@@ -1,6 +1,14 @@
 [workspace]
 resolver = "2"
-members = ["crates/ui", "crates/chat", "examples/dev", "xtask"]
+members = [
+    "crates/ui",
+    "crates/conversation-model",
+    "crates/conversation-host",
+    "crates/conversation-ui",
+    "crates/chat",
+    "examples/dev",
+    "xtask",
+]
 default-members = ["examples/dev"]
 
 [workspace.package]
@@ -12,6 +20,15 @@ license = "UNLICENSED"
 [workspace.dependencies]
 ui = { path = "crates/ui" }
 chat = { path = "crates/chat" }
+conversation-model = { path = "crates/conversation-model" }
+conversation-host = { path = "crates/conversation-host" }
+conversation-ui = { path = "crates/conversation-ui" }
+futures = "0.3"
+# The session event schema and its recorded fixtures, pinned at the commit
+# isonomic-sdk pins, until the SDK's agents interface re-exports them. CI
+# fetches it with the shared workflow's `harness` input.
+harness-core = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
+harness-testkit = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
 # Isonomic UI is a sibling checkout (../isonomic-ui) pinned to the commit in
 # UI_REF. CI checks it out there. Only crates/ui names it.
 isonomic-ui = { path = "../isonomic-ui/crates/ui" }
