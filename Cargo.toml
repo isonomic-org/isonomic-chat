@@ -1,0 +1,49 @@
+[workspace]
+resolver = "2"
+members = ["crates/ui", "crates/chat", "examples/dev", "xtask"]
+default-members = ["examples/dev"]
+
+[workspace.package]
+version = "0.0.1"
+edition = "2024"
+publish = false
+license = "UNLICENSED"
+
+[workspace.dependencies]
+ui = { path = "crates/ui" }
+chat = { path = "crates/chat" }
+# Isonomic UI is a sibling checkout (../isonomic-ui) pinned to the commit in
+# UI_REF. CI checks it out there. Only crates/ui names it.
+isonomic-ui = { path = "../isonomic-ui/crates/ui" }
+isonomic-ui-extra = { path = "../isonomic-ui/crates/extra" }
+
+# Isonomic UI's copy of GPUI's macros, which resolve GPUI paths through the
+# facade. The UI workspace applies the same patch.
+[patch.crates-io]
+gpui-pre-macros = { path = "../isonomic-ui/vendor/gpui-pre-macros" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+dbg_macro = "deny"
+todo = "deny"
+
+# Optimize the heavy rendering crates in debug builds so the dev window and
+# the gallery run at a usable speed; incremental builds are unaffected.
+[profile.dev]
+debug = "limited"
+
+[profile.dev.package]
+resvg = { opt-level = 3 }
+rustybuzz = { opt-level = 3 }
+taffy = { opt-level = 3 }
+ttf-parser = { opt-level = 3 }
+smol = { opt-level = 3 }
+gpui-pre = { opt-level = 3 }
+gpui-pre-platform = { opt-level = 3 }
+gpui-pre-sum-tree = { opt-level = 3 }
+ropey = { opt-level = 3 }
+
+[profile.release]
+strip = "symbols"
