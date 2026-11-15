@@ -1,7 +1,7 @@
 //! The thread model against the harness's recorded fixtures.
 
-use conversation_model::schema::{LiveDelta, SessionEvent, SessionId, TurnId};
 use conversation_model::schema::{DeltaKind, Event};
+use conversation_model::schema::{LiveDelta, SessionEvent, SessionId, TurnId};
 use conversation_model::{InputState, Thread, TurnState, Update};
 use harness_testkit::fixtures;
 
@@ -26,9 +26,19 @@ fn every_fixture_folds_and_ends_closed_or_ready() {
         for id in sessions {
             let events = session(&fixture.events, id.as_str());
             let thread = Thread::from_events(&events);
-            assert_eq!(thread.last_seq(), events.last().unwrap().seq, "{}", fixture.name);
+            assert_eq!(
+                thread.last_seq(),
+                events.last().unwrap().seq,
+                "{}",
+                fixture.name
+            );
             for turn in thread.turns() {
-                assert!(!turn.state.is_open(), "{}: open turn {:?}", fixture.name, turn.ids);
+                assert!(
+                    !turn.state.is_open(),
+                    "{}: open turn {:?}",
+                    fixture.name,
+                    turn.ids
+                );
             }
             assert_ne!(thread.input_state(), InputState::Busy, "{}", fixture.name);
         }
@@ -147,10 +157,7 @@ fn an_optimistic_send_is_adopted_by_the_host_turn() {
     thread.apply_event(&events[first_turn + 1]);
     assert_eq!(thread.turns().len(), 1);
     assert_eq!(thread.turns()[0].state, TurnState::Running);
-    assert_eq!(
-        thread.turns()[0].ids,
-        vec![TurnId::new("trn_0001")],
-    );
+    assert_eq!(thread.turns()[0].ids, vec![TurnId::new("trn_0001")],);
 }
 
 #[test]

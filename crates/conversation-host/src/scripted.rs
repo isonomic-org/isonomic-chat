@@ -79,13 +79,21 @@ struct Open {
     continues: Option<Seq>,
 }
 
+/// What a stopped reply did not get to write.
+struct Leftover {
+    text: VecDeque<String>,
+    /// The `seq` of the sealed partial reply it carries on.
+    after: Seq,
+    title: Option<String>,
+}
+
 #[derive(Default)]
 struct Session {
     log: Vec<SessionEvent>,
     subscribers: Vec<UnboundedSender<Update>>,
     open: Option<Open>,
     /// Words a stopped reply did not get to, for continue.
-    leftover: Option<(VecDeque<String>, Seq)>,
+    leftover: Option<Leftover>,
     titled: bool,
 }
 
@@ -139,7 +147,10 @@ impl ScriptedHost {
     /// Whether any reply is open.
     pub fn is_busy(&self) -> bool {
         let inner = self.inner.borrow();
-        inner.sessions.values().any(|session| session.open.is_some())
+        inner
+            .sessions
+            .values()
+            .any(|session| session.open.is_some())
     }
 
     /// A session's durable log so far.
@@ -234,8 +245,7 @@ impl ConversationHost for ScriptedHost {
         let session = session.clone();
         self.call(move |inner| {
             let state = inner.session(&session)?;
-            let Some((text, after)) = state.leftover.take().filter(|_| state.open.is_none())
-            else {
+            let Some(leftover) = state.leftover.take().filter(|_| state.open.is_none()) else {
                 return Err(HostError::new("continue_refused", "Nothing to continue."));
             };
             let turn = inner.turn_id();
@@ -249,12 +259,12 @@ impl ConversationHost for ScriptedHost {
                 turn,
                 step,
                 reasoning: VecDeque::new(),
-                text,
+                text: leftover.text,
                 written_reasoning: String::new(),
                 written_text: String::new(),
-                title: None,
+                title: leftover.title,
                 refuse: false,
-                continues: Some(after),
+                continues: Some(leftover.after),
             });
             Ok(())
         })
@@ -287,7 +297,11 @@ impl ConversationHost for ScriptedHost {
             let state = inner.session(&session)?;
             state.leftover = sealed
                 .filter(|_| !open.text.is_empty())
-                .map(|seq| (open.text, seq));
+                .map(|after| Leftover {
+                    text: open.text,
+                    after,
+                    title: open.title,
+                });
             Ok(())
         })
     }

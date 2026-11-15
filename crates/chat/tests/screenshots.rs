@@ -121,7 +121,11 @@ mod screenshots {
                     ..Default::default()
                 },
                 cx,
-                |window, cx| cx.new(|cx| ChatShell::new(window, cx)),
+                |window, cx| {
+                    let host: std::rc::Rc<dyn chat::ConversationHost> =
+                        std::rc::Rc::new(conversation_host::ScriptedHost::new());
+                    cx.new(|cx| ChatShell::new(host, window, cx))
+                },
             )
         })
         .expect("open the headless window")

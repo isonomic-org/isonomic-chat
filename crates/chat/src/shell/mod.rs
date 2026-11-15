@@ -16,6 +16,11 @@ use ui::{
     AnyElement, App, Entity, FocusHandle, Focusable, SharedString, Subscription, Window, div,
 };
 
+use conversation_host::ConversationHost;
+use conversation_ui::{ConversationEvent, ConversationView};
+use std::collections::HashMap;
+use std::rc::Rc;
+
 use crate::composer::{Composer, ComposerEvent};
 use crate::copy::{self, DayPart};
 use crate::demo::{self, SessionSummary};
@@ -54,14 +59,21 @@ pub struct ChatShell {
     context_panel_open: bool,
     context_tab: ContextTab,
     composer: Entity<Composer>,
+    host: Rc<dyn ConversationHost>,
+    threads: HashMap<SharedString, Entity<ConversationView>>,
     rename: Option<Rename>,
     day_part: DayPart,
     _subscriptions: Vec<Subscription>,
 }
 
 impl ChatShell {
-    /// Chat with the static demo data, on home.
-    pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
+    /// Chat on home. The example chats are static; every chat sent from
+    /// home runs on `host`.
+    pub fn new(
+        host: Rc<dyn ConversationHost>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
         let composer = cx.new(|cx| Composer::new(window, cx));
         let subscription = cx.subscribe_in(&composer, window, |this, _, event, window, cx| {
             let ComposerEvent::Submit(text) = event;
@@ -76,6 +88,8 @@ impl ChatShell {
             context_panel_open: true,
             context_tab: ContextTab::Context,
             composer,
+            host,
+            threads: HashMap::new(),
             rename: None,
             day_part: DayPart::from_hour(local_hour()),
             _subscriptions: vec![subscription],
@@ -158,8 +172,13 @@ impl ChatShell {
         cx.notify();
     }
 
-    /// Sending from home starts a chat titled from the text. With static
-    /// data nothing is sent anywhere; the conversation view comes with the kit.
+    /// The conversation behind a chat, if it has one.
+    pub fn thread(&self, id: &SharedString) -> Option<&Entity<ConversationView>> {
+        self.threads.get(id)
+    }
+
+    /// Sending from home starts a chat titled from the text, opens its
+    /// conversation and sends the text to the host.
     fn start_session(&mut self, text: &str, window: &mut Window, cx: &mut Context<Self>) {
         if self.route != Route::Home {
             return;
@@ -170,6 +189,23 @@ impl ChatShell {
         let at = self.sessions.iter().take_while(|s| s.pinned).count();
         self.sessions
             .insert(at, SessionSummary::new(id.clone(), title, false));
+        let host = self.host.clone();
+        let thread = cx
+            .new(|cx| ConversationView::new(host, crate::PRESET, copy::conversation(), window, cx));
+        let chat = id.clone();
+        let subscription = cx.subscribe(&thread, move |this, _, event, cx| {
+            if let ConversationEvent::TitleChanged(title) = event
+                && let Some(session) = this.sessions.iter_mut().find(|s| s.id == chat)
+            {
+                session.title = title.clone();
+                cx.notify();
+            }
+        });
+        self._subscriptions.push(subscription);
+        let text = text.to_owned();
+        thread.update(cx, |thread, cx| thread.send(text, cx));
+        thread.update(cx, |thread, cx| thread.focus_composer(window, cx));
+        self.threads.insert(id.clone(), thread);
         self.open_session(id, window, cx);
     }
 
@@ -219,6 +255,7 @@ impl ChatShell {
         if let Route::Session(id) = &self.route {
             let id = id.clone();
             self.sessions.retain(|session| session.id != id);
+            self.threads.remove(&id);
             self.new_chat(window, cx);
         }
     }
@@ -245,12 +282,46 @@ impl ChatShell {
     fn render_body(&mut self, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
         match self.route {
             Route::Home => home::render(self.day_part, &self.composer, window, cx),
-            Route::Session(_) => self.render_thread(cx),
+            Route::Session(ref id) => match self.threads.get(id) {
+                Some(thread) => self.render_conversation(thread.clone(), cx),
+                None => self.render_thread(cx),
+            },
         }
     }
 
-    /// The thread is the kit's `ConversationView`; until it exists the
-    /// panel shows an empty state above the docked composer.
+    /// A chat with a conversation: the kit's view, then the disclaimer.
+    fn render_conversation(
+        &self,
+        thread: Entity<ConversationView>,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let theme = cx.theme();
+        v_flex()
+            .id("thread")
+            .size_full()
+            .items_center()
+            .px_6()
+            .pb_3()
+            .gap_2()
+            .child(
+                div()
+                    .flex_1()
+                    .min_h_0()
+                    .w_full()
+                    .max_w(metrics::content_max_width())
+                    .child(thread),
+            )
+            .child(
+                div()
+                    .text_xs()
+                    .text_color(theme.muted_foreground)
+                    .child(copy::DISCLAIMER),
+            )
+            .into_any_element()
+    }
+
+    /// An example chat with no conversation behind it: an empty state above
+    /// the docked composer.
     fn render_thread(&self, cx: &mut Context<Self>) -> AnyElement {
         let theme = cx.theme();
         v_flex()

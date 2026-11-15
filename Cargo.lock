@@ -896,6 +896,9 @@ name = "chat"
 version = "0.0.1"
 dependencies = [
  "chrono",
+ "conversation-host",
+ "conversation-model",
+ "conversation-ui",
  "ui",
 ]
 
@@ -1420,6 +1423,7 @@ name = "dev"
 version = "0.0.1"
 dependencies = [
  "chat",
+ "conversation-host",
  "ui",
 ]
 

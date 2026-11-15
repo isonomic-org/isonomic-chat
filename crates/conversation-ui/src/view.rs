@@ -63,13 +63,12 @@ impl ConversationView {
             composer.set_dictation(false, cx);
             composer
         });
-        let composer_events = cx.subscribe_in(&composer, window, |this, _, event, _, cx| {
-            match event {
+        let composer_events =
+            cx.subscribe_in(&composer, window, |this, _, event, _, cx| match event {
                 PromptComposerEvent::Submit { text, .. } => this.send(text.to_string(), cx),
                 PromptComposerEvent::Stop => this.stop(cx),
                 _ => {}
-            }
-        });
+            });
         Self {
             host,
             preset: preset.into(),
@@ -229,7 +228,9 @@ impl ConversationView {
         let title = self.thread.borrow().title().map(str::to_owned);
         if title.is_some() && title != self.title {
             self.title = title.clone();
-            cx.emit(ConversationEvent::TitleChanged(title.unwrap_or_default().into()));
+            cx.emit(ConversationEvent::TitleChanged(
+                title.unwrap_or_default().into(),
+            ));
         }
         self.rows_changed(cx);
     }
@@ -248,7 +249,8 @@ impl ConversationView {
                 scroller.remeasure_items(count - 1..count, cx);
             }
         });
-        self.composer.update(cx, |composer, cx| composer.set_busy(busy, cx));
+        self.composer
+            .update(cx, |composer, cx| composer.set_busy(busy, cx));
         cx.notify();
     }
 }
@@ -258,20 +260,24 @@ impl Render for ConversationView {
         let thread = self.thread.clone();
         let copy = self.copy.clone();
         let view = cx.weak_entity();
-        let list = MessageScroller::new("conversation-turns", self.scroller.clone(), move |index, _, cx| {
-            let thread = thread.borrow();
-            let Some(turn) = thread.turns().get(index) else {
-                return div().into_any_element();
-            };
-            let last = index + 1 == thread.turns().len();
-            let on_continue = (last && thread.input_state().can_continue()).then(|| {
-                let view = view.clone();
-                Box::new(move |_: &mut Window, cx: &mut App| {
-                    let _ = view.update(cx, |view, cx| view.resume(cx));
-                }) as OnClick
-            });
-            render_turn(index, turn, &copy, RowActions { on_continue }, cx)
-        })
+        let list = MessageScroller::new(
+            "conversation-turns",
+            self.scroller.clone(),
+            move |index, _, cx| {
+                let thread = thread.borrow();
+                let Some(turn) = thread.turns().get(index) else {
+                    return div().into_any_element();
+                };
+                let last = index + 1 == thread.turns().len();
+                let on_continue = (last && thread.input_state().can_continue()).then(|| {
+                    let view = view.clone();
+                    Box::new(move |_: &mut Window, cx: &mut App| {
+                        let _ = view.update(cx, |view, cx| view.resume(cx));
+                    }) as OnClick
+                });
+                render_turn(index, turn, &copy, RowActions { on_continue }, cx)
+            },
+        )
         .with_bottom_fade(cx.theme().background);
 
         v_flex()

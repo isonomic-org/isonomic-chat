@@ -1,12 +1,12 @@
 //! A session's events folded into turns.
 
+use crate::Update;
 use crate::input::InputState;
 use crate::schema::{
     AttemptOutcome, Block, Cause, DeltaKind, Event, LiveDelta, Seq, SessionEvent, SessionId,
     Status, StepId, StopReason, TurnId, TurnStop,
 };
 use crate::turn::{Notice, ToolUse, Turn, TurnState};
-use crate::Update;
 use std::collections::BTreeSet;
 
 /// One session as a list of turns.
@@ -299,9 +299,7 @@ impl Thread {
     fn end_state(&self, stop: &TurnStop, message: Option<String>) -> TurnState {
         let attempt = self.attempt_message.clone();
         match stop {
-            TurnStop::Done if self.last_stop == Some(StopReason::MaxTokens) => {
-                TurnState::Truncated
-            }
+            TurnStop::Done if self.last_stop == Some(StopReason::MaxTokens) => TurnState::Truncated,
             TurnStop::Cancelled | TurnStop::Interrupted => TurnState::Stopped,
             TurnStop::Failed => TurnState::Failed(attempt.or(message).unwrap_or_default()),
             TurnStop::Refused => TurnState::Refused(attempt.or(message).unwrap_or_default()),

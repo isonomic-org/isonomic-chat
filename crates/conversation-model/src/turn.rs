@@ -105,7 +105,11 @@ impl Turn {
     /// The reply as it stands: committed text, then anything streaming.
     pub fn reply(&self) -> String {
         let mut reply = self.text.clone();
-        let streaming = self.live.values().flat_map(|b| b.values()).any(|t| !t.is_empty());
+        let streaming = self
+            .live
+            .values()
+            .flat_map(|b| b.values())
+            .any(|t| !t.is_empty());
         if streaming && !reply.is_empty() && !self.continuing && !reply.ends_with("\n\n") {
             reply.push_str("\n\n");
         }

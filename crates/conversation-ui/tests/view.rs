@@ -60,7 +60,11 @@ fn open(cx: &mut TestAppContext) -> Harness {
 }
 
 impl Harness {
-    fn frame<R>(&self, cx: &mut TestAppContext, f: impl FnOnce(&mut Window, &mut ui::App) -> R) -> R {
+    fn frame<R>(
+        &self,
+        cx: &mut TestAppContext,
+        f: impl FnOnce(&mut Window, &mut ui::App) -> R,
+    ) -> R {
         cx.run_until_parked();
         cx.update_window(self.window.into(), |_, window, cx| {
             // The list measures new rows on one frame and paints them on the next.
@@ -115,7 +119,10 @@ fn a_reply_streams_in_and_the_composer_comes_back(cx: &mut TestAppContext) {
 
     h.host.finish();
     cx.run_until_parked();
-    assert_eq!(h.last(cx), ("Three good names follow.".into(), TurnState::Done));
+    assert_eq!(
+        h.last(cx),
+        ("Three good names follow.".into(), TurnState::Done)
+    );
     assert_eq!(h.state(cx), InputState::Ready);
     assert!(
         h.events
@@ -128,14 +135,18 @@ fn a_reply_streams_in_and_the_composer_comes_back(cx: &mut TestAppContext) {
 #[ui::test]
 fn stop_keeps_the_partial_reply_and_continue_finishes_it(cx: &mut TestAppContext) {
     let h = open(cx);
-    h.host
-        .script(ScriptedReply::text("Welcome, everyone. Tonight we pick our first book."));
+    h.host.script(ScriptedReply::text(
+        "Welcome, everyone. Tonight we pick our first book.",
+    ));
     h.send(cx, "Write a welcome");
     h.pump(cx, 2);
 
     h.frame(cx, |window, cx| window.click("stop", cx));
     cx.run_until_parked();
-    assert_eq!(h.last(cx), ("Welcome, everyone. ".into(), TurnState::Stopped));
+    assert_eq!(
+        h.last(cx),
+        ("Welcome, everyone. ".into(), TurnState::Stopped)
+    );
     assert_eq!(h.state(cx), InputState::Continuable);
 
     h.frame(cx, |window, cx| window.click("conversation-continue", cx));
@@ -174,7 +185,8 @@ fn reasoning_shows_before_the_answer(cx: &mut TestAppContext) {
 #[ui::test]
 fn a_refusal_ends_the_turn_with_its_message(cx: &mut TestAppContext) {
     let h = open(cx);
-    h.host.script(ScriptedReply::refusal("I can't help with that."));
+    h.host
+        .script(ScriptedReply::refusal("I can't help with that."));
     h.send(cx, "Something not allowed");
     h.host.finish();
     cx.run_until_parked();

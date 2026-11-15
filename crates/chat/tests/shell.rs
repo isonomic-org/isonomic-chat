@@ -3,7 +3,10 @@
 
 extern crate ui as gpui;
 
-use chat::{ChatShell, Route};
+use chat::{ChatShell, ConversationHost, Route};
+use conversation_host::{ScriptedHost, ScriptedReply};
+use conversation_model::{InputState, TurnState};
+use std::rc::Rc;
 use ui::test::TestWindowExt as _;
 use ui::{
     AppContext as _, Bounds, Entity, Focusable as _, SharedString, TestAppContext, Window,
@@ -17,6 +20,14 @@ const MOD: &str = "cmd";
 const MOD: &str = "ctrl";
 
 fn open(cx: &mut TestAppContext) -> (WindowHandle<Root>, Entity<ChatShell>) {
+    open_with(cx, ScriptedHost::new())
+}
+
+fn open_with(
+    cx: &mut TestAppContext,
+    host: ScriptedHost,
+) -> (WindowHandle<Root>, Entity<ChatShell>) {
+    let host: Rc<dyn ConversationHost> = Rc::new(host);
     cx.update(|cx| {
         ui::init(cx);
         chat::init(cx);
@@ -32,7 +43,7 @@ fn open(cx: &mut TestAppContext) -> (WindowHandle<Root>, Entity<ChatShell>) {
             },
             cx,
             |window, cx| {
-                let shell = cx.new(|cx| ChatShell::new(window, cx));
+                let shell = cx.new(|cx| ChatShell::new(host, window, cx));
                 let focus = shell.read(cx).focus_handle(cx);
                 window.focus(&focus, cx);
                 shell
@@ -186,4 +197,62 @@ fn delete_drops_the_chat_and_goes_home(cx: &mut TestAppContext) {
         assert_eq!(shell.route(), &Route::Home);
         assert!(shell.sessions().iter().all(|s| s.id.as_ref() != "s4"));
     });
+}
+
+#[ui::test]
+fn a_chat_sent_from_home_runs_a_turn_with_stop_and_continue(cx: &mut TestAppContext) {
+    let host = ScriptedHost::new();
+    host.script(
+        ScriptedReply::text("A hash function maps data of any size to a fixed-size value.")
+            .with_title("Hash functions"),
+    );
+    let (window, shell) = open_with(cx, host.clone());
+    with_window(cx, window, |window, cx| {
+        shell.update(cx, |shell, cx| {
+            shell.set_draft("What is a hash function?", window, cx)
+        });
+        window.render_frame(cx);
+        window.press("enter", cx);
+    });
+    cx.run_until_parked();
+    let id = cx.update(|cx| shell.read(cx).sessions()[1].id.clone());
+    let thread = cx.update(|cx| shell.read(cx).thread(&id).cloned().expect("a conversation"));
+    let state = |cx: &mut TestAppContext| {
+        cx.update(|cx| {
+            let view = thread.read(cx);
+            let turns = view.thread();
+            let turn = turns.turns().last().expect("a turn");
+            (view.input_state(), turn.reply(), turn.state.clone())
+        })
+    };
+
+    host.pump(3);
+    cx.run_until_parked();
+    assert_eq!(state(cx).0, InputState::Busy);
+    assert_eq!(state(cx).1, "A hash function ");
+
+    // Stop from the composer: the partial reply stays and continue appears.
+    with_window(cx, window, |window, cx| {
+        window.render_frame(cx);
+        window.click("stop", cx);
+    });
+    cx.run_until_parked();
+    assert_eq!(state(cx).2, TurnState::Stopped);
+    with_window(cx, window, |window, cx| {
+        window.render_frame(cx);
+        window.click("conversation-continue", cx);
+    });
+    cx.run_until_parked();
+    host.finish();
+    cx.run_until_parked();
+    let (input, reply, turn) = state(cx);
+    assert_eq!(input, InputState::Ready);
+    assert_eq!(
+        reply,
+        "A hash function maps data of any size to a fixed-size value."
+    );
+    assert_eq!(turn, TurnState::Done);
+    // The model's title replaces the one taken from the prompt.
+    let title = cx.update(|cx| shell.read(cx).sessions()[1].title.clone());
+    assert_eq!(title.as_ref(), "Hash functions");
 }

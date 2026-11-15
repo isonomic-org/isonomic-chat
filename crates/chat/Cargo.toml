@@ -7,13 +7,16 @@ publish.workspace = true
 license.workspace = true
 
 [features]
-test-support = ["ui/test-support"]
+test-support = ["ui/test-support", "conversation-ui/test-support"]
 
 [dependencies]
 chrono = { version = "0.4.38", default-features = false, features = ["clock"] }
+conversation-host.workspace = true
+conversation-ui.workspace = true
 ui.workspace = true
 
 [dev-dependencies]
+conversation-model.workspace = true
 ui = { workspace = true, features = ["test-support"] }
 
 [lints]
