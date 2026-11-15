@@ -57,7 +57,16 @@ fn main() {
             cx,
             move |window, cx| {
                 let host: Rc<dyn ConversationHost> = Rc::new(host);
-                let shell = cx.new(|cx| ChatShell::new(Some(host), window, cx));
+                let shell = cx.new(|cx| {
+                    ChatShell::new(
+                        Some(isonomic_chat::Backend {
+                            host,
+                            store: Rc::new(isonomic_chat::store::MemoryStore::default()),
+                        }),
+                        window,
+                        cx,
+                    )
+                });
                 let focus = shell.read(cx).focus_handle(cx);
                 window.focus(&focus, cx);
                 shell

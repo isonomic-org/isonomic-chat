@@ -16,14 +16,17 @@ test-support = [
 [dependencies]
 chrono = { version = "0.4.38", default-features = false, features = ["clock"] }
 conversation-host.workspace = true
+conversation-model.workspace = true
 conversation-sdk.workspace = true
 conversation-ui.workspace = true
+futures.workspace = true
 isonomic-app.workspace = true
+isonomic-client.workspace = true
 isonomic-proto.workspace = true
 ui.workspace = true
 
 [dev-dependencies]
-conversation-model.workspace = true
+futures = { workspace = true, features = ["executor"] }
 isonomic-app = { workspace = true, features = ["test-support"] }
 ui = { workspace = true, features = ["test-support"] }
 

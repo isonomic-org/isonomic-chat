@@ -3,7 +3,7 @@
 
 extern crate ui as gpui;
 
-use conversation_host::{ScriptedHost, ScriptedReply};
+use conversation_host::{NewSession, ScriptedHost, ScriptedReply, SessionQuery};
 use conversation_model::{InputState, TurnState};
 use isonomic_chat::{ChatShell, ConversationHost, Route};
 use std::rc::Rc;
@@ -19,15 +19,28 @@ const MOD: &str = "cmd";
 #[cfg(not(target_os = "macos"))]
 const MOD: &str = "ctrl";
 
+/// The shell on the static example chats, with no backend.
 fn open(cx: &mut TestAppContext) -> (WindowHandle<Root>, Entity<ChatShell>) {
-    open_with(cx, ScriptedHost::new())
+    open_on(cx, None)
 }
 
+/// The shell on a scripted host and an in-memory store.
 fn open_with(
     cx: &mut TestAppContext,
     host: ScriptedHost,
 ) -> (WindowHandle<Root>, Entity<ChatShell>) {
     let host: Rc<dyn ConversationHost> = Rc::new(host);
+    let backend = isonomic_chat::Backend {
+        host,
+        store: Rc::new(isonomic_chat::store::MemoryStore::default()),
+    };
+    open_on(cx, Some(backend))
+}
+
+fn open_on(
+    cx: &mut TestAppContext,
+    backend: Option<isonomic_chat::Backend>,
+) -> (WindowHandle<Root>, Entity<ChatShell>) {
     cx.update(|cx| {
         ui::init(cx);
         isonomic_chat::init(cx);
@@ -43,7 +56,7 @@ fn open_with(
             },
             cx,
             |window, cx| {
-                let shell = cx.new(|cx| ChatShell::new(Some(host), window, cx));
+                let shell = cx.new(|cx| ChatShell::new(backend, window, cx));
                 let focus = shell.read(cx).focus_handle(cx);
                 window.focus(&focus, cx);
                 shell
@@ -215,7 +228,7 @@ fn a_chat_sent_from_home_runs_a_turn_with_stop_and_continue(cx: &mut TestAppCont
         window.press("enter", cx);
     });
     cx.run_until_parked();
-    let id = cx.update(|cx| shell.read(cx).sessions()[1].id.clone());
+    let id = cx.update(|cx| shell.read(cx).sessions()[0].id.clone());
     let thread = cx.update(|cx| shell.read(cx).thread(&id).cloned().expect("a conversation"));
     let state = |cx: &mut TestAppContext| {
         cx.update(|cx| {
@@ -253,6 +266,73 @@ fn a_chat_sent_from_home_runs_a_turn_with_stop_and_continue(cx: &mut TestAppCont
     );
     assert_eq!(turn, TurnState::Done);
     // The model's title replaces the one taken from the prompt.
-    let title = cx.update(|cx| shell.read(cx).sessions()[1].title.clone());
+    let title = cx.update(|cx| shell.read(cx).sessions()[0].title.clone());
     assert_eq!(title.as_ref(), "Hash functions");
+}
+
+#[ui::test]
+fn a_stored_chat_reopens_with_its_history_and_rename_and_delete_reach_the_host(
+    cx: &mut TestAppContext,
+) {
+    // An earlier visit left one chat with one exchange in the host.
+    let host = ScriptedHost::new();
+    host.script(ScriptedReply::text("Lisbon in three days.").with_title("Lisbon"));
+    let new = NewSession {
+        preset: "chat".into(),
+        title: None,
+    };
+    let session = futures::executor::block_on(host.create(new)).unwrap();
+    let ask = vec![conversation_model::schema::Block::text("Plan a trip")];
+    futures::executor::block_on(host.send(&session, ask)).unwrap();
+    host.finish();
+
+    let (window, shell) = open_with(cx, host.clone());
+    cx.run_until_parked();
+    let id: SharedString = session.0.clone().into();
+    cx.update(|cx| {
+        let sessions = shell.read(cx).sessions();
+        assert_eq!(sessions.len(), 1);
+        assert_eq!(sessions[0].title.as_ref(), "Lisbon");
+    });
+
+    // Opening it replays the stored exchange.
+    with_window(cx, window, |window, cx| {
+        shell.update(cx, |shell, cx| shell.open_session(id.clone(), window, cx));
+    });
+    cx.run_until_parked();
+    let thread = cx.update(|cx| shell.read(cx).thread(&id).cloned().expect("a conversation"));
+    cx.update(|cx| {
+        let view = thread.read(cx);
+        let turns = view.thread();
+        assert_eq!(turns.turns().len(), 1);
+        assert_eq!(turns.turns()[0].prompt, "Plan a trip");
+        assert_eq!(turns.turns()[0].reply(), "Lisbon in three days.");
+    });
+
+    // Rename reaches the host.
+    with_window(cx, window, |window, cx| {
+        shell.update(cx, |shell, cx| shell.begin_rename(window, cx));
+        window.render_frame(cx);
+        window.press(&format!("{MOD}-a"), cx);
+        window.input("Lisbon, three days", cx);
+        window.press("enter", cx);
+    });
+    cx.run_until_parked();
+    let listed = futures::executor::block_on(host.list(SessionQuery::default())).unwrap();
+    assert_eq!(listed[0].title.as_deref(), Some("Lisbon, three days"));
+
+    // Delete archives it in the host and goes home.
+    with_window(cx, window, |window, cx| {
+        shell.update(cx, |shell, cx| shell.delete_current(window, cx));
+    });
+    cx.run_until_parked();
+    assert!(
+        futures::executor::block_on(host.list(SessionQuery::default()))
+            .unwrap()
+            .is_empty()
+    );
+    cx.update(|cx| {
+        assert_eq!(shell.read(cx).route(), &Route::Home);
+        assert!(shell.read(cx).sessions().is_empty());
+    });
 }
