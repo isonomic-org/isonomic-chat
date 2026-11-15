@@ -2,6 +2,21 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-15 · The SDK adapter
+
+**Built**
+
+- `conversation-sdk`: `SdkHost` implements `ConversationHost` on the SDK's agents interface (`sessions.create`, `send`, `continue`, `cancel`, `rename`, `subscribe`) under the app's own token. Session updates pass through unchanged: the SDK re-exports the same harness-core the kit folds. Engine errors keep their wire code and words.
+- Chat's manifest asks for `agents` and nothing else, and `Chat::build` runs every new chat on `SdkHost`.
+- `SDK_REF` moves to `21ed50d` (isonomic-sdk main with the agents interface and the testkit's in-memory agents host).
+- Real turns in tests, no engine: through `SdkHost` (stream, title, a reply cut off at the output limit, continue in the same turn, stop with nothing running, continue refused), and inside the mounted Chat app (a chat sent from home gets the host's reply under `com.isonomic.chat`).
+- Fix: the fold ignores steps that are not the reply. The title step runs after `turn.end` in the same turn, and its text had been added to the reply.
+
+**Not yet**
+
+- The host refuses to continue a turn whose title step ran after it, because the last reply it sees is the title's (requests O7).
+- Approvals, questions and client tool results come after V1's plain text turns.
+
 ## 2026-11-15 · The conversation kit and the thread screen
 
 **Built**

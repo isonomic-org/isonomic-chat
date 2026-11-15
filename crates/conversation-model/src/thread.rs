@@ -3,8 +3,8 @@
 use crate::Update;
 use crate::input::InputState;
 use crate::schema::{
-    AttemptOutcome, Block, Cause, DeltaKind, Event, LiveDelta, Seq, SessionEvent, SessionId,
-    Status, StepId, StopReason, TurnId, TurnStop,
+    AttemptOutcome, Block, Cause, DeltaKind, Event, LiveDelta, Purpose, Seq, SessionEvent,
+    SessionId, Status, StepId, StopReason, TurnId, TurnStop,
 };
 use crate::turn::{Notice, ToolUse, Turn, TurnState};
 use std::collections::BTreeSet;
@@ -24,6 +24,9 @@ pub struct Thread {
     last_seq: Seq,
     closed: bool,
     committed: BTreeSet<StepId>,
+    /// Steps that are not the reply (the title step, summaries): their text
+    /// is never part of a turn.
+    side_steps: BTreeSet<StepId>,
     /// The last reply's stop reason in the open turn.
     last_stop: Option<StopReason>,
     /// A refusal or error recorded by an attempt, for the turn's end.
@@ -127,6 +130,7 @@ impl Thread {
     pub fn apply_delta(&mut self, delta: &LiveDelta) {
         if self.session.as_ref().is_some_and(|s| s != &delta.session)
             || self.committed.contains(&delta.step)
+            || self.side_steps.contains(&delta.step)
         {
             return;
         }
@@ -160,7 +164,17 @@ impl Thread {
         }
         self.last_seq = event.seq;
         self.revision += 1;
+        if let Some(step) = &event.step
+            && self.side_steps.contains(step)
+        {
+            return;
+        }
         match &event.event {
+            Event::StepStart(start) if start.purpose != Purpose::Reply => {
+                if let Some(step) = &event.step {
+                    self.side_steps.insert(step.clone());
+                }
+            }
             Event::SessionStatus(status) => {
                 self.closed = status.status == Status::Failed;
             }

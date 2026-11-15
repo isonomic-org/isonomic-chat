@@ -4,6 +4,10 @@ What this repository needs from others, and what others asked of it. Newest firs
 
 ## Out
 
+### O7 · Harness: continue skips the title step
+
+**To:** isonomic-harness. **Status:** open. `harness-loop` `machine.rs` (around line 417) takes the turn's last `assistant` to decide whether a reply can be continued. On a session's first turn the title step's `assistant` (purpose `title`, stop `end`) comes after the reply's, so continuing a first reply cut off at the output limit or stopped is refused with "The reply is complete." Skip assistants from steps whose purpose is not `reply`.
+
 ### O6 · SDK: tokio's multi-thread runtime for `test-support`
 
 **To:** isonomic-sdk. **Status:** open. `isonomic-app`'s `testing::TestHost` calls `tokio::runtime::Builder::new_multi_thread()`, but `crates/app/Cargo.toml` enables `rt-multi-thread` only in its dev-dependencies. An app that turns on `isonomic-app/test-support` outside the SDK workspace fails to compile. Add: `test-support = ["dep:isonomic-testkit", "isonomic-ui/test-support", "tokio/rt-multi-thread"]`. Until then `isonomic-chat`'s `test-support` asks tokio for it.

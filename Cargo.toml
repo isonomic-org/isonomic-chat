@@ -5,6 +5,7 @@ members = [
     "crates/conversation-model",
     "crates/conversation-host",
     "crates/conversation-ui",
+    "crates/conversation-sdk",
     "crates/chat",
     "examples/dev",
     "xtask",
@@ -23,11 +24,14 @@ isonomic-chat = { path = "crates/chat" }
 conversation-model = { path = "crates/conversation-model" }
 conversation-host = { path = "crates/conversation-host" }
 conversation-ui = { path = "crates/conversation-ui" }
+conversation-sdk = { path = "crates/conversation-sdk" }
 futures = "0.3"
 # The session event schema and its recorded fixtures, pinned at the commit
 # isonomic-sdk pins, until the SDK's agents interface re-exports them. CI
 # fetches it with the shared workflow's `harness` input.
 harness-core = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
+harness-host = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
+harness-log = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
 harness-testkit = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
 # Isonomic UI is a sibling checkout (../isonomic-ui) pinned to the commit in
 # UI_REF. CI checks it out there. Only crates/ui names it.
@@ -36,6 +40,9 @@ isonomic-ui-extra = { path = "../isonomic-ui/crates/extra" }
 # The SDK is a sibling checkout (../isonomic-sdk) pinned to the commit in
 # SDK_REF, the same pin as the window, so both link one copy of each crate.
 isonomic-app = { path = "../isonomic-sdk/crates/app" }
+isonomic-client = { path = "../isonomic-sdk/crates/client" }
+isonomic-proto = { path = "../isonomic-sdk/crates/proto" }
+serde_json = "1"
 
 # Isonomic UI's copy of GPUI's macros, which resolve GPUI paths through the
 # facade. The UI workspace applies the same patch.

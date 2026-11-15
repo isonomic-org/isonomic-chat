@@ -58,6 +58,12 @@ fn chat_basic_reads_as_prompts_and_replies() {
         "What are three good names for a neighborhood book club?"
     );
     assert!(turns[0].reply().contains("The Porch Readers"));
+    // The title step runs after the reply; its text is never in the turn.
+    assert!(
+        turns[0].reply().ends_with("in a particular tone?"),
+        "{:?}",
+        turns[0].reply()
+    );
     assert!(!turns[0].thinking().is_empty());
     assert_eq!(turns[0].state, TurnState::Done);
 
