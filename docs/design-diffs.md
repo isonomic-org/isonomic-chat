@@ -2,7 +2,7 @@
 
 Every visible difference between the Isonomic Chat Figma file and what this repository draws. Until Omar decides which source wins, the build uses Isonomic UI's tokens and icons, adds no fonts or icon sets, and records each difference here. When he decides, these become one task.
 
-Figma: `A0H5z7vRJfA8J7HYFy1aKW`, section "Start a Basic Chat / Flow v1" (`19:992`), frames `ChatView/01`–`05`. Isonomic UI at `UI_REF`. Screenshots: `cargo test -p chat --features test-support --test screenshots` writes `crates/chat/target/screenshots/{light,dark}/`.
+Figma: `A0H5z7vRJfA8J7HYFy1aKW`, section "Start a Basic Chat / Flow v1" (`19:992`), frames `ChatView/01`–`05`. Isonomic UI at `UI_REF`. Screenshots: `cargo test -p isonomic-chat --features test-support --test screenshots` writes `crates/chat/target/screenshots/{light,dark}/`.
 
 ## Across the file
 

@@ -3,7 +3,7 @@
 
 extern crate ui as gpui;
 
-use chat::{ChatShell, Route};
+use isonomic_chat::{ChatShell, Route};
 use ui::test::TestWindowExt as _;
 use ui::{
     AppContext as _, Bounds, Entity, Focusable as _, SharedString, TestAppContext, Window,
@@ -19,7 +19,7 @@ const MOD: &str = "ctrl";
 fn open(cx: &mut TestAppContext) -> (WindowHandle<Root>, Entity<ChatShell>) {
     cx.update(|cx| {
         ui::init(cx);
-        chat::init(cx);
+        isonomic_chat::init(cx);
     });
     cx.update(|cx| {
         let (window, shell) = ui::open_window(

@@ -2,6 +2,19 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-15 · The app crate the window mounts
+
+**Built**
+
+- `crates/chat` is now the package `isonomic-chat`. `isonomic_chat::Chat` implements `isonomic_app::App`: id `com.isonomic.chat`, no capabilities yet, and a root view that holds the shell. Key bindings register once, however often the window builds Chat. `open_link` takes `isonomic://chat/...` links.
+- Pins: isonomic-ui moves to `4c912f6` (`UI_REF`, the V1 pin for every repo); isonomic-sdk is pinned at `7c488c2` (`SDK_REF`), both sibling checkouts by path, the same as the window. CI checks out both (`ui: true`, `sdk: true`).
+- Tests against the SDK's `TestHost`: the manifest, mounting on home with no calls of Chat's own, link routing, and building twice.
+
+**Deviations**
+
+- `rust-toolchain.toml` pins Rust 1.98: rustfmt on 1.100 reformats macro arguments in Isonomic UI, and `cargo fmt --all --check` covers path dependencies.
+- `isonomic-chat`'s `test-support` feature asks tokio for its multi-thread runtime, which the SDK's `TestHost` needs (requests O6).
+
 ## 2026-11-15 · Shell and home with static data
 
 **Built**

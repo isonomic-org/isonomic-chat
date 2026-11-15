@@ -11,11 +11,14 @@ license = "UNLICENSED"
 
 [workspace.dependencies]
 ui = { path = "crates/ui" }
-chat = { path = "crates/chat" }
+isonomic-chat = { path = "crates/chat" }
 # Isonomic UI is a sibling checkout (../isonomic-ui) pinned to the commit in
 # UI_REF. CI checks it out there. Only crates/ui names it.
 isonomic-ui = { path = "../isonomic-ui/crates/ui" }
 isonomic-ui-extra = { path = "../isonomic-ui/crates/extra" }
+# The SDK is a sibling checkout (../isonomic-sdk) pinned to the commit in
+# SDK_REF, the same pin as the window, so both link one copy of each crate.
+isonomic-app = { path = "../isonomic-sdk/crates/app" }
 
 # Isonomic UI's copy of GPUI's macros, which resolve GPUI paths through the
 # facade. The UI workspace applies the same patch.

@@ -7,7 +7,7 @@ publish.workspace = true
 license.workspace = true
 
 [dependencies]
-chat.workspace = true
+isonomic-chat.workspace = true
 ui.workspace = true
 
 [lints]
