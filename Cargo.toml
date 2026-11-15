@@ -30,6 +30,8 @@ futures = "0.3"
 # isonomic-sdk pins, until the SDK's agents interface re-exports them. CI
 # fetches it with the shared workflow's `harness` input.
 harness-core = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
+harness-host = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
+harness-log = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
 harness-testkit = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
 # Isonomic UI is a sibling checkout (../isonomic-ui) pinned to the commit in
 # UI_REF. CI checks it out there. Only crates/ui names it.

@@ -1,0 +1,122 @@
+//! A whole turn through `SdkHost`, against the SDK testkit's in-memory
+//! agents host: no engine, the real host loop.
+
+use conversation_host::{ConversationHost, NewSession, UpdateStream};
+use conversation_model::schema::Block;
+use conversation_model::{InputState, Thread, TurnState};
+use conversation_sdk::SdkHost;
+use futures::StreamExt as _;
+use harness_host::ModelChunk;
+use harness_log::ModelStop;
+use isonomic_app::testing::TestHost;
+use isonomic_proto::manifest::AgentsAccess;
+
+struct Probe;
+
+impl isonomic_app::App for Probe {
+    fn manifest() -> isonomic_app::Manifest {
+        isonomic_app::Manifest {
+            id: "com.example.probe".into(),
+            name: "Probe".into(),
+            version: "0.1.0".into(),
+            icon: "sparkle".into(),
+            capabilities: isonomic_app::Capabilities {
+                agents: Some(AgentsAccess {}),
+                ..Default::default()
+            },
+            schemas: vec![],
+        }
+    }
+
+    fn build(_: isonomic_app::AppContext, _: &mut ui::Window, app: &mut ui::App) -> ui::AnyView {
+        use ui::AppContext as _;
+        app.new(|_| ui::Empty).into()
+    }
+}
+
+fn done(stop: ModelStop) -> ModelChunk {
+    ModelChunk::Done {
+        stop,
+        usage: Default::default(),
+    }
+}
+
+/// Fold updates until `done` holds.
+async fn until(thread: &mut Thread, updates: &mut UpdateStream, done: impl Fn(&Thread) -> bool) {
+    while !done(thread) {
+        let update = updates.next().await.expect("the stream ended early");
+        thread.apply(&update);
+    }
+}
+
+fn text(text: &str) -> Vec<Block> {
+    vec![Block::text(text)]
+}
+
+#[test]
+fn turns_stream_and_a_reply_cut_short_continues_in_its_turn() {
+    let host = TestHost::new();
+    let (app, _) = host.context::<Probe>();
+    let sdk = SdkHost::new(app.client().agents());
+    host.engine().agents().with(|memory| {
+        // Turn 1, then the title step that follows it.
+        memory
+            .model
+            .text("Start small, write it down, review on Friday.");
+        memory.model.text("Getting started");
+        // Turn 2 stops at the output limit; continue finishes it.
+        memory.model.push(vec![
+            Ok(ModelChunk::Text("Friday reviews keep ".into())),
+            Ok(done(ModelStop::MaxTokens)),
+        ]);
+        memory.model.text("what worked and drop the rest.");
+    });
+
+    host.runtime().block_on(async {
+        let new = NewSession {
+            preset: "chat".into(),
+            title: None,
+        };
+        let session = sdk.create(new).await.expect("create");
+        let mut updates = sdk.subscribe(&session, 0).await.expect("subscribe");
+        let mut thread = Thread::for_session(session.clone());
+
+        thread.begin_send("Three ideas?");
+        sdk.send(&session, text("Three ideas?"))
+            .await
+            .expect("send");
+        until(&mut thread, &mut updates, |t| t.title().is_some()).await;
+        let first = &thread.turns()[0];
+        assert_eq!(first.prompt, "Three ideas?");
+        assert_eq!(
+            first.reply(),
+            "Start small, write it down, review on Friday."
+        );
+        assert_eq!(first.state, TurnState::Done);
+        assert_eq!(thread.title(), Some("Getting started"));
+
+        sdk.send(&session, text("Why Friday?")).await.expect("send");
+        until(&mut thread, &mut updates, |t| {
+            t.turns().len() == 2 && t.input_state() == InputState::Continuable
+        })
+        .await;
+        assert_eq!(thread.turns()[1].reply(), "Friday reviews keep ");
+        assert_eq!(thread.turns()[1].state, TurnState::Truncated);
+
+        sdk.resume(&session).await.expect("continue");
+        until(&mut thread, &mut updates, |t| {
+            t.turns()[1].state == TurnState::Done
+        })
+        .await;
+        assert_eq!(thread.turns().len(), 2, "continue stays in its turn");
+        assert_eq!(
+            thread.turns()[1].reply(),
+            "Friday reviews keep what worked and drop the rest."
+        );
+
+        // Stop with nothing running is safe; continue then has nothing to do.
+        sdk.cancel(&session).await.expect("cancel");
+        let refused = sdk.resume(&session).await.expect_err("nothing to continue");
+        assert_eq!(refused.code, "continue_refused");
+    });
+}

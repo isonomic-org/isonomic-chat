@@ -44,9 +44,10 @@ fn the_window_mounts_chat_on_home(cx: &mut TestAppContext) {
 }
 
 #[ui::test]
-fn sending_from_home_calls_the_agents_interface_under_chats_token(cx: &mut TestAppContext) {
+fn a_chat_sent_from_home_runs_a_real_turn_under_chats_token(cx: &mut TestAppContext) {
     cx.update(ui::init);
     let host = TestHost::new();
+    host.engine().agents().reply("Hello! How can I help?");
     let open = host.open::<Chat>(cx);
     let chat = open.root::<Chat>(cx);
     let shell = chat.read_with(cx, |chat, _| chat.shell().clone());
@@ -64,7 +65,7 @@ fn sending_from_home_calls_the_agents_interface_under_chats_token(cx: &mut TestA
         view.thread()
             .turns()
             .last()
-            .is_some_and(|turn| turn.state != TurnState::Sending)
+            .is_some_and(|turn| turn.state == TurnState::Done)
     });
     let calls = host.engine().calls();
     let mine: Vec<&str> = calls
@@ -72,11 +73,13 @@ fn sending_from_home_calls_the_agents_interface_under_chats_token(cx: &mut TestA
         .filter(|c| c.app.as_deref() == Some(APP_ID))
         .map(|c| c.method.as_str())
         .collect();
-    assert_eq!(mine, ["sessions.create"]);
-    // The testkit answers no agents call until its in-memory host lands, so
-    // the turn shows the engine's refusal in words.
-    let state = thread.read_with(cx, |view, _| {
-        view.thread().turns().last().map(|t| t.state.clone())
+    assert!(mine.starts_with(&["sessions.create"]), "{mine:?}");
+    assert!(mine.contains(&"sessions.send"), "{mine:?}");
+    let (prompt, reply) = thread.read_with(cx, |view, _| {
+        let thread = view.thread();
+        let turn = &thread.turns()[0];
+        (turn.prompt.clone(), turn.reply())
     });
-    assert!(matches!(state, Some(TurnState::Rejected(message)) if !message.is_empty()));
+    assert_eq!(prompt, "Hello");
+    assert_eq!(reply, "Hello! How can I help?");
 }
