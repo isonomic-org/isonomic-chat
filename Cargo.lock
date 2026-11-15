@@ -3796,7 +3796,9 @@ dependencies = [
  "conversation-model",
  "conversation-sdk",
  "conversation-ui",
+ "futures",
  "isonomic-app",
+ "isonomic-client",
  "isonomic-proto",
  "ui",
 ]

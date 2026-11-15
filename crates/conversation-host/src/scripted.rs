@@ -5,7 +5,9 @@
 //! Stop seals the partial reply exactly as the engine does, and continue
 //! streams the words that were left.
 
-use crate::{ConversationHost, HostError, HostFuture, NewSession, UpdateStream};
+use crate::{
+    ConversationHost, HostError, HostFuture, NewSession, SessionEntry, SessionQuery, UpdateStream,
+};
 use conversation_model::Update;
 use conversation_model::schema::{
     AppId, Assistant, Attempt, AttemptOutcome, Block, Cause, DeltaKind, Event, LiveDelta, Params,
@@ -95,6 +97,7 @@ struct Session {
     /// Words a stopped reply did not get to, for continue.
     leftover: Option<Leftover>,
     titled: bool,
+    archived: bool,
 }
 
 #[derive(Default)]
@@ -311,6 +314,45 @@ impl ConversationHost for ScriptedHost {
         self.call(move |inner| {
             inner.session(&session)?.titled = true;
             inner.emit(&session, None, None, title_event(title, TitleSource::User));
+            Ok(())
+        })
+    }
+
+    fn list(&self, query: SessionQuery) -> HostFuture<Vec<SessionEntry>> {
+        self.call(move |inner| {
+            let mut entries: Vec<SessionEntry> = inner
+                .sessions
+                .iter()
+                .filter(|(_, s)| s.archived == query.archived)
+                .map(|(id, s)| SessionEntry {
+                    id: id.clone(),
+                    title: s.log.iter().rev().find_map(|e| match &e.event {
+                        Event::Title(title) => Some(title.title.clone()),
+                        _ => None,
+                    }),
+                    updated_at: s.log.last().map(|e| e.at).unwrap_or_default(),
+                    archived: s.archived,
+                })
+                .filter(|entry| match &query.text {
+                    Some(text) => entry
+                        .title
+                        .as_deref()
+                        .is_some_and(|t| t.contains(text.as_str())),
+                    None => true,
+                })
+                .collect();
+            entries.sort_by(|a, b| b.updated_at.cmp(&a.updated_at).then(b.id.cmp(&a.id)));
+            if query.limit > 0 {
+                entries.truncate(query.limit as usize);
+            }
+            Ok(entries)
+        })
+    }
+
+    fn archive(&self, session: &SessionId, archived: bool) -> HostFuture<()> {
+        let session = session.clone();
+        self.call(move |inner| {
+            inner.session(&session)?.archived = archived;
             Ok(())
         })
     }

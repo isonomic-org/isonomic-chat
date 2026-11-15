@@ -20,9 +20,22 @@ mod home;
 pub mod icons;
 mod metrics;
 mod shell;
+pub mod store;
 
 pub use app::{APP_ID, Chat, LINK_PREFIX};
 pub use conversation_host::ConversationHost;
+
+use std::rc::Rc;
+
+/// What Chat runs on: the host for sessions, and the store for Chat's own
+/// state.
+#[derive(Clone)]
+pub struct Backend {
+    /// Sessions, titles and history.
+    pub host: Rc<dyn ConversationHost>,
+    /// Pins.
+    pub store: Rc<dyn store::Store>,
+}
 pub use shell::{ChatShell, Route};
 
 use ui::{App, KeyBinding};

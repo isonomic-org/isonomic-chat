@@ -59,6 +59,30 @@ pub struct NewSession {
     pub title: Option<String>,
 }
 
+/// One session in a list, newest activity first.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SessionEntry {
+    /// The session.
+    pub id: SessionId,
+    /// Its title, once it has one.
+    pub title: Option<String>,
+    /// When it last changed, in milliseconds since the epoch.
+    pub updated_at: u64,
+    /// Whether it is archived.
+    pub archived: bool,
+}
+
+/// Which sessions to list.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct SessionQuery {
+    /// Archived ones instead of the others.
+    pub archived: bool,
+    /// Only those whose title contains this text.
+    pub text: Option<String>,
+    /// At most this many; 0 means the host's default.
+    pub limit: u32,
+}
+
 /// The platform, as the conversation kit sees it.
 ///
 /// Requests resolve on the foreground; what they cause arrives on the
@@ -78,6 +102,12 @@ pub trait ConversationHost {
 
     /// Rename the session.
     fn rename(&self, session: &SessionId, title: String) -> HostFuture<()>;
+
+    /// The caller's sessions, most recently changed first.
+    fn list(&self, query: SessionQuery) -> HostFuture<Vec<SessionEntry>>;
+
+    /// Archive a session, or bring it back.
+    fn archive(&self, session: &SessionId, archived: bool) -> HostFuture<()>;
 
     /// Follow a session from just after `from_seq` (0 for everything).
     fn subscribe(&self, session: &SessionId, from_seq: Seq) -> HostFuture<UpdateStream>;

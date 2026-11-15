@@ -2,6 +2,20 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-15 · Chats that persist
+
+**Built**
+
+- Kit: `ConversationHost` gains `list` (newest first, archived or not, by title text, with a limit) and `archive`, as `SessionEntry` and `SessionQuery`. `SdkHost` maps them onto `sessions.list` and `sessions.archive`; `ScriptedHost` keeps them in memory.
+- Chat: with a `Backend` (a host and a store), the sidebar lists the host's chats instead of the examples. Opening one replays its history; rename goes to `sessions.rename`; delete archives it and drops its pin. A new chat takes the host's session id as soon as the host creates it. A list that arrives after a chat was started keeps that chat.
+- Chat's own state is only the pins, in its schema `chat` (`store.rs`): a `pins` table of `session text` and `pinned_at timestamptz`, one statement per call. The manifest now asks for `sql` and declares the schema. `MemoryStore` serves tests and the dev window. Writes in flight are counted (`is_saving`), and the last failed write is kept (`save_error`).
+- Tests: the mounted app lists the host's chats with their pins, and writes a pin in Chat's schema; a stored chat reopens with its history, and rename and delete reach the host.
+
+**Notes**
+
+- The SDK testkit's database is scripted and runs no SQL, so the tests check the statements Chat sends and the rows it reads back, not a real database.
+- History lives in the host's session log, so `blobs` is not used yet; attachments will use it.
+
 ## 2026-11-15 · Isonomic UI through the SDK
 
 - `SDK_REF` moves to `c68bf0d`. `crates/ui` re-exports `isonomic_app::ui` instead of depending on isonomic-ui, so the SDK's `UI_REF` is the pin. The conversation components still come from `isonomic-ui-extra` directly until the SDK re-exports them (requests O8). `UI_REF` stays until the shared workflow reads the pin from the SDK checkout.

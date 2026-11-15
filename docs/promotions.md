@@ -30,3 +30,5 @@ Read at `main` `c3c745b` (15 Nov 2026), plus the open pull requests #4 (xtask, d
 | Rename and delete of the open chat | `crates/chat` `shell` (header and its menu) | Chat owns rename in the header; persistence moves to the host's session registry through the kit |
 | Key bindings: new chat, toggle sidebar, toggle context panel | `crates/chat` `init` | App navigation: Chat only |
 | Offscreen screenshots | `crates/chat/tests/screenshots.rs` | Chat's states only; `xtask screenshots` will cover the gallery and every binding |
+| Session list and archive (`SessionEntry`, `SessionQuery`, `list`, `archive`) | `crates/conversation-host` | Any app with sessions lists them the same way; mirrors `sessions.list` and `sessions.archive` |
+| Pins and the `chat` schema (`store.rs`) | `crates/chat` | Only Chat pins chats; storage is Chat's own schema through the SDK |

@@ -2,7 +2,7 @@
 //! the root view it mounts.
 
 use conversation_sdk::SdkHost;
-use isonomic_app::{AppContext, Capabilities, Manifest, SearchHit};
+use isonomic_app::{AppContext, Capabilities, Manifest, Schema, SearchHit, SqlAccess};
 use isonomic_proto::manifest::AgentsAccess;
 use std::rc::Rc;
 use ui::{
@@ -53,12 +53,16 @@ impl isonomic_app::App for Chat {
             name: "Chat".into(),
             version: env!("CARGO_PKG_VERSION").into(),
             icon: "message-circle".into(),
-            // Chat's own sessions, presets and artifacts, and nothing else.
+            // Chat's own sessions, presets and artifacts, and its own schema
+            // for what only Chat stores (pins). Nothing else.
             capabilities: Capabilities {
                 agents: Some(AgentsAccess {}),
+                sql: Some(SqlAccess::default()),
                 ..Default::default()
             },
-            schemas: vec![],
+            schemas: vec![Schema {
+                name: crate::store::SCHEMA.into(),
+            }],
         }
     }
 
@@ -67,8 +71,11 @@ impl isonomic_app::App for Chat {
             crate::init(app);
             app.set_global(KeysBound);
         }
-        let host: Rc<dyn crate::ConversationHost> = Rc::new(SdkHost::new(cx.client().agents()));
-        let shell = app.new(|shell| ChatShell::new(Some(host), window, shell));
+        let backend = crate::Backend {
+            host: Rc::new(SdkHost::new(cx.client().agents())),
+            store: Rc::new(crate::store::SqlStore::new(cx.client().sql())),
+        };
+        let shell = app.new(|shell| ChatShell::new(Some(backend), window, shell));
         let focus = shell.read(app).focus_handle(app);
         window.focus(&focus, app);
         app.new(|_| Chat {

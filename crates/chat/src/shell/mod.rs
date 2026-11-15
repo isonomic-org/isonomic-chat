@@ -6,6 +6,7 @@
 
 mod context_panel;
 mod header;
+mod sessions;
 mod sidebar;
 
 use ui::component::empty::{Empty, EmptyDescription, EmptyHeader};
@@ -16,15 +17,13 @@ use ui::{
     AnyElement, App, Entity, FocusHandle, Focusable, SharedString, Subscription, Window, div,
 };
 
-use conversation_host::ConversationHost;
-use conversation_ui::{ConversationEvent, ConversationView};
+use conversation_ui::ConversationView;
 use std::collections::HashMap;
-use std::rc::Rc;
 
 use crate::composer::{Composer, ComposerEvent};
 use crate::copy::{self, DayPart};
 use crate::demo::{self, SessionSummary};
-use crate::{KEY_CONTEXT, NewChat, ToggleContextPanel, ToggleSidebar, home, metrics};
+use crate::{Backend, KEY_CONTEXT, NewChat, ToggleContextPanel, ToggleSidebar, home, metrics};
 
 /// Where the panel is.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -59,42 +58,56 @@ pub struct ChatShell {
     context_panel_open: bool,
     context_tab: ContextTab,
     composer: Entity<Composer>,
-    host: Option<Rc<dyn ConversationHost>>,
+    backend: Option<Backend>,
     threads: HashMap<SharedString, Entity<ConversationView>>,
+    load_error: Option<SharedString>,
+    loaded: bool,
+    saving: usize,
+    save_error: Option<SharedString>,
+    _load: Option<ui::Task<()>>,
     rename: Option<Rename>,
     day_part: DayPart,
     _subscriptions: Vec<Subscription>,
 }
 
 impl ChatShell {
-    /// Chat on home. The example chats are static. With a host, every chat
-    /// sent from home runs on it; without one (until the SDK adapter lands)
-    /// a new chat opens empty, as with static data.
-    pub fn new(
-        host: Option<Rc<dyn ConversationHost>>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    /// Chat on home. With a backend, the sidebar lists the host's chats
+    /// and every chat runs on it; without one the sidebar shows the static
+    /// example chats and a new chat opens empty.
+    pub fn new(backend: Option<Backend>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let composer = cx.new(|cx| Composer::new(window, cx));
         let subscription = cx.subscribe_in(&composer, window, |this, _, event, window, cx| {
             let ComposerEvent::Submit(text) = event;
             this.start_session(text, window, cx);
         });
-        Self {
+        let sessions = match backend {
+            Some(_) => Vec::new(),
+            None => demo::sessions(),
+        };
+        let mut shell = Self {
             focus_handle: cx.focus_handle(),
             route: Route::Home,
-            sessions: demo::sessions(),
+            sessions,
             next_id: 1,
             sidebar_collapsed: false,
             context_panel_open: true,
             context_tab: ContextTab::Context,
             composer,
-            host,
+            backend: backend.clone(),
             threads: HashMap::new(),
+            load_error: None,
+            loaded: backend.is_none(),
+            saving: 0,
+            save_error: None,
+            _load: None,
             rename: None,
             day_part: DayPart::from_hour(local_hour()),
             _subscriptions: vec![subscription],
+        };
+        if let Some(backend) = backend {
+            shell.load(backend, cx);
         }
+        shell
     }
 
     /// Where the panel is.
@@ -166,6 +179,7 @@ impl ChatShell {
             return;
         }
         self.rename = None;
+        self.ensure_thread(&id, window, cx);
         self.route = Route::Session(id);
         self.composer.update(cx, |composer, cx| {
             composer.set_placeholder(copy::COMPOSER_THREAD, window, cx)
@@ -190,26 +204,14 @@ impl ChatShell {
         let at = self.sessions.iter().take_while(|s| s.pinned).count();
         self.sessions
             .insert(at, SessionSummary::new(id.clone(), title, false));
-        let Some(host) = self.host.clone() else {
+        let Some(backend) = self.backend.clone() else {
             self.open_session(id, window, cx);
             return;
         };
-        let thread = cx
-            .new(|cx| ConversationView::new(host, crate::PRESET, copy::conversation(), window, cx));
-        let chat = id.clone();
-        let subscription = cx.subscribe(&thread, move |this, _, event, cx| {
-            if let ConversationEvent::TitleChanged(title) = event
-                && let Some(session) = this.sessions.iter_mut().find(|s| s.id == chat)
-            {
-                session.title = title.clone();
-                cx.notify();
-            }
-        });
-        self._subscriptions.push(subscription);
+        let thread = self.new_thread(id.clone(), backend.host, window, cx);
         let text = text.to_owned();
         thread.update(cx, |thread, cx| thread.send(text, cx));
         thread.update(cx, |thread, cx| thread.focus_composer(window, cx));
-        self.threads.insert(id.clone(), thread);
         self.open_session(id, window, cx);
     }
 
@@ -247,8 +249,10 @@ impl ChatShell {
         let title = rename.field.read(cx).value().trim().to_string();
         if let Some(session) = self.sessions.iter_mut().find(|s| s.id == rename.id)
             && !title.is_empty()
+            && session.title.as_ref() != title
         {
-            session.title = title.into();
+            session.title = title.clone().into();
+            self.sync(&rename.id, sessions::Change::Rename(title), cx);
         }
         window.focus(&self.focus_handle, cx);
         cx.notify();
@@ -260,6 +264,7 @@ impl ChatShell {
             let id = id.clone();
             self.sessions.retain(|session| session.id != id);
             self.threads.remove(&id);
+            self.sync(&id, sessions::Change::Delete, cx);
             self.new_chat(window, cx);
         }
     }

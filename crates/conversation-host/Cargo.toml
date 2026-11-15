@@ -10,5 +10,8 @@ license.workspace = true
 conversation-model.workspace = true
 futures.workspace = true
 
+[dev-dependencies]
+futures = { workspace = true, features = ["executor"] }
+
 [lints]
 workspace = true

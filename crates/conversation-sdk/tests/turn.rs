@@ -1,7 +1,7 @@
 //! A whole turn through `SdkHost`, against the SDK testkit's in-memory
 //! agents host: no engine, the real host loop.
 
-use conversation_host::{ConversationHost, NewSession, UpdateStream};
+use conversation_host::{ConversationHost, NewSession, SessionQuery, UpdateStream};
 use conversation_model::schema::Block;
 use conversation_model::{InputState, Thread, TurnState};
 use conversation_sdk::SdkHost;
@@ -118,5 +118,38 @@ fn turns_stream_and_a_reply_cut_short_continues_in_its_turn() {
         sdk.cancel(&session).await.expect("cancel");
         let refused = sdk.resume(&session).await.expect_err("nothing to continue");
         assert_eq!(refused.code, "continue_refused");
+    });
+}
+
+#[test]
+fn sessions_list_newest_first_and_archive_hides_them() {
+    let host = TestHost::new();
+    let (app, _) = host.context::<Probe>();
+    let sdk = SdkHost::new(app.client().agents());
+    host.runtime().block_on(async {
+        let mut ids = Vec::new();
+        for title in ["First", "Second"] {
+            let new = NewSession {
+                preset: "chat".into(),
+                title: Some(title.into()),
+            };
+            ids.push(sdk.create(new).await.expect("create"));
+            host.engine().agents().advance(1_000);
+        }
+        let listed = sdk.list(SessionQuery::default()).await.expect("list");
+        let titles: Vec<_> = listed.iter().map(|e| e.title.clone()).collect();
+        assert_eq!(titles, [Some("Second".into()), Some("First".into())]);
+
+        sdk.archive(&ids[0], true).await.expect("archive");
+        let listed = sdk.list(SessionQuery::default()).await.expect("list");
+        assert_eq!(listed.len(), 1);
+        assert_eq!(listed[0].id, ids[1]);
+        let archived = SessionQuery {
+            archived: true,
+            ..Default::default()
+        };
+        let listed = sdk.list(archived).await.expect("list");
+        assert_eq!(listed[0].id, ids[0]);
+        assert!(listed[0].archived);
     });
 }
