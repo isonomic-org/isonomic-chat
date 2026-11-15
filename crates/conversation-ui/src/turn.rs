@@ -60,8 +60,9 @@ pub(crate) fn render_turn(
             SharedString::from(last_line(&turn.thinking()))
         };
         row = row.child(
-            ThinkingIndicator::new(ElementId::NamedInteger("thinking".into(), index as u64), OrbState::Reasoning)
-                .label(label),
+            div()
+                .id("thinking")
+                .child(ThinkingIndicator::new("thinking-orb", OrbState::Reasoning).label(label)),
         );
     }
     if !reply.is_empty() {
@@ -101,7 +102,7 @@ pub(crate) fn render_turn(
         has_status = true;
         status = status.child(
             div()
-                .id(ElementId::NamedInteger("turn-note".into(), index as u64))
+                .id("turn-note")
                 .text_sm()
                 .text_color(cx.theme().muted_foreground)
                 .child(note),
