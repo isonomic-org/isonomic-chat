@@ -25,13 +25,13 @@ The agent loop, tools, policy, approvals and storage run in the engine's host (i
 
 ## Develop
 
-Isonomic UI and the SDK are sibling checkouts pinned to the commits in `UI_REF` and `SDK_REF`:
+The SDK is a sibling checkout pinned to the commit in `SDK_REF`; Isonomic UI is a sibling checkout at the commit in the SDK's `UI_REF`:
 
 ```sh
 git clone https://github.com/isonomic-org/isonomic-ui ../isonomic-ui
-git -C ../isonomic-ui checkout "$(cat UI_REF)"
 git clone https://github.com/isonomic-org/isonomic-sdk ../isonomic-sdk
 git -C ../isonomic-sdk checkout "$(cat SDK_REF)"
+git -C ../isonomic-ui checkout "$(cat ../isonomic-sdk/UI_REF)"
 cargo run                 # Chat in a standalone window
 cargo test --workspace --all-features --locked
 # Offscreen screenshots of the shell and home, light and dark:

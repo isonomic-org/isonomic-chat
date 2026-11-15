@@ -39,5 +39,5 @@ These rules win over anything below that contradicts them.
 - One task per branch and pull request. End every pull request with `ready`, `blocked: …`, `failed: …` or `waiting: …`.
 - Merge your own pull request once every required check is green (see Standing rules). Before each new task, handle open issues labelled `master` first.
 - Before pushing: `cargo fmt --all`, `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`, `cargo test --workspace --all-features --locked`.
-- Isonomic UI is a sibling checkout (`../isonomic-ui`) at the commit in `UI_REF`. Bumping it means regenerating `Cargo.lock` in the same pull request.
+- Isonomic UI comes through the SDK; its pin is the SDK's `UI_REF`, and the sibling checkout (`../isonomic-ui`) sits at that commit. Moving `SDK_REF` can move it, so regenerate `Cargo.lock` in the same pull request.
 - Requests to other repositories go in their `docs/requests.md` or as isonomic-ui issues labelled `request`; this repo's are in `docs/requests.md`.

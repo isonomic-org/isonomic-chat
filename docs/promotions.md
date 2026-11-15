@@ -17,7 +17,7 @@ Read at `main` `c3c745b` (15 Nov 2026), plus the open pull requests #4 (xtask, d
 
 | What | Where it went | Why |
 | --- | --- | --- |
-| Re-export of Isonomic UI and its conversation components | `crates/ui` | One crate names the library and GPUI, so a `UI_REF` bump touches one place. Kit and Chat both use it; it moves with the kit |
+| Re-export of Isonomic UI and its conversation components | `crates/ui` | One crate names the library and GPUI, so a UI pin bump touches one place. Kit and Chat both use it; it moves with the kit |
 | Shell layout: sidebar, header, context panel and their sizes | `crates/chat` `shell/` | A screen and its layout: Chat only |
 | Static session list in the sidebar | `crates/chat` `shell/`, temporary | Replaced by the kit's `SessionList` binding once it exists; the list mechanism (grouping, pinning, rename, search) goes in the kit because Agents and the Activity tab list sessions too |
 | Greeting, starter suggestions and empty state | `crates/chat` `home/` | Copy and defaults: Chat only |
