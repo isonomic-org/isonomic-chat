@@ -2,6 +2,26 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-15 · Shell and home with static data
+
+**Built**
+
+- `ChatShell`: the sidebar (collapse, new chat, the chats with pinned first), the header (Untitled and Titled, a title menu with Rename and Delete, Share disabled, the context-panel toggle) and the context panel (Context and Tools tabs; Files and Connections). Hidden panels give their width to the conversation.
+- Home: a greeting by part of the day, the composer stand-in, and five starter chips that each open three example prompts and fill the composer.
+- Sending from home starts a chat titled from the first line of the text, below the pinned ones, and opens it. The opened chat shows where the conversation view will go, above the docked composer and the disclaimer.
+- Keys: new chat (`cmd-shift-o`, `ctrl-shift-o` off macOS), toggle the sidebar (`cmd-\`), toggle the context panel (`cmd-alt-\`).
+- `examples/dev` opens Chat in a window; `crates/chat/tests/screenshots.rs` renders home, composing, titled and panels-hidden in light and dark.
+- Tests: 4 unit tests (greeting, day parts, titles, starters) and 6 headless window tests (routing, send waits for text, sending starts a chat, keyboard new chat, keyboard toggles, rename keeps a new title and ignores an empty one, delete).
+
+**Looked at**
+
+All eight screenshots, against `ChatView/01`, `02` and `04`. Every visible difference is in `design-diffs.md`.
+
+**Deviations**
+
+- The composer, the chat list and the context rows are stand-ins until Isonomic UI ships the Prompt composer (#206) and the stacked list item (#208) and the kit's bindings exist.
+- Long chat titles clip without an ellipsis (isonomic-ui #210).
+
 ## 2026-11-15 · Step 0
 
 **Prerequisites** (checked 15 Nov 2026, 00:30 UTC)

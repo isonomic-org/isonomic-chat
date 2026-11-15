@@ -32,6 +32,8 @@ git clone https://github.com/isonomic-org/isonomic-ui ../isonomic-ui
 git -C ../isonomic-ui checkout "$(cat UI_REF)"
 cargo run                 # Chat in a standalone window
 cargo test --workspace --all-features --locked
+# Offscreen screenshots of the shell and home, light and dark:
+cargo test -p chat --features test-support --test screenshots
 ```
 
 On Linux, GPUI needs `libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libasound2-dev libvulkan-dev libx11-xcb-dev libfontconfig-dev libssl-dev`.
