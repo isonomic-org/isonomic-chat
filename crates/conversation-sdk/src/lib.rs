@@ -6,12 +6,14 @@
 //! re-export of the harness schema, the same crate the kit folds, so events
 //! pass through unchanged.
 
-use conversation_host::{ConversationHost, HostError, HostFuture, NewSession, UpdateStream};
+use conversation_host::{
+    ConversationHost, HostError, HostFuture, NewSession, SessionEntry, SessionQuery, UpdateStream,
+};
 use conversation_model::Update;
 use conversation_model::schema::{Block, Seq, SessionId};
 use futures::{FutureExt as _, StreamExt as _, stream};
 use isonomic_client::{Agents, ClientError, SessionUpdate};
-use isonomic_proto::agents::{CreateSession, PresetId};
+use isonomic_proto::agents::{CreateSession, ListSessions, PresetId};
 
 /// A conversation host on the SDK's agents interface.
 #[derive(Clone)]
@@ -91,6 +93,34 @@ impl ConversationHost for SdkHost {
     fn rename(&self, session: &SessionId, title: String) -> HostFuture<()> {
         let (agents, session) = (self.agents.clone(), session.clone());
         async move { agents.rename(&session, &title).await.map_err(host_error) }.boxed_local()
+    }
+
+    fn list(&self, query: SessionQuery) -> HostFuture<Vec<SessionEntry>> {
+        let agents = self.agents.clone();
+        async move {
+            let filter = ListSessions {
+                archived: Some(query.archived),
+                text: query.text,
+                limit: query.limit,
+                ..Default::default()
+            };
+            let (items, _next) = agents.list(filter).await.map_err(host_error)?;
+            Ok(items
+                .into_iter()
+                .map(|summary| SessionEntry {
+                    id: summary.id,
+                    title: summary.title,
+                    updated_at: summary.updated_at,
+                    archived: summary.archived,
+                })
+                .collect())
+        }
+        .boxed_local()
+    }
+
+    fn archive(&self, session: &SessionId, archived: bool) -> HostFuture<()> {
+        let (agents, session) = (self.agents.clone(), session.clone());
+        async move { agents.archive(&session, archived).await.map_err(host_error) }.boxed_local()
     }
 
     fn subscribe(&self, session: &SessionId, from_seq: Seq) -> HostFuture<UpdateStream> {
