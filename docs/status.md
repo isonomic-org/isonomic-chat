@@ -2,6 +2,12 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-15 · Everything through the SDK
+
+- `SDK_REF` moves to `c0d2bf7`; every harness crate is pinned at `f061211`, the SDK's URL and rev character for character.
+- The conversation components come through the SDK (`isonomic_app::extra`); no crate depends on isonomic-ui directly. The `../isonomic-ui` checkout stays for the macros patch.
+- Continuing a first reply after its title step works (harness #37) and is tested.
+
 ## 2026-11-15 · One UI pin
 
 - `UI_REF` is gone. The shared workflow reads the pin from the SDK checkout (isonomic-org/.github #8), so the SDK's `UI_REF` is the one pin.

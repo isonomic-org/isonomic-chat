@@ -12,7 +12,6 @@ test-support = ["isonomic-app/test-support"]
 
 [dependencies]
 isonomic-app.workspace = true
-isonomic-ui-extra.workspace = true
 
 [lints]
 workspace = true

@@ -6,11 +6,11 @@ What this repository needs from others, and what others asked of it. Newest firs
 
 ### O8 · SDK: re-export the conversation components
 
-**To:** isonomic-sdk. **Status:** open. `isonomic_app::ui` re-exports `isonomic-ui` but not `isonomic-ui-extra`, which holds the prompt composer, thinking indicator, approval card, tool call card and the rest of the conversation components. Add `pub use isonomic_ui_extra as extra;` next to `pub use isonomic_ui as ui;`, so apps take them from the SDK too. Until then `crates/ui` depends on `isonomic-ui-extra` directly, at the SDK's `UI_REF`.
+**To:** isonomic-sdk. **Status:** done in isonomic-sdk #28 (`isonomic_app::extra`, feature `extra`); the direct path dependency is gone. `isonomic_app::ui` re-exports `isonomic-ui` but not `isonomic-ui-extra`, which holds the prompt composer, thinking indicator, approval card, tool call card and the rest of the conversation components. Add `pub use isonomic_ui_extra as extra;` next to `pub use isonomic_ui as ui;`, so apps take them from the SDK too. Until then `crates/ui` depends on `isonomic-ui-extra` directly, at the SDK's `UI_REF`.
 
 ### O7 · Harness: continue skips the title step
 
-**To:** isonomic-harness. **Status:** open. `harness-loop` `machine.rs` (around line 417) takes the turn's last `assistant` to decide whether a reply can be continued. On a session's first turn the title step's `assistant` (purpose `title`, stop `end`) comes after the reply's, so continuing a first reply cut off at the output limit or stopped is refused with "The reply is complete." Skip assistants from steps whose purpose is not `reply`.
+**To:** isonomic-harness. **Status:** done in isonomic-harness #37 (`f061211`); tested here. `harness-loop` `machine.rs` (around line 417) takes the turn's last `assistant` to decide whether a reply can be continued. On a session's first turn the title step's `assistant` (purpose `title`, stop `end`) comes after the reply's, so continuing a first reply cut off at the output limit or stopped is refused with "The reply is complete." Skip assistants from steps whose purpose is not `reply`.
 
 ### O6 · SDK: tokio's multi-thread runtime for `test-support`
 

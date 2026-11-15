@@ -153,3 +153,49 @@ fn sessions_list_newest_first_and_archive_hides_them() {
         assert!(listed[0].archived);
     });
 }
+
+#[test]
+fn a_first_reply_cut_short_continues_after_its_title_step() {
+    let host = TestHost::new();
+    let (app, _) = host.context::<Probe>();
+    let sdk = SdkHost::new(app.client().agents());
+    host.engine().agents().with(|memory| {
+        memory.model.push(vec![
+            Ok(ModelChunk::Text("Pack light, ".into())),
+            Ok(done(ModelStop::MaxTokens)),
+        ]);
+        memory.model.text("Packing tips");
+        memory.model.text("and leave room for souvenirs.");
+    });
+    host.runtime().block_on(async {
+        let new = NewSession {
+            preset: "chat".into(),
+            title: None,
+        };
+        let session = sdk.create(new).await.expect("create");
+        let mut updates = sdk.subscribe(&session, 0).await.expect("subscribe");
+        let mut thread = Thread::for_session(session.clone());
+        sdk.send(&session, text("Packing tips?"))
+            .await
+            .expect("send");
+        until(&mut thread, &mut updates, |t| {
+            t.title().is_some() && t.input_state() == InputState::Continuable
+        })
+        .await;
+        assert_eq!(thread.turns()[0].reply(), "Pack light, ");
+
+        sdk.resume(&session)
+            .await
+            .expect("continue after the title step");
+        until(&mut thread, &mut updates, |t| {
+            t.turns()[0].state == TurnState::Done
+        })
+        .await;
+        assert_eq!(thread.turns().len(), 1);
+        assert_eq!(
+            thread.turns()[0].reply(),
+            "Pack light, and leave room for souvenirs."
+        );
+        assert_eq!(thread.title(), Some("Packing tips"));
+    });
+}
