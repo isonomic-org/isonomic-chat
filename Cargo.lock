@@ -3798,7 +3798,6 @@ dependencies = [
  "conversation-ui",
  "isonomic-app",
  "isonomic-proto",
- "tokio",
  "ui",
 ]
 
@@ -7550,7 +7549,7 @@ dependencies = [
 name = "ui"
 version = "0.0.1"
 dependencies = [
- "isonomic-ui",
+ "isonomic-app",
  "isonomic-ui-extra",
 ]
 

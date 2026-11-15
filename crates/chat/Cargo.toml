@@ -7,13 +7,10 @@ publish.workspace = true
 license.workspace = true
 
 [features]
-# The SDK's TestHost builds a multi-threaded runtime, but isonomic-app does
-# not ask tokio for one (requests O6 in docs/requests.md).
 test-support = [
     "ui/test-support",
     "conversation-ui/test-support",
     "isonomic-app/test-support",
-    "dep:tokio",
 ]
 
 [dependencies]
@@ -23,13 +20,11 @@ conversation-sdk.workspace = true
 conversation-ui.workspace = true
 isonomic-app.workspace = true
 isonomic-proto.workspace = true
-tokio = { version = "1", optional = true, features = ["rt-multi-thread"] }
 ui.workspace = true
 
 [dev-dependencies]
 conversation-model.workspace = true
 isonomic-app = { workspace = true, features = ["test-support"] }
-tokio = { version = "1", features = ["rt-multi-thread"] }
 ui = { workspace = true, features = ["test-support"] }
 
 [lints]

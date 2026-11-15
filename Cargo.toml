@@ -33,9 +33,9 @@ harness-core = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git",
 harness-host = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
 harness-log = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
 harness-testkit = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
-# Isonomic UI is a sibling checkout (../isonomic-ui) pinned to the commit in
-# UI_REF. CI checks it out there. Only crates/ui names it.
-isonomic-ui = { path = "../isonomic-ui/crates/ui" }
+# Isonomic UI comes through the SDK (isonomic_app::ui). Its conversation
+# components (isonomic-ui-extra) are not re-exported yet, so crates/ui takes
+# them from the sibling checkout (../isonomic-ui) at UI_REF, the SDK's pin.
 isonomic-ui-extra = { path = "../isonomic-ui/crates/extra" }
 # The SDK is a sibling checkout (../isonomic-sdk) pinned to the commit in
 # SDK_REF, the same pin as the window, so both link one copy of each crate.

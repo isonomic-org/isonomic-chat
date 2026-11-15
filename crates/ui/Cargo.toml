@@ -8,10 +8,10 @@ license.workspace = true
 
 [features]
 # Headless windows and input simulation for UI tests.
-test-support = ["isonomic-ui/test-support"]
+test-support = ["isonomic-app/test-support"]
 
 [dependencies]
-isonomic-ui.workspace = true
+isonomic-app.workspace = true
 isonomic-ui-extra.workspace = true
 
 [lints]
