@@ -2,6 +2,19 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-15 · The SDK adapter
+
+**Built**
+
+- `conversation-sdk`: `SdkHost` implements `ConversationHost` on the SDK's agents interface (`sessions.create`, `send`, `continue`, `cancel`, `rename`, `subscribe`) under the app's own token. Session updates pass through unchanged: the SDK re-exports the same harness-core the kit folds. Engine errors keep their wire code and words.
+- Chat's manifest asks for `agents` and nothing else, and `Chat::build` runs every new chat on `SdkHost`.
+- `SDK_REF` moves to `1b9fe35` (isonomic-sdk main with the agents interface).
+
+**Not yet**
+
+- The SDK testkit answers no agents call until its in-memory host lands, so the tests check that the calls go out under Chat's token and that a refusal shows in words. One real turn needs that host or the engine.
+- Approvals, questions and client tool results come after V1's plain text turns.
+
 ## 2026-11-15 · The conversation kit and the thread screen
 
 **Built**

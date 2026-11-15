@@ -1,7 +1,10 @@
 //! Chat as an Isonomic app: the manifest the window shows and grants, and
 //! the root view it mounts.
 
+use conversation_sdk::SdkHost;
 use isonomic_app::{AppContext, Capabilities, Manifest, SearchHit};
+use isonomic_proto::manifest::AgentsAccess;
+use std::rc::Rc;
 use ui::{
     AnyView, App, AppContext as _, Context, Entity, Focusable, Global, IntoElement, Render, Window,
 };
@@ -50,9 +53,11 @@ impl isonomic_app::App for Chat {
             name: "Chat".into(),
             version: env!("CARGO_PKG_VERSION").into(),
             icon: "message-circle".into(),
-            // Chat runs on static data until the SDK's agents interface
-            // ships; it then asks for `agents` and nothing else.
-            capabilities: Capabilities::default(),
+            // Chat's own sessions, presets and artifacts, and nothing else.
+            capabilities: Capabilities {
+                agents: Some(AgentsAccess {}),
+                ..Default::default()
+            },
             schemas: vec![],
         }
     }
@@ -62,7 +67,8 @@ impl isonomic_app::App for Chat {
             crate::init(app);
             app.set_global(KeysBound);
         }
-        let shell = app.new(|shell| ChatShell::new(None, window, shell));
+        let host: Rc<dyn crate::ConversationHost> = Rc::new(SdkHost::new(cx.client().agents()));
+        let shell = app.new(|shell| ChatShell::new(Some(host), window, shell));
         let focus = shell.read(app).focus_handle(app);
         window.focus(&focus, app);
         app.new(|_| Chat {
