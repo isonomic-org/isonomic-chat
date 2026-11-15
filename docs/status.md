@@ -2,6 +2,20 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-15 · The conversation kit and the thread screen
+
+**Built**
+
+- `conversation-model`: `Thread` folds one session's durable events and live deltas into turns (prompt, reasoning, the reply as it streams, tools used, how it ended). Continue keeps the reply in its turn; deltas are dropped once the durable reply arrives; replayed events are ignored; optimistic sends are adopted by the host's turn. `InputState` says whether the composer offers send, stop or continue. Tested against every harness fixture.
+- `conversation-host`: the `ConversationHost` trait, shaped like the SDK's `sessions.create`, `send`, `continue`, `cancel`, `rename` and `subscribe`, and `ScriptedHost`, which plays scripted replies word by word as real schema-v1 events, with stop sealing the partial reply and continue finishing it.
+- `conversation-ui`: `ConversationView`, with the turns in Isonomic UI's virtualized message scroller, replies as Markdown text views, the thinking indicator before the first words, Isonomic UI's prompt composer (send turns into stop) and continue under a reply that stopped early. The app supplies the words (`ConversationCopy`) and the preset.
+- Chat: a chat sent from home opens a `ConversationView` on the host Chat is given and sends the prompt; the model's title replaces the one taken from the prompt. The window build has no host until the SDK adapter lands, so there a new chat opens empty, as before. `examples/dev` runs on the scripted host.
+
+**Deviations**
+
+- Until the SDK's agents interface re-exports it, the kit takes harness-core and its fixtures over ssh at the SDK's URL and rev (`7a73ca6`), so cargo builds one copy. CI passes `harness: true`.
+- Approvals, questions, artifacts and memory are not folded yet; the turns ignore them, and unknown events and blocks show as a generic notice.
+
 ## 2026-11-15 · The app crate the window mounts
 
 **Built**

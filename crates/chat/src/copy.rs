@@ -35,7 +35,15 @@ pub const NO_FILES: &str = "Files you add to this chat appear here.";
 /// The Tools tab with nothing in it.
 pub const NO_TOOLS: &str = "Tools this chat can use appear here.";
 /// Shown where the conversation view will be.
-pub const THREAD_PENDING: &str = "The conversation view arrives with the conversation kit.";
+pub const THREAD_PENDING: &str = "This example chat has no conversation behind it.";
+
+/// Chat's words for the kit's conversation view.
+pub fn conversation() -> conversation_ui::ConversationCopy {
+    conversation_ui::ConversationCopy {
+        placeholder: COMPOSER_THREAD.into(),
+        ..Default::default()
+    }
+}
 /// Accessible names for icon-only buttons.
 pub const TOGGLE_SIDEBAR: &str = "Show or hide the sidebar";
 /// Accessible names for icon-only buttons.

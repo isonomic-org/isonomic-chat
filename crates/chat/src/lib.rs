@@ -5,9 +5,10 @@
 //! means and how it binds to Isonomic UI. Chat never matches on session
 //! events, renders a tool call or decides an approval.
 //!
-//! Today the shell and home run on static data from [`demo`]. The session
-//! list, composer and context rows are placeholders until the kit's bindings
-//! exist (see `docs/name-map.md`).
+//! A chat sent from home runs on the [`ConversationHost`] Chat is given,
+//! through the kit's `ConversationView`. The example chats in the sidebar
+//! come from [`demo`]; the session list, home composer and context rows are
+//! placeholders until the kit's bindings exist (see `docs/name-map.md`).
 
 extern crate ui as gpui;
 
@@ -21,6 +22,7 @@ mod metrics;
 mod shell;
 
 pub use app::{APP_ID, Chat, LINK_PREFIX};
+pub use conversation_host::ConversationHost;
 pub use shell::{ChatShell, Route};
 
 use ui::{App, KeyBinding};
@@ -36,6 +38,9 @@ ui::actions!(
         ToggleContextPanel
     ]
 );
+
+/// The preset every new chat runs.
+pub const PRESET: &str = "chat";
 
 /// The key context of Chat's root view.
 pub(crate) const KEY_CONTEXT: &str = "ChatShell";

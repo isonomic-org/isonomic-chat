@@ -1,0 +1,16 @@
+[package]
+name = "conversation-model"
+description = "The conversation kit's headless models: a session's events folded into turns, and the composer's state."
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+harness-core.workspace = true
+
+[dev-dependencies]
+harness-testkit.workspace = true
+
+[lints]
+workspace = true

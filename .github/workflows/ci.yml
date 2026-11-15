@@ -20,4 +20,5 @@ jobs:
       linux-gui-libs: true
       ui: true
       sdk: true
+      harness: true
       features: --all-features --locked

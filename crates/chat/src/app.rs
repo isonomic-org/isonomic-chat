@@ -62,7 +62,7 @@ impl isonomic_app::App for Chat {
             crate::init(app);
             app.set_global(KeysBound);
         }
-        let shell = app.new(|shell| ChatShell::new(window, shell));
+        let shell = app.new(|shell| ChatShell::new(None, window, shell));
         let focus = shell.read(app).focus_handle(app);
         window.focus(&focus, app);
         app.new(|_| Chat {
