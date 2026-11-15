@@ -26,5 +26,6 @@ None blocks the shell and home, which use static data. The kit's models wait for
 
 **Deviations**
 
-- `ci.yml` is not in this pull request: the connector cannot write workflow files. Its content is in `docs/requests.md` for the master session to add.
+- `ci.yml` came from the master session's `ci/shared-workflow` branch (issue #1); `ui: true` and `--locked` were added through the web editor, since the connector cannot write workflow files.
 - Pushes that the connector cannot carry (`Cargo.lock`) go through git on Omar's Mac with the @QadmiriOmar login.
+- The first CI run did not start: GitHub reported the organization's Actions payment or spending limit. Escalated to Omar.

@@ -23,39 +23,9 @@ isonomic-ui #207, from proposal #14. For the kit's `ThinkingIndicator` (story 3)
 
 isonomic-ui #206. For the kit's `PromptComposer` (home and thread).
 
-### O0 · Master session: add `ci.yml`
+### O0 · `ci.yml`
 
-**To:** the master session. **Status:** open. The connector cannot write workflow files; please add this file through the web editor as `.github/workflows/ci.yml`:
-
-```yaml
-name: ci
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-
-permissions:
-  contents: read
-
-jobs:
-  rust:
-    uses: isonomic-org/.github/.github/workflows/rust-ci.yml@main
-    secrets: inherit
-    with:
-      # --locked rides on the features input so clippy and test both use Cargo.lock.
-      features: --all-features --locked
-      # GPUI's system libraries on Linux.
-      linux-gui-libs: true
-      # Isonomic UI as a sibling checkout at the commit in UI_REF (needs UI_DEPLOY_KEY).
-      ui: true
-```
-
-When `xtask` gains the product-term lint and the boundary check, a later request adds `xtask: lint boundary`.
+**Status:** done in #2. The master session's branch `ci/shared-workflow` (issue #1) was merged into the Step 0 branch, and two inputs were added to its call of the shared workflow through the web editor: `ui: true` (Isonomic UI as a sibling checkout at `UI_REF`, which needs the `UI_DEPLOY_KEY` secret) and `features: --all-features --locked`. When `xtask` gains the product-term lint and the boundary check, `xtask: lint boundary` follows the same way.
 
 ## In
 

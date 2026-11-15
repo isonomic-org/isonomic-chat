@@ -8,7 +8,7 @@ Newest first. Updated at every task boundary so a new session can resume from th
 
 | Task | Pull request | State |
 | --- | --- | --- |
-| Step 0: workspace, `Cargo.lock`, inventory, name map | #1 | open |
+| Step 0: workspace, `Cargo.lock`, inventory, name map | #2 | open; CI blocked by the organization's Actions billing |
 | Chat shell and home with static data | next | |
 
 **Notes for whoever resumes**
