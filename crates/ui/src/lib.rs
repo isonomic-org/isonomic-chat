@@ -1,8 +1,8 @@
 //! The single re-export of Isonomic UI.
 //!
 //! Every other crate in this repository depends on `ui` for its interface and
-//! never names Isonomic UI or GPUI directly, so moving the pinned commit in
-//! UI pin (the SDK's `UI_REF`) is a change to this crate alone.
+//! never names Isonomic UI or GPUI directly, so moving the UI pin (the SDK's
+//! `UI_REF`) is a change to this crate alone.
 //!
 //! - `ui::*` is GPUI, through the Isonomic UI facade, which apps reach
 //!   through the SDK (`isonomic_app::ui`) so the SDK's `UI_REF` is the pin.
