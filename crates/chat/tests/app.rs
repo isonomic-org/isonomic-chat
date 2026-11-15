@@ -39,7 +39,7 @@ fn mine(host: &TestHost) -> Vec<String> {
 }
 
 #[test]
-fn the_manifest_asks_for_agents_and_its_own_schema() {
+fn the_manifest_asks_for_agents_local_models_and_its_own_schema() {
     let manifest = Chat::manifest();
     assert_eq!(manifest.id, "com.isonomic.chat");
     assert_eq!(manifest.id, APP_ID);
@@ -47,8 +47,16 @@ fn the_manifest_asks_for_agents_and_its_own_schema() {
     let wanted = isonomic_app::Capabilities {
         agents: manifest.capabilities.agents.clone(),
         sql: Some(isonomic_app::SqlAccess::default()),
+        models: Some(isonomic_app::ModelAccess {
+            any: true,
+            ..Default::default()
+        }),
         ..Default::default()
     };
+    assert!(
+        !manifest.capabilities.models.as_ref().unwrap().remote,
+        "local models only"
+    );
     assert!(manifest.capabilities.agents.is_some());
     assert_eq!(manifest.capabilities, wanted);
     assert_eq!(manifest.schemas.len(), 1);
@@ -65,6 +73,7 @@ fn the_window_mounts_chat_on_home_with_the_hosts_chats(cx: &mut TestAppContext) 
         .block_on(SdkHost::new(app.client().agents()).create(NewSession {
             preset: "chat".into(),
             title: Some("Trip to Lisbon".into()),
+            model: None,
         }))
         .expect("create");
     let pins = Rows {
@@ -108,6 +117,7 @@ fn pinning_writes_to_chats_schema(cx: &mut TestAppContext) {
         .block_on(SdkHost::new(app.client().agents()).create(NewSession {
             preset: "chat".into(),
             title: Some("Notes".into()),
+            model: None,
         }))
         .expect("create");
     let (_open, shell) = mount(cx, &host);

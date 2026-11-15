@@ -69,6 +69,11 @@ impl ChatShell {
         self._load = Some(task);
     }
 
+    /// The model new chats run on, once one has been picked.
+    pub fn model(&self) -> Option<&str> {
+        self.model.as_deref()
+    }
+
     /// Whether the first load of the list has finished.
     pub fn is_loaded(&self) -> bool {
         self.loaded
@@ -144,7 +149,9 @@ impl ChatShell {
                     }
                     *local.borrow_mut() = named;
                 }
-                ConversationEvent::HostError(_) => {}
+                ConversationEvent::ModelSelected(model) => this.model = Some(model.to_string()),
+                // Downloads belong to the window; Chat shows the words only.
+                ConversationEvent::HostError(_) | ConversationEvent::ModelUnavailable(_) => {}
             }
             cx.notify();
         });

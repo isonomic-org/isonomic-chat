@@ -9,22 +9,44 @@
 use conversation_host::{
     ConversationHost, HostError, HostFuture, NewSession, SessionEntry, SessionQuery, UpdateStream,
 };
-use conversation_model::Update;
 use conversation_model::schema::{Block, Seq, SessionId};
+use conversation_model::{Availability, ModelCatalog, ModelOption, Update};
 use futures::{FutureExt as _, StreamExt as _, stream};
-use isonomic_client::{Agents, ClientError, SessionUpdate};
+use isonomic_client::{Agents, ClientError, Models, SessionUpdate};
 use isonomic_proto::agents::{CreateSession, ListSessions, PresetId};
+use isonomic_proto::models::ModelState;
 
 /// A conversation host on the SDK's agents interface.
 #[derive(Clone)]
 pub struct SdkHost {
     agents: Agents,
+    models: Option<Models>,
 }
 
 impl SdkHost {
     /// A host over the agents interface of the app's scoped client.
     pub fn new(agents: Agents) -> Self {
-        Self { agents }
+        Self {
+            agents,
+            models: None,
+        }
+    }
+
+    /// Also list models, through the app's `models` interface.
+    pub fn with_models(mut self, models: Models) -> Self {
+        self.models = Some(models);
+        self
+    }
+}
+
+/// A model's state as the kit shows it.
+pub fn availability(state: ModelState) -> Availability {
+    match state {
+        ModelState::Ready | ModelState::Stopped | ModelState::Starting => Availability::Installed,
+        ModelState::Downloading => Availability::Downloading,
+        ModelState::NotInstalled => Availability::NotInstalled,
+        ModelState::Degraded => Availability::Unavailable,
+        _ => Availability::Unknown,
     }
 }
 
@@ -58,6 +80,8 @@ impl ConversationHost for SdkHost {
     fn create(&self, request: NewSession) -> HostFuture<SessionId> {
         let agents = self.agents.clone();
         async move {
+            // `request.model` reaches the engine once `sessions.create` carries
+            // `model` (isonomic-sdk, in review); until then the preset's model runs.
             let request = CreateSession {
                 preset: PresetId::new(request.preset),
                 title: request.title,
@@ -121,6 +145,32 @@ impl ConversationHost for SdkHost {
     fn archive(&self, session: &SessionId, archived: bool) -> HostFuture<()> {
         let (agents, session) = (self.agents.clone(), session.clone());
         async move { agents.archive(&session, archived).await.map_err(host_error) }.boxed_local()
+    }
+
+    fn models(&self) -> HostFuture<ModelCatalog> {
+        let models = self.models.clone();
+        async move {
+            let Some(models) = models else {
+                return Ok(ModelCatalog::default());
+            };
+            let listed = models.list().await.map_err(host_error)?;
+            let mut options = Vec::new();
+            for model in listed.into_iter().filter(|m| m.supports("chat")) {
+                // A model whose state cannot be read is offered as unknown,
+                // never as installed.
+                let state = models.info(&model.id).await.map(|d| d.state).ok();
+                options.push(ModelOption {
+                    id: model.id,
+                    name: model.name,
+                    remote: model.remote,
+                    availability: state.map_or(Availability::Unknown, availability),
+                });
+            }
+            // Apps cannot read the engine's recommendation yet (`models.recommended`
+            // is shell-only), so none is given.
+            Ok(ModelCatalog::new(options, None))
+        }
+        .boxed_local()
     }
 
     fn subscribe(&self, session: &SessionId, from_seq: Seq) -> HostFuture<UpdateStream> {

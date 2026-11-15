@@ -10,8 +10,8 @@ mod scripted;
 
 pub use scripted::{ScriptedHost, ScriptedReply};
 
-use conversation_model::Update;
 use conversation_model::schema::{Block, Seq, SessionId};
+use conversation_model::{ModelCatalog, Update};
 use futures::future::LocalBoxFuture;
 use futures::stream::LocalBoxStream;
 use std::fmt;
@@ -57,6 +57,9 @@ pub struct NewSession {
     pub preset: String,
     /// A title to start with, if any.
     pub title: Option<String>,
+    /// The model to run on, overriding the preset's; `None` uses the
+    /// preset's model.
+    pub model: Option<String>,
 }
 
 /// One session in a list, newest activity first.
@@ -108,6 +111,9 @@ pub trait ConversationHost {
 
     /// Archive a session, or bring it back.
     fn archive(&self, session: &SessionId, archived: bool) -> HostFuture<()>;
+
+    /// The chat models the caller may use, with whether each can answer now.
+    fn models(&self) -> HostFuture<ModelCatalog>;
 
     /// Follow a session from just after `from_seq` (0 for everything).
     fn subscribe(&self, session: &SessionId, from_seq: Seq) -> HostFuture<UpdateStream>;

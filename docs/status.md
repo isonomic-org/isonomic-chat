@@ -2,6 +2,18 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-15 · Model choice
+
+**Built**
+
+- Kit: `ModelCatalog` (chat models only; the recommended one first, then those that can answer, then downloading, not installed and unavailable) with `choose`, which names a listed model that can answer, or nothing. A model is never assumed to exist. `ConversationHost::models` loads it: `SdkHost` reads `models.list` plus each model's `models.info` state, and a model whose state cannot be read is `Unknown`, never installed.
+- `ConversationView` offers the catalog in the composer's model menu. A pick applies to the session the view creates (`NewSession.model`) and is reported as `ModelSelected`. `capability_denied`, `unknown_model` and `model_unavailable` read in plain words (`ConversationCopy`); `model_unavailable` also reports `ModelUnavailable` so the app can offer the download.
+- Chat applies the last picked model to every new chat. The manifest asks for `models` with `any: true`, local only.
+
+**Waiting on the SDK**
+
+- `ModelInfo.recommended` and `sessions.create { model }` are in review (needs-master). Until they merge, the catalog has no recommendation and the preset's model runs. Switching model inside a chat is not in version 1.
+
 ## 2026-11-15 · Everything through the SDK
 
 - `SDK_REF` moves to `c0d2bf7`; every harness crate is pinned at `f061211`, the SDK's URL and rev character for character.

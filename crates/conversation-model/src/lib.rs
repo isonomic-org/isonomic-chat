@@ -11,11 +11,13 @@
 //! SDK's agents interface ships, it re-exports the same crate.
 
 mod input;
+mod models;
 mod thread;
 mod turn;
 
 pub use harness_core as schema;
 pub use input::InputState;
+pub use models::{Availability, ModelCatalog, ModelOption};
 pub use thread::Thread;
 pub use turn::{Notice, ToolUse, Turn, TurnState};
 

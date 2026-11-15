@@ -24,6 +24,12 @@ pub struct ConversationCopy {
     pub limited: SharedString,
     /// The label of a block this build cannot show.
     pub unknown: SharedString,
+    /// The picked model is not one this app may use.
+    pub model_denied: SharedString,
+    /// The picked model does not exist.
+    pub model_unknown: SharedString,
+    /// The picked model is not installed yet.
+    pub model_unavailable: SharedString,
 }
 
 impl Default for ConversationCopy {
@@ -38,6 +44,10 @@ impl Default for ConversationCopy {
             refused: "The model declined to answer this.".into(),
             limited: "Stopped at this conversation's limit.".into(),
             unknown: "Content this version can't show".into(),
+            model_denied: "This app isn't allowed to use that model.".into(),
+            model_unknown: "That model isn't available any more. Pick another.".into(),
+            model_unavailable: "That model isn't installed yet. Download it, or pick another."
+                .into(),
         }
     }
 }

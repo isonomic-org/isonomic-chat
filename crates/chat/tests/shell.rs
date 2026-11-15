@@ -280,6 +280,7 @@ fn a_stored_chat_reopens_with_its_history_and_rename_and_delete_reach_the_host(
     let new = NewSession {
         preset: "chat".into(),
         title: None,
+        model: None,
     };
     let session = futures::executor::block_on(host.create(new)).unwrap();
     let ask = vec![conversation_model::schema::Block::text("Plan a trip")];
