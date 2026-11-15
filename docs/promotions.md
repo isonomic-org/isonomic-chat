@@ -23,4 +23,10 @@ Read at `main` `c3c745b` (15 Nov 2026), plus the open pull requests #4 (xtask, d
 | Greeting, starter suggestions and empty state | `crates/chat` `home/` | Copy and defaults: Chat only |
 | Composer on home and in the thread | `crates/chat` `home/`, placeholder | A plain `Textarea` and `Button` until Isonomic UI's Prompt composer (#206) and the kit's `PromptComposer` exist. Draft, attachments, mentions and commands go in the kit's composer-model |
 | Context panel content | `crates/chat` `shell/`, static | Rows become the kit's `ContextItem` binding (Isonomic UI request #208); which sections show and when the panel opens stay in Chat |
-| Static demo data (session titles, connections, user name) | `crates/chat` `fixtures` module | Development data for the shell and home; replaced by the host's data, never shipped as defaults |
+| Static demo data (session titles, connections, user name, model label) | `crates/chat` `demo` module | Development data for the shell and home; replaced by the host's data, never shipped as defaults |
+| Copy: greeting by part of day, starter prompts, titles from the first message | `crates/chat` `copy` module | Chat's words and defaults. The title heuristic is a stand-in: titles come from the preset's post-turn step run by the host (story 4) |
+| Layout sizes (sidebar, context panel, content width, header height) | `crates/chat` `metrics` module | Chat's layout; colours and type stay in the theme |
+| Icons Chat draws | `crates/chat` `icons` module, with `ALL` for the host | One place to map roles to Isonomic UI icons |
+| Rename and delete of the open chat | `crates/chat` `shell` (header and its menu) | Chat owns rename in the header; persistence moves to the host's session registry through the kit |
+| Key bindings: new chat, toggle sidebar, toggle context panel | `crates/chat` `init` | App navigation: Chat only |
+| Offscreen screenshots | `crates/chat/tests/screenshots.rs` | Chat's states only; `xtask screenshots` will cover the gallery and every binding |

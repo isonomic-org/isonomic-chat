@@ -30,11 +30,11 @@ Verified 15 Nov 2026 against the Figma file and isonomic-ui `main` at `4cf5571` 
 | Figma component or layer | Isonomic UI component | Owner | Status |
 | --- | --- | --- | --- |
 | `ChatSidebar` | `component::sidebar::{Sidebar, SidebarGroup, SidebarMenu, SidebarMenuItem, SidebarToggleButton}` | Chat `shell::sidebar` layout; the list inside becomes the kit's `SessionList` | on main |
-| `chat_item` (row, pin, selected) | `SidebarMenuItem` (`active`, `suffix`, `context_menu`) | kit `SessionList` | on main |
+| `chat_item` (row, pin, selected) | `SidebarMenuItem` (`active`, `suffix`, `context_menu`) | kit `SessionList` | on main; long labels clip without an ellipsis: request #210 |
 | `ChatHeader` (state: Untitled, Titled) | `component::button::Button` (ghost, dropdown caret; outline for Share) | Chat `shell::header` | on main |
 | `ChatGreeting` | text with theme tokens; the Isonomic mark from the icon set | Chat `home` | on main |
 | `SuggestionChips` | `Button` (outline, small, with icon) in a row | Chat `home` (content); the row is plain layout | on main |
-| `ContextSidebar` | `component::tab::{TabBar, Tab}` (underline) | Chat `shell::context_panel` | on main |
+| `ContextSidebar` | `component::tab::{TabBar, Tab}` (underline, icon as prefix) | Chat `shell::context_panel` | on main |
 | `IconButton` (state: Default, Hover) | `Button` with `icon` and `ghost` | none | on main |
 | `Avatar` (kit instance) | `component::avatar::Avatar` | `Message` | on main |
 | `disclaimer` (under the docked composer) | text with theme tokens | Chat copy | on main |
@@ -55,3 +55,4 @@ Verified 15 Nov 2026 against the Figma file and isonomic-ui `main` at `4cf5571` 
 | isonomic-ui #206 | Prompt composer |
 | isonomic-ui #207 | Thinking indicator (from proposal #14) |
 | isonomic-ui #208 | Stacked list item, for `ContextItem` |
+| isonomic-ui #210 | Sidebar menu item: ellipsis for long labels |

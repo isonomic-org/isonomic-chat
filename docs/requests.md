@@ -4,11 +4,15 @@ What this repository needs from others, and what others asked of it. Newest firs
 
 ## Out
 
+### O5 · Isonomic UI: sidebar labels
+
+isonomic-ui #210. Long `SidebarMenuItem` labels clip without an ellipsis.
+
 ### O4 · Desktop: icons and linking
 
 **To:** isonomic-desktop. **Status:** open.
 
-1. Chat draws icons from Isonomic UI's full catalog (`isonomic_ui::assets::IconName`), not only the default set. The window registers `isonomic_ui::assets::AllAssets`, or an asset source that includes the icons Chat lists in one module.
+1. Chat draws icons from Isonomic UI's full catalog (`isonomic_ui::assets::IconName`), not only the default set. The window registers `isonomic_ui::assets::AllAssets`, or an asset source that includes the icons in `chat::icons::ALL`.
 2. Chat depends on Isonomic UI through `../isonomic-ui`, pinned by `UI_REF`, like the SDK. Linking `chat` at a pinned revision works when the window and Chat resolve the same `isonomic-ui` checkout; otherwise GPUI is built twice and Chat's views cannot be placed in the window's tabs.
 
 ### O3 · Isonomic UI: stacked list item

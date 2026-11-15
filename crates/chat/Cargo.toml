@@ -10,6 +10,7 @@ license.workspace = true
 test-support = ["ui/test-support"]
 
 [dependencies]
+chrono = { version = "0.4.38", default-features = false, features = ["clock"] }
 ui.workspace = true
 
 [dev-dependencies]
@@ -17,3 +18,11 @@ ui = { workspace = true, features = ["test-support"] }
 
 [lints]
 workspace = true
+
+# Offscreen screenshots of the shell and home, light and dark. Opt-in: needs a
+# GPU or a software Vulkan adapter.
+[[test]]
+name = "screenshots"
+harness = false
+test = false
+required-features = ["test-support"]

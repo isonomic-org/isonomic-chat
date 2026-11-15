@@ -9,7 +9,7 @@ Newest first. Updated at every task boundary so a new session can resume from th
 | Task | Pull request | State |
 | --- | --- | --- |
 | Step 0: workspace, `Cargo.lock`, inventory, name map | #2 | open; CI blocked by the organization's Actions billing |
-| Chat shell and home with static data | next | |
+| Chat shell and home with static data | #3 | open, stacked on #2 |
 
 **Notes for whoever resumes**
 
@@ -18,6 +18,6 @@ Newest first. Updated at every task boundary so a new session can resume from th
 
 **Next, in order**
 
-1. Chat's shell and home from `ChatView/01` and `02`, static data.
-2. `conversation-model` and `composer-model`, once the harness schema and fixtures merge.
-3. The `ConversationHost` trait and the fixture player.
+1. `conversation-model` and `composer-model`, once the harness schema and fixtures merge (isonomic-harness #2, #3).
+2. The `ConversationHost` trait and the fixture player.
+3. The gallery: every binding against every fixture, light and dark, with replay.
