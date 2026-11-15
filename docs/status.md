@@ -2,6 +2,11 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-15 · Isonomic UI through the SDK
+
+- `SDK_REF` moves to `c68bf0d`. `crates/ui` re-exports `isonomic_app::ui` instead of depending on isonomic-ui, so the SDK's `UI_REF` is the pin. The conversation components still come from `isonomic-ui-extra` directly until the SDK re-exports them (requests O8). `UI_REF` stays until the shared workflow reads the pin from the SDK checkout.
+- The tokio workaround for the SDK's `TestHost` is gone (isonomic-sdk #22).
+
 ## 2026-11-15 · The SDK adapter
 
 **Built**
