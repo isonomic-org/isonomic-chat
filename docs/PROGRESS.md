@@ -14,7 +14,7 @@ Newest first. Updated at every task boundary so a new session can resume from th
 **Notes for whoever resumes**
 
 - The GitHub connector cannot create repositories, write `.github/workflows/`, or carry very large files such as `Cargo.lock`. The repository was created in the browser as @QadmiriOmar; large pushes go through git on Omar's Mac (`~/Code/isonomic/repos/isonomic-chat`), whose `gh` is signed in as @QadmiriOmar.
-- Isonomic UI is checked out next to this repository at the commit in `UI_REF`.
+- Isonomic UI is checked out next to this repository at the commit in the SDK's `UI_REF`.
 
 **Next, in order**
 

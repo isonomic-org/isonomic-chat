@@ -2,6 +2,10 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-15 · One UI pin
+
+- `UI_REF` is gone. The shared workflow reads the pin from the SDK checkout (isonomic-org/.github #8), so the SDK's `UI_REF` is the one pin.
+
 ## 2026-11-15 · Chats that persist
 
 **Built**

@@ -1,6 +1,6 @@
 # Pinned because rustfmt on 1.100 reformats macro arguments in the pinned
 # Isonomic UI checkout, which `cargo fmt --all --check` also checks as a path
-# dependency. Move this forward together with UI_REF.
+# dependency. Move this forward together with the SDK's UI_REF.
 [toolchain]
 channel = "1.98"
 components = ["rustfmt", "clippy"]
