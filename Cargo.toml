@@ -29,17 +29,15 @@ futures = "0.3"
 # The session event schema and its recorded fixtures, pinned at the commit
 # isonomic-sdk pins, until the SDK's agents interface re-exports them. CI
 # fetches it with the shared workflow's `harness` input.
-harness-core = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
-harness-host = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
-harness-log = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
-harness-testkit = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "7a73ca695254d415332ef39bae2b100e4f791b6c" }
-# Isonomic UI comes through the SDK (isonomic_app::ui). Its conversation
-# components (isonomic-ui-extra) are not re-exported yet, so crates/ui takes
-# them from the sibling checkout (../isonomic-ui) at the SDK's UI_REF, the one pin.
-isonomic-ui-extra = { path = "../isonomic-ui/crates/extra" }
+harness-core = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "f0612113f6dcc8e11528642137e6dd9b24f48165" }
+harness-host = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "f0612113f6dcc8e11528642137e6dd9b24f48165" }
+harness-log = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "f0612113f6dcc8e11528642137e6dd9b24f48165" }
+harness-testkit = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "f0612113f6dcc8e11528642137e6dd9b24f48165" }
+# Isonomic UI and its extra components come through the SDK
+# (isonomic_app::ui, isonomic_app::extra); the SDK's UI_REF is the one pin.
 # The SDK is a sibling checkout (../isonomic-sdk) pinned to the commit in
 # SDK_REF, the same pin as the window, so both link one copy of each crate.
-isonomic-app = { path = "../isonomic-sdk/crates/app" }
+isonomic-app = { path = "../isonomic-sdk/crates/app", features = ["extra"] }
 isonomic-client = { path = "../isonomic-sdk/crates/client" }
 isonomic-proto = { path = "../isonomic-sdk/crates/proto" }
 serde_json = "1"

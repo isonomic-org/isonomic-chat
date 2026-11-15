@@ -17,6 +17,5 @@
 pub use isonomic_app::ui::*;
 
 /// The conversation components and the other components queued on the
-/// Isonomic UI foundation. The SDK does not re-export them yet (requests O8),
-/// so this is the one direct dependency on isonomic-ui.
-pub use isonomic_ui_extra as extra;
+/// Isonomic UI foundation, through the SDK.
+pub use isonomic_app::extra;
