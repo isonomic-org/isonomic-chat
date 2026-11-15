@@ -2,7 +2,7 @@
 //! the root view it mounts.
 
 use conversation_sdk::SdkHost;
-use isonomic_app::{AppContext, Capabilities, Manifest, Schema, SearchHit, SqlAccess};
+use isonomic_app::{AppContext, Capabilities, Manifest, ModelAccess, Schema, SearchHit, SqlAccess};
 use isonomic_proto::manifest::AgentsAccess;
 use std::rc::Rc;
 use ui::{
@@ -57,6 +57,11 @@ impl isonomic_app::App for Chat {
             // for what only Chat stores (pins). Nothing else.
             capabilities: Capabilities {
                 agents: Some(AgentsAccess {}),
+                // Any local model the person has; remote ones stay off.
+                models: Some(ModelAccess {
+                    any: true,
+                    ..Default::default()
+                }),
                 sql: Some(SqlAccess::default()),
                 ..Default::default()
             },
@@ -72,7 +77,7 @@ impl isonomic_app::App for Chat {
             app.set_global(KeysBound);
         }
         let backend = crate::Backend {
-            host: Rc::new(SdkHost::new(cx.client().agents())),
+            host: Rc::new(SdkHost::new(cx.client().agents()).with_models(cx.client().models())),
             store: Rc::new(crate::store::SqlStore::new(cx.client().sql())),
         };
         let shell = app.new(|shell| ChatShell::new(Some(backend), window, shell));

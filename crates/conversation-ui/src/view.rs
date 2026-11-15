@@ -2,13 +2,13 @@
 
 use conversation_host::{ConversationHost, HostError, NewSession};
 use conversation_model::schema::{Block, SessionId};
-use conversation_model::{InputState, Thread, Update};
+use conversation_model::{InputState, ModelCatalog, Thread, Update};
 use futures::StreamExt as _;
 use std::cell::RefCell;
 use std::rc::Rc;
 use ui::component::message_scroller::{MessageScroller, MessageScrollerState};
 use ui::component::{ActiveTheme as _, v_flex};
-use ui::extra::prompt_composer::{PromptComposer, PromptComposerEvent};
+use ui::extra::prompt_composer::{ComposerChoice, PromptComposer, PromptComposerEvent};
 use ui::prelude::*;
 use ui::{App, Entity, EventEmitter, FocusHandle, Focusable, SharedString, Task, Window, div};
 
@@ -24,6 +24,10 @@ pub enum ConversationEvent {
     TitleChanged(SharedString),
     /// The host refused a request; the message is readable.
     HostError(SharedString),
+    /// A model was picked. It applies to the next new conversation.
+    ModelSelected(SharedString),
+    /// The picked model is not installed; the app may offer its download.
+    ModelUnavailable(SharedString),
 }
 
 /// One conversation, bound to a host.
@@ -36,6 +40,9 @@ pub struct ConversationView {
     composer: Entity<PromptComposer>,
     focus: FocusHandle,
     title: Option<String>,
+    catalog: ModelCatalog,
+    wanted: Option<String>,
+    _models: Option<Task<()>>,
     _follow: Option<Task<()>>,
     _request: Option<Task<()>>,
     _composer_events: ui::Subscription,
@@ -67,9 +74,10 @@ impl ConversationView {
             cx.subscribe_in(&composer, window, |this, _, event, _, cx| match event {
                 PromptComposerEvent::Submit { text, .. } => this.send(text.to_string(), cx),
                 PromptComposerEvent::Stop => this.stop(cx),
+                PromptComposerEvent::SelectModel(id) => this.select_model(id.to_string(), cx),
                 _ => {}
             });
-        Self {
+        let mut view = Self {
             host,
             preset: preset.into(),
             copy: Rc::new(copy),
@@ -78,10 +86,62 @@ impl ConversationView {
             composer,
             focus: cx.focus_handle(),
             title: None,
+            catalog: ModelCatalog::default(),
+            wanted: None,
+            _models: None,
             _follow: None,
             _request: None,
             _composer_events: composer_events,
+        };
+        view.load_models(cx);
+        view
+    }
+
+    /// The models on offer, in order.
+    pub fn catalog(&self) -> &ModelCatalog {
+        &self.catalog
+    }
+
+    /// The model a new session runs on: the picked one if the host listed
+    /// it, else the one the catalog would choose, else the preset's.
+    pub fn model(&self) -> Option<&str> {
+        match self.wanted.as_deref() {
+            Some(id) if self.catalog.get(id).is_some() => Some(id),
+            _ => self.catalog.choose(None).map(|o| o.id.as_str()),
         }
+    }
+
+    /// Prefer this model for the session this view creates.
+    pub fn select_model(&mut self, id: String, cx: &mut Context<Self>) {
+        self.wanted = Some(id.clone());
+        self.show_models(cx);
+        cx.emit(ConversationEvent::ModelSelected(id.into()));
+    }
+
+    fn load_models(&mut self, cx: &mut Context<Self>) {
+        let request = self.host.models();
+        self._models = Some(cx.spawn(async move |this, cx| {
+            // No catalog is not an error: the preset's model is used.
+            let catalog = request.await.unwrap_or_default();
+            let _ = this.update(cx, |this, cx| {
+                this.catalog = catalog;
+                this.show_models(cx);
+            });
+        }));
+    }
+
+    fn show_models(&mut self, cx: &mut Context<Self>) {
+        let choices = self
+            .catalog
+            .options()
+            .iter()
+            .map(|option| ComposerChoice::new(option.id.clone(), option.name.clone()))
+            .collect();
+        let selected = self.model().map(|id| SharedString::from(id.to_owned()));
+        self.composer.update(cx, |composer, cx| {
+            composer.set_models(choices, selected, cx)
+        });
+        cx.notify();
     }
 
     /// An existing session: replays its log, then follows it.
@@ -129,6 +189,7 @@ impl ConversationView {
         let host = self.host.clone();
         let session = self.session();
         let preset = self.preset.clone();
+        let model = self.model().map(str::to_owned);
         self._request = Some(cx.spawn(async move |this, cx| {
             let session = match session {
                 Some(session) => session,
@@ -136,6 +197,7 @@ impl ConversationView {
                     let request = NewSession {
                         preset,
                         title: None,
+                        model,
                     };
                     match host.create(request).await {
                         Ok(session) => {
@@ -195,11 +257,22 @@ impl ConversationView {
             .turns()
             .last()
             .is_some_and(|turn| turn.state == conversation_model::TurnState::Sending);
+        let message = match error.code.as_str() {
+            "capability_denied" if self.session().is_none() => self.copy.model_denied.to_string(),
+            "unknown_model" => self.copy.model_unknown.to_string(),
+            "model_unavailable" => {
+                if let Some(model) = self.model() {
+                    cx.emit(ConversationEvent::ModelUnavailable(model.to_owned().into()));
+                }
+                self.copy.model_unavailable.to_string()
+            }
+            _ => error.message.clone(),
+        };
         if pending {
-            self.thread.borrow_mut().fail_send(error.message.clone());
+            self.thread.borrow_mut().fail_send(message.clone());
             self.rows_changed(cx);
         }
-        cx.emit(ConversationEvent::HostError(error.message.into()));
+        cx.emit(ConversationEvent::HostError(message.into()));
     }
 
     /// Follow the session's updates from the last `seq` seen.

@@ -25,6 +25,7 @@ fn a_call_goes_out_under_the_apps_token() {
     let created = host.runtime().block_on(sdk.create(NewSession {
         preset: "probe".into(),
         title: None,
+        model: None,
     }));
     let error = created.expect_err("the testkit has no agents host yet");
     assert!(!error.message.is_empty());
@@ -48,6 +49,59 @@ impl isonomic_app::App for Probe {
             icon: "sparkle".into(),
             capabilities: isonomic_app::Capabilities {
                 agents: Some(isonomic_proto::manifest::AgentsAccess {}),
+                ..Default::default()
+            },
+            schemas: vec![],
+        }
+    }
+
+    fn build(_: isonomic_app::AppContext, _: &mut ui::Window, app: &mut ui::App) -> ui::AnyView {
+        use ui::AppContext as _;
+        app.new(|_| ui::Empty).into()
+    }
+}
+
+#[test]
+fn the_catalog_lists_chat_models_with_their_state() {
+    let host = TestHost::new();
+    let (app, _) = host.context::<Modeler>();
+    let sdk = SdkHost::new(app.client().agents()).with_models(app.client().models());
+    let catalog = host.runtime().block_on(sdk.models()).expect("models");
+    let ids: Vec<&str> = catalog.options().iter().map(|o| o.id.as_str()).collect();
+    // The embeddings model is not offered for chat.
+    assert_eq!(ids, ["chat-small"]);
+    assert_ne!(
+        catalog.options()[0].availability,
+        conversation_model::Availability::Unknown,
+        "its state comes from models.info"
+    );
+    // Without the models interface there is no catalog, not an error.
+    let bare = SdkHost::new(app.client().agents());
+    assert!(
+        host.runtime()
+            .block_on(bare.models())
+            .unwrap()
+            .options()
+            .is_empty()
+    );
+}
+
+/// An app that may use any model.
+struct Modeler;
+
+impl isonomic_app::App for Modeler {
+    fn manifest() -> isonomic_app::Manifest {
+        isonomic_app::Manifest {
+            id: "com.example.modeler".into(),
+            name: "Modeler".into(),
+            version: "0.1.0".into(),
+            icon: "sparkle".into(),
+            capabilities: isonomic_app::Capabilities {
+                agents: Some(isonomic_proto::manifest::AgentsAccess {}),
+                models: Some(isonomic_app::ModelAccess {
+                    any: true,
+                    ..Default::default()
+                }),
                 ..Default::default()
             },
             schemas: vec![],

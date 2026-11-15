@@ -5,16 +5,20 @@
 //! Stop seals the partial reply exactly as the engine does, and continue
 //! streams the words that were left.
 
+use events::{assistant, step_end, title_event, turn_end, words};
+
+mod events;
+
 use crate::{
     ConversationHost, HostError, HostFuture, NewSession, SessionEntry, SessionQuery, UpdateStream,
 };
-use conversation_model::Update;
 use conversation_model::schema::{
-    AppId, Assistant, Attempt, AttemptOutcome, Block, Cause, DeltaKind, Event, LiveDelta, Params,
-    PresetId, PresetRef, Principal, PrincipalKind, Purpose, Reasoning, Seq, SessionClass,
-    SessionEvent, SessionId, SessionStart, StepEnd, StepId, StepOutcome, StepStart, StopReason,
-    Title, TitleSource, TurnEnd, TurnId, TurnStart, TurnStop, Usage, User,
+    AppId, Attempt, AttemptOutcome, Block, Cause, DeltaKind, Event, LiveDelta, Params, PresetId,
+    PresetRef, Principal, PrincipalKind, Purpose, Reasoning, Seq, SessionClass, SessionEvent,
+    SessionId, SessionStart, StepId, StepOutcome, StepStart, StopReason, TitleSource, TurnId,
+    TurnStart, TurnStop, User,
 };
+use conversation_model::{ModelCatalog, Update};
 use futures::channel::mpsc::{UnboundedSender, unbounded};
 use futures::{FutureExt as _, StreamExt as _, future};
 use std::cell::RefCell;
@@ -102,6 +106,9 @@ struct Session {
 
 #[derive(Default)]
 struct Inner {
+    models: ModelCatalog,
+    created: Vec<NewSession>,
+    refuse_create: Option<HostError>,
     script: VecDeque<ScriptedReply>,
     sessions: BTreeMap<SessionId, Session>,
     next_session: u32,
@@ -126,6 +133,21 @@ impl ScriptedHost {
     pub fn script(&self, reply: ScriptedReply) -> &Self {
         self.inner.borrow_mut().script.push_back(reply);
         self
+    }
+
+    /// Every create request so far, oldest first.
+    pub fn created(&self) -> Vec<NewSession> {
+        self.inner.borrow().created.clone()
+    }
+
+    /// Refuse the next create with this error.
+    pub fn refuse_create(&self, error: HostError) {
+        self.inner.borrow_mut().refuse_create = Some(error);
+    }
+
+    /// Offer these models.
+    pub fn set_models(&self, models: ModelCatalog) {
+        self.inner.borrow_mut().models = models;
     }
 
     /// Stream up to `words` more words of every open reply. Returns whether
@@ -183,6 +205,10 @@ impl ScriptedHost {
 impl ConversationHost for ScriptedHost {
     fn create(&self, request: NewSession) -> HostFuture<SessionId> {
         self.call(|inner| {
+            inner.created.push(request.clone());
+            if let Some(error) = inner.refuse_create.take() {
+                return Err(error);
+            }
             inner.next_session += 1;
             let id = SessionId::new(format!("ses_{:04}", inner.next_session));
             inner.sessions.insert(id.clone(), Session::default());
@@ -357,6 +383,10 @@ impl ConversationHost for ScriptedHost {
         })
     }
 
+    fn models(&self) -> HostFuture<ModelCatalog> {
+        self.call(|inner| Ok(inner.models.clone()))
+    }
+
     fn subscribe(&self, session: &SessionId, from_seq: Seq) -> HostFuture<UpdateStream> {
         let session = session.clone();
         self.call(move |inner| {
@@ -498,53 +528,4 @@ impl Inner {
             self.emit(id, None, None, title_event(title, TitleSource::Model));
         }
     }
-}
-
-/// Split text into words, each keeping the space after it.
-fn words(text: &str) -> VecDeque<String> {
-    text.split_inclusive(' ').map(str::to_owned).collect()
-}
-
-fn assistant(open: &Open, stop: StopReason) -> Event {
-    let mut content = Vec::new();
-    if !open.written_reasoning.is_empty() {
-        content.push(Block::Reasoning {
-            text: open.written_reasoning.clone(),
-            elapsed_ms: None,
-        });
-    }
-    if !open.written_text.is_empty() {
-        content.push(Block::text(open.written_text.clone()));
-    }
-    Event::Assistant(Assistant {
-        content,
-        stop,
-        stream: Vec::new(),
-        usage: None,
-        continues: open.continues,
-    })
-}
-
-fn step_end(outcome: StepOutcome) -> Event {
-    Event::StepEnd(StepEnd {
-        outcome,
-        duration_ms: 0,
-        usage: None,
-    })
-}
-
-fn turn_end(stop: TurnStop, reason: Option<String>) -> Event {
-    Event::TurnEnd(TurnEnd {
-        stop,
-        steps: 1,
-        duration_ms: 0,
-        usage: Usage::default(),
-        reason,
-        error: None,
-        budget: None,
-    })
-}
-
-fn title_event(title: String, source: TitleSource) -> Event {
-    Event::Title(Title { title, source })
 }

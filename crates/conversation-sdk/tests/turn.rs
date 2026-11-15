@@ -76,6 +76,7 @@ fn turns_stream_and_a_reply_cut_short_continues_in_its_turn() {
         let new = NewSession {
             preset: "chat".into(),
             title: None,
+            model: None,
         };
         let session = sdk.create(new).await.expect("create");
         let mut updates = sdk.subscribe(&session, 0).await.expect("subscribe");
@@ -132,6 +133,7 @@ fn sessions_list_newest_first_and_archive_hides_them() {
             let new = NewSession {
                 preset: "chat".into(),
                 title: Some(title.into()),
+                model: None,
             };
             ids.push(sdk.create(new).await.expect("create"));
             host.engine().agents().advance(1_000);
@@ -171,6 +173,7 @@ fn a_first_reply_cut_short_continues_after_its_title_step() {
         let new = NewSession {
             preset: "chat".into(),
             title: None,
+            model: None,
         };
         let session = sdk.create(new).await.expect("create");
         let mut updates = sdk.subscribe(&session, 0).await.expect("subscribe");

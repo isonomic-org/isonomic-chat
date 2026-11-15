@@ -10,6 +10,7 @@ fn the_list_is_newest_first_titled_and_honours_archive() {
     let new = || NewSession {
         preset: "p".into(),
         title: None,
+        model: None,
     };
     let first = block_on(host.create(new())).unwrap();
     let second = block_on(host.create(new())).unwrap();

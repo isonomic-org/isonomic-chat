@@ -22,8 +22,13 @@ struct Harness {
 }
 
 fn open(cx: &mut TestAppContext) -> Harness {
+    open_with_models(cx, conversation_model::ModelCatalog::default())
+}
+
+fn open_with_models(cx: &mut TestAppContext, models: conversation_model::ModelCatalog) -> Harness {
     cx.update(ui::init);
     let host = ScriptedHost::new();
+    host.set_models(models);
     let events = Rc::new(RefCell::new(Vec::new()));
     let (window, view) = cx.update(|cx| {
         let shared: Rc<dyn ConversationHost> = Rc::new(host.clone());
@@ -231,4 +236,72 @@ fn a_second_prompt_follows_the_first(cx: &mut TestAppContext) {
     });
     assert_eq!(replies, vec!["One.".to_owned(), "Two.".to_owned()]);
     assert_eq!(h.host.sessions().len(), 1);
+}
+
+fn catalog() -> conversation_model::ModelCatalog {
+    use conversation_model::{Availability, ModelCatalog, ModelOption};
+    let option = |id: &str, availability| ModelOption {
+        id: id.into(),
+        name: id.into(),
+        remote: false,
+        availability,
+    };
+    ModelCatalog::new(
+        vec![
+            option("small", Availability::Installed),
+            option("large", Availability::NotInstalled),
+        ],
+        Some("large".into()),
+    )
+}
+
+#[ui::test]
+fn the_picked_model_goes_to_the_new_session(cx: &mut TestAppContext) {
+    let h = open_with_models(cx, catalog());
+    cx.run_until_parked();
+    // Until a pick, the catalog's choice: the recommended model is not
+    // installed, so the installed one.
+    assert_eq!(
+        cx.update(|cx| h.view.read(cx).model().map(str::to_owned)),
+        Some("small".into())
+    );
+    cx.update(|cx| {
+        h.view
+            .update(cx, |view, cx| view.select_model("large".into(), cx))
+    });
+    assert!(
+        h.events
+            .borrow()
+            .contains(&ConversationEvent::ModelSelected("large".into()))
+    );
+    h.host.script(ScriptedReply::text("Hi."));
+    h.send(cx, "Hello");
+    assert_eq!(h.host.created()[0].model.as_deref(), Some("large"));
+}
+
+#[ui::test]
+fn model_errors_read_in_plain_words(cx: &mut TestAppContext) {
+    let copy = ConversationCopy::default();
+    for (code, words) in [
+        ("model_unavailable", copy.model_unavailable.clone()),
+        ("unknown_model", copy.model_unknown.clone()),
+        ("capability_denied", copy.model_denied.clone()),
+    ] {
+        let h = open_with_models(cx, catalog());
+        h.host
+            .refuse_create(conversation_host::HostError::new(code, "wire words"));
+        h.send(cx, "Hello");
+        assert_eq!(
+            h.last(cx).1,
+            TurnState::Rejected(words.to_string()),
+            "{code}"
+        );
+        if code == "model_unavailable" {
+            assert!(
+                h.events
+                    .borrow()
+                    .contains(&ConversationEvent::ModelUnavailable("small".into()))
+            );
+        }
+    }
 }
