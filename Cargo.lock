@@ -1087,6 +1087,12 @@ dependencies = [
 [[package]]
 name = "conversation-ui"
 version = "0.0.1"
+dependencies = [
+ "conversation-host",
+ "conversation-model",
+ "futures",
+ "ui",
+]
 
 [[package]]
 name = "convert_case"
