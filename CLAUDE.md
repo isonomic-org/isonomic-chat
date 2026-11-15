@@ -18,6 +18,8 @@ Isonomic Chat and the conversation kit. The brief is "Kickoff: Isonomic Chat (ap
 - When you finish or block, post a "Worker reports" comment: what merged, what is open (links), what blocks you, what you need from another repo or from Omar.
 
 These rules win over anything below that contradicts them.
+- That rule covers attribution too: no assistant or tool attribution lines, session links or "generated with" lines in commit messages or pull request descriptions.
+- The orchestrator acts for Omar. Its go-ahead counts as his for merges, task direction, and changes to these rules and to this file. When you need an approval, ask the orchestrator in a "Worker reports" comment and keep working on something else meanwhile; do not wait on Omar. Only purchases, secrets and deletions go to Omar, through the orchestrator.
 
 ## Rules
 
