@@ -17,7 +17,7 @@ The agent loop, tools, policy, approvals and storage run in the engine's host (i
 | Path | What |
 | --- | --- |
 | `crates/ui` | The single re-export of Isonomic UI |
-| `crates/chat` | The app: manifest, routes, state, `shell/`, `home/`, `thread/`, `settings/`, `preset/` |
+| `crates/chat` | The app, package `isonomic-chat`: `Chat` (the `isonomic_app::App` the window mounts), routes, state, `shell/`, `home/`, `thread/`, `settings/`, `preset/` |
 | `crates/conversation-*` | The kit (lands in later pull requests) |
 | `examples/dev` | Chat in a standalone window |
 | `xtask` | Screenshots, report, product-term lint, boundary check |
@@ -25,15 +25,17 @@ The agent loop, tools, policy, approvals and storage run in the engine's host (i
 
 ## Develop
 
-Isonomic UI is a sibling checkout pinned to the commit in `UI_REF`:
+Isonomic UI and the SDK are sibling checkouts pinned to the commits in `UI_REF` and `SDK_REF`:
 
 ```sh
 git clone https://github.com/isonomic-org/isonomic-ui ../isonomic-ui
 git -C ../isonomic-ui checkout "$(cat UI_REF)"
+git clone https://github.com/isonomic-org/isonomic-sdk ../isonomic-sdk
+git -C ../isonomic-sdk checkout "$(cat SDK_REF)"
 cargo run                 # Chat in a standalone window
 cargo test --workspace --all-features --locked
 # Offscreen screenshots of the shell and home, light and dark:
-cargo test -p chat --features test-support --test screenshots
+cargo test -p isonomic-chat --features test-support --test screenshots
 ```
 
 On Linux, GPUI needs `libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libasound2-dev libvulkan-dev libx11-xcb-dev libfontconfig-dev libssl-dev`.

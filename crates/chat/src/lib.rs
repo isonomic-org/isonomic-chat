@@ -11,6 +11,7 @@
 
 extern crate ui as gpui;
 
+mod app;
 mod composer;
 pub mod copy;
 pub mod demo;
@@ -19,6 +20,7 @@ pub mod icons;
 mod metrics;
 mod shell;
 
+pub use app::{APP_ID, Chat, LINK_PREFIX};
 pub use shell::{ChatShell, Route};
 
 use ui::{App, KeyBinding};

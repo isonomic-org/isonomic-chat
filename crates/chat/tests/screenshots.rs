@@ -21,8 +21,8 @@ mod screenshots {
     use std::sync::Arc;
     use std::time::Duration;
 
-    use chat::ChatShell;
-    use chat::copy::DayPart;
+    use isonomic_chat::ChatShell;
+    use isonomic_chat::copy::DayPart;
     use ui::assets::AllAssets;
     use ui::component::{ActiveTheme as _, Theme, ThemeMode};
     use ui::test::TestWindowExt as _;
@@ -67,7 +67,7 @@ mod screenshots {
         cx.allow_parking();
         cx.update(|cx| {
             ui::init(cx);
-            chat::init(cx);
+            isonomic_chat::init(cx);
         });
 
         let mut written = 0;

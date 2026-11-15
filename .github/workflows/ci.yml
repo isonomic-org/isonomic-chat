@@ -19,4 +19,5 @@ jobs:
     with:
       linux-gui-libs: true
       ui: true
+      sdk: true
       features: --all-features --locked
