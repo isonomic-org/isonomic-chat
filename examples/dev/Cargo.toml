@@ -8,6 +8,7 @@ license.workspace = true
 
 [dependencies]
 isonomic-chat.workspace = true
+conversation-host.workspace = true
 ui.workspace = true
 
 [lints]

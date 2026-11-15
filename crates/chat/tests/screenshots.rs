@@ -121,7 +121,7 @@ mod screenshots {
                     ..Default::default()
                 },
                 cx,
-                |window, cx| cx.new(|cx| ChatShell::new(window, cx)),
+                |window, cx| cx.new(|cx| ChatShell::new(None, window, cx)),
             )
         })
         .expect("open the headless window")

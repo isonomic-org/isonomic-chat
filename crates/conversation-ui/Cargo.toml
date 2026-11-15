@@ -1,0 +1,22 @@
+[package]
+name = "conversation-ui"
+description = "The conversation kit's bindings to Isonomic UI: the conversation view, its composer and its turns."
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[features]
+test-support = ["ui/test-support"]
+
+[dependencies]
+conversation-host.workspace = true
+conversation-model.workspace = true
+futures.workspace = true
+ui.workspace = true
+
+[dev-dependencies]
+ui = { workspace = true, features = ["test-support"] }
+
+[lints]
+workspace = true
