@@ -2,6 +2,23 @@
 
 Isonomic Chat and the conversation kit. The brief is "Kickoff: Isonomic Chat (app and conversation kit), Milestone 0" in Drive › Isonomic › 2. Kickoff briefs; it is binding. `docs/spec.md` condenses it and `docs/PROGRESS.md` says where the work stands.
 
+## Standing rules
+
+- Only work in isonomic-chat. If you need a change in another repo, file it in that repo's docs/requests.md or as an issue, and tell the orchestrator.
+- Start from main, the open pull requests and docs/status.md. Open pull requests and branches from earlier sessions are yours now: finish, rebase or close them.
+- Commit as Omar Qadmiri <omar@isonomic.com>; check `git config user.email` first. Commit and push work in progress often.
+- Repos stay private. No license files. Never rename or delete a repo.
+- In code, comments, commits, branches, issues and pull requests, never name a third-party product or company, another AI system, or an older product name.
+- Branch from main and open a pull request. Required checks: "rust / fmt, clippy, test (ubuntu-latest)" and "rust / file sizes and names". macOS runs after merge.
+- Merge your own pull request once every required check is green. Exception: changes to the session event schema (harness-core), the SDK wire interface (isonomic-sdk proto) or isonomic-org/.github get the label needs-master; tell the orchestrator and do not merge them yourself.
+- GitHub Actions has a hard $40/month budget. Don't trigger extra macOS runs.
+- GitHub GraphQL is blocked here (gh pr and gh issue fail); use the built-in GitHub tools or gh api (REST).
+- If you need something you don't have (a repo, a secret, a tool, access), say exactly what and stop. Don't mock or guess around it.
+- Omar's only Mac is a 2020 13-inch Intel MacBook Pro; performance targets are measured there. Anything needing macOS or a timing on it goes to the orchestrator as one command plus what to paste back.
+- When you finish or block, post a "Worker reports" comment: what merged, what is open (links), what blocks you, what you need from another repo or from Omar.
+
+These rules win over anything below that contradicts them.
+
 ## Rules
 
 1. **Never build a presentational component that Isonomic UI has or has queued** (isonomic-ui #1). If one is missing, file an isonomic-ui issue labelled `request`, use a plain placeholder, and track it in `docs/name-map.md`.
@@ -18,7 +35,7 @@ Isonomic Chat and the conversation kit. The brief is "Kickoff: Isonomic Chat (ap
 ## Workflow
 
 - One task per branch and pull request. End every pull request with `ready`, `blocked: …`, `failed: …` or `waiting: …`.
-- Merge your own pull request once every check is green. A change to a shared contract (the frozen event schema, the SDK wire interface, isonomic-org/.github) is labelled `needs-master` and waits for the master session. Before each new task, handle open issues labelled `master` first.
+- Merge your own pull request once every required check is green (see Standing rules). Before each new task, handle open issues labelled `master` first.
 - Before pushing: `cargo fmt --all`, `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`, `cargo test --workspace --all-features --locked`.
 - Isonomic UI is a sibling checkout (`../isonomic-ui`) at the commit in `UI_REF`. Bumping it means regenerating `Cargo.lock` in the same pull request.
 - Requests to other repositories go in their `docs/requests.md` or as isonomic-ui issues labelled `request`; this repo's are in `docs/requests.md`.
