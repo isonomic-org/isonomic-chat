@@ -12,6 +12,7 @@
 extern crate ui as gpui;
 
 mod copy;
+mod metrics;
 mod turn;
 mod view;
 

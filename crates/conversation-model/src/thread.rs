@@ -23,6 +23,7 @@ pub struct Thread {
     notices: Vec<Notice>,
     last_seq: Seq,
     closed: bool,
+    awaiting_client: bool,
     committed: BTreeSet<StepId>,
     /// Steps that are not the reply (the title step, summaries): their text
     /// is never part of a turn.
@@ -107,6 +108,30 @@ impl Thread {
         self.touch_last();
     }
 
+    /// Whether a client tool's app is gone and the session waits for it.
+    pub fn awaiting_client(&self) -> bool {
+        self.awaiting_client
+    }
+
+    /// The prompt to send again for the last turn, if it failed or was
+    /// rejected. A rejected send was never opened by the host, so it is
+    /// dropped here; a failed turn stays in the log and in the thread.
+    pub fn take_retry(&mut self) -> Option<String> {
+        let turn = self.turns.last()?;
+        if turn.prompt.is_empty() {
+            return None;
+        }
+        match turn.state {
+            TurnState::Rejected(_) if turn.ids.is_empty() => {
+                let prompt = self.turns.pop().map(|t| t.prompt);
+                self.revision += 1;
+                prompt
+            }
+            TurnState::Failed(_) | TurnState::Rejected(_) => Some(turn.prompt.clone()),
+            _ => None,
+        }
+    }
+
     /// The host refused an optimistic send before opening a turn.
     pub fn fail_send(&mut self, message: impl Into<String>) {
         if let Some(turn) = self.turns.last_mut()
@@ -177,6 +202,7 @@ impl Thread {
             }
             Event::SessionStatus(status) => {
                 self.closed = status.status == Status::Failed;
+                self.awaiting_client = status.status == Status::AwaitingClient;
             }
             Event::Title(title) => self.title = Some(title.title.clone()),
             Event::TurnStart(start) => self.start_turn(event.turn.clone(), &start.cause),
@@ -194,6 +220,7 @@ impl Thread {
                     self.drop_live(index, step);
                 }
                 let turn = &mut self.turns[index];
+                turn.retrying = None;
                 let joins = reply.continues.is_some() || turn.continuing;
                 commit(turn, &reply.content, joins);
                 turn.continuing = false;
@@ -211,7 +238,11 @@ impl Thread {
                     AttemptOutcome::Refused => {
                         self.attempt_message = Some(text_of(&attempt.content));
                     }
-                    AttemptOutcome::Error if !attempt.will_retry => {
+                    AttemptOutcome::Error if attempt.will_retry => {
+                        let reason = attempt.error.as_ref().map(|e| e.message.clone());
+                        self.turns[index].retrying = Some(reason.unwrap_or_default());
+                    }
+                    AttemptOutcome::Error => {
                         self.attempt_message =
                             attempt.error.as_ref().map(|error| error.message.clone());
                     }
@@ -254,6 +285,7 @@ impl Thread {
                     let turn = &mut self.turns[index];
                     turn.live.clear();
                     turn.live_reasoning.clear();
+                    turn.retrying = None;
                     turn.continuing = false;
                     turn.state = state;
                     self.touch(index);

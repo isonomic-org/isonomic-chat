@@ -192,3 +192,55 @@ fn tool_calls_and_unknown_events_are_kept_generically() {
             .all(|tool| tool.outcome.is_some())
     );
 }
+
+#[test]
+fn a_transient_error_shows_as_retrying_until_the_reply_arrives() {
+    let fixture = fixtures::tool_heavy();
+    let retry_at = fixture
+        .events
+        .iter()
+        .position(|e| matches!(&e.event, Event::Attempt(a) if a.will_retry))
+        .expect("the fixture retries a transient error");
+    let mut thread = Thread::from_events(&fixture.events[..=retry_at]);
+    let turn = thread.turns().last().unwrap();
+    assert!(turn.retrying.is_some());
+    assert!(turn.state.is_open());
+    for event in &fixture.events[retry_at + 1..] {
+        thread.apply_event(event);
+    }
+    assert!(thread.turns().iter().all(|t| t.retrying.is_none()));
+}
+
+#[test]
+fn only_a_failed_or_rejected_last_turn_can_be_tried_again() {
+    let mut thread = Thread::new();
+    thread.begin_send("Hello");
+    assert_eq!(thread.take_retry(), None, "a send in flight is not retried");
+    thread.fail_send("Not connected to the engine.");
+    assert_eq!(thread.take_retry().as_deref(), Some("Hello"));
+    assert!(
+        thread.turns().is_empty(),
+        "the rejected local send is dropped"
+    );
+
+    let fixture = fixtures::chat_basic();
+    let events = session(&fixture.events, "ses_0001");
+    let mut done = Thread::from_events(&events);
+    assert_eq!(
+        done.take_retry(),
+        None,
+        "a refusal or a done turn is not retried"
+    );
+}
+
+#[test]
+fn awaiting_client_follows_the_session_status() {
+    let fixture = fixtures::client_gone();
+    let gone_at = fixture
+        .events
+        .iter()
+        .position(|e| matches!(&e.event, Event::SessionStatus(s) if s.status == conversation_model::schema::Status::AwaitingClient))
+        .expect("the fixture loses its client");
+    assert!(Thread::from_events(&fixture.events[..=gone_at]).awaiting_client());
+    assert!(!Thread::from_events(&fixture.events).awaiting_client());
+}

@@ -2,7 +2,7 @@
 
 use conversation_host::{ConversationHost, HostError, NewSession};
 use conversation_model::schema::{Block, SessionId};
-use conversation_model::{InputState, ModelCatalog, Thread, Update};
+use conversation_model::{InputState, ModelCatalog, Thread, TurnState, Update};
 use futures::StreamExt as _;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -43,6 +43,8 @@ pub struct ConversationView {
     catalog: ModelCatalog,
     wanted: Option<String>,
     _models: Option<Task<()>>,
+    reconnecting: bool,
+    reconnects: u32,
     _follow: Option<Task<()>>,
     _request: Option<Task<()>>,
     _composer_events: ui::Subscription,
@@ -89,6 +91,8 @@ impl ConversationView {
             catalog: ModelCatalog::default(),
             wanted: None,
             _models: None,
+            reconnecting: false,
+            reconnects: 0,
             _follow: None,
             _request: None,
             _composer_events: composer_events,
@@ -221,6 +225,20 @@ impl ConversationView {
         }));
     }
 
+    /// Send the last prompt again after a failure.
+    pub fn retry(&mut self, cx: &mut Context<Self>) {
+        let prompt = self.thread.borrow_mut().take_retry();
+        if let Some(prompt) = prompt {
+            self.rows_changed(cx);
+            self.send(prompt, cx);
+        }
+    }
+
+    /// Whether the connection to the host is being restored.
+    pub fn is_reconnecting(&self) -> bool {
+        self.reconnecting
+    }
+
     /// Stop the reply being written. The partial reply is kept.
     pub fn stop(&mut self, cx: &mut Context<Self>) {
         let Some(session) = self.session() else {
@@ -275,24 +293,55 @@ impl ConversationView {
         cx.emit(ConversationEvent::HostError(message.into()));
     }
 
-    /// Follow the session's updates from the last `seq` seen.
+    /// Follow the session's updates from the last `seq` seen. When the
+    /// stream ends, follow again from there after a short wait that grows
+    /// with each try, so nothing is missed and nothing is shown twice.
     fn follow(&mut self, session: SessionId, cx: &mut Context<Self>) {
         let from = self.thread.borrow().last_seq();
         let subscribe = self.host.subscribe(&session, from);
+        let wait = crate::metrics::reconnect_wait(self.reconnects);
         self._follow = Some(cx.spawn(async move |this, cx| {
-            let mut updates = match subscribe.await {
-                Ok(updates) => updates,
-                Err(error) => {
+            match subscribe.await {
+                Ok(mut updates) => {
+                    let _ = this.update(cx, |this, cx| this.connected(cx));
+                    while let Some(update) = updates.next().await {
+                        if this.update(cx, |this, cx| this.apply(update, cx)).is_err() {
+                            return;
+                        }
+                    }
+                }
+                Err(error) if error.code != "disconnected" => {
                     let _ = this.update(cx, |this, cx| this.refused(error, cx));
                     return;
                 }
-            };
-            while let Some(update) = updates.next().await {
-                if this.update(cx, |this, cx| this.apply(update, cx)).is_err() {
-                    break;
-                }
+                Err(_) => {}
             }
+            let again = this.update(cx, |this, cx| this.lost(cx)).unwrap_or(false);
+            if !again {
+                return;
+            }
+            cx.background_executor().timer(wait).await;
+            let _ = this.update(cx, |this, cx| this.follow(session, cx));
         }));
+    }
+
+    fn connected(&mut self, cx: &mut Context<Self>) {
+        if self.reconnecting {
+            self.reconnecting = false;
+            self.reconnects = 0;
+            cx.notify();
+        }
+    }
+
+    /// The stream ended. Follow again unless the session is closed.
+    fn lost(&mut self, cx: &mut Context<Self>) -> bool {
+        if self.thread.borrow().input_state() == InputState::Closed {
+            return false;
+        }
+        self.reconnecting = true;
+        self.reconnects = self.reconnects.saturating_add(1);
+        cx.notify();
+        true
     }
 
     /// Fold one update in and re-render only what moved.
@@ -310,7 +359,9 @@ impl ConversationView {
 
     fn rows_changed(&mut self, cx: &mut Context<Self>) {
         let count = self.thread.borrow().turns().len();
-        let busy = self.input_state().is_busy();
+        let state = self.input_state();
+        let busy = state.is_busy();
+        let closed = state == InputState::Closed;
         self.scroller.update(cx, |scroller, cx| {
             let known = scroller.item_count();
             if count > known {
@@ -322,9 +373,25 @@ impl ConversationView {
                 scroller.remeasure_items(count - 1..count, cx);
             }
         });
-        self.composer
-            .update(cx, |composer, cx| composer.set_busy(busy, cx));
+        self.composer.update(cx, |composer, cx| {
+            composer.set_busy(busy, cx);
+            composer.set_disabled(closed, cx);
+        });
         cx.notify();
+    }
+
+    /// The line above the composer: reconnecting, an app away, or closed.
+    fn banner(&self) -> Option<SharedString> {
+        let thread = self.thread.borrow();
+        if thread.input_state() == InputState::Closed {
+            Some(self.copy.closed.clone())
+        } else if self.reconnecting {
+            Some(self.copy.reconnecting.clone())
+        } else if thread.awaiting_client() {
+            Some(self.copy.awaiting_client.clone())
+        } else {
+            None
+        }
     }
 }
 
@@ -348,7 +415,18 @@ impl Render for ConversationView {
                         let _ = view.update(cx, |view, cx| view.resume(cx));
                     }) as OnClick
                 });
-                render_turn(index, turn, &copy, RowActions { on_continue }, cx)
+                let failed = matches!(turn.state, TurnState::Failed(_) | TurnState::Rejected(_));
+                let on_retry = (last && failed && !turn.prompt.is_empty()).then(|| {
+                    let view = view.clone();
+                    Box::new(move |_: &mut Window, cx: &mut App| {
+                        let _ = view.update(cx, |view, cx| view.retry(cx));
+                    }) as OnClick
+                });
+                let actions = RowActions {
+                    on_continue,
+                    on_retry,
+                };
+                render_turn(index, turn, &copy, actions, cx)
             },
         )
         .with_bottom_fade(cx.theme().background);
@@ -359,6 +437,16 @@ impl Render for ConversationView {
             .size_full()
             .min_h_0()
             .child(div().flex_1().min_h_0().w_full().child(list))
+            .when_some(self.banner(), |this, banner| {
+                this.child(
+                    div()
+                        .id("conversation-banner")
+                        .w_full()
+                        .text_sm()
+                        .text_color(cx.theme().muted_foreground)
+                        .child(banner),
+                )
+            })
             .child(div().w_full().child(self.composer.clone()))
     }
 }

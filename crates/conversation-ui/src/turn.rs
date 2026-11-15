@@ -15,6 +15,9 @@ use crate::ConversationCopy;
 /// Element id of the continue button under the last turn.
 pub(crate) const CONTINUE_ID: &str = "conversation-continue";
 
+/// Element id of the try-again button under a failed last turn.
+pub(crate) const RETRY_ID: &str = "conversation-retry";
+
 /// A row's click handler.
 pub(crate) type OnClick = Box<dyn Fn(&mut Window, &mut App) + 'static>;
 
@@ -22,6 +25,8 @@ pub(crate) type OnClick = Box<dyn Fn(&mut Window, &mut App) + 'static>;
 pub(crate) struct RowActions {
     /// Called when continue is pressed, on the last turn only.
     pub(crate) on_continue: Option<OnClick>,
+    /// Called when try again is pressed, on a failed last turn only.
+    pub(crate) on_retry: Option<OnClick>,
 }
 
 /// Render one turn: the prompt on the trailing side, the reply below it, and
@@ -87,6 +92,7 @@ pub(crate) fn render_turn(
     }
 
     let note = match &turn.state {
+        _ if turn.retrying.is_some() => Some(copy.retrying.clone()),
         TurnState::Stopped => Some(copy.stopped.clone()),
         TurnState::Truncated => Some(copy.truncated.clone()),
         TurnState::Limited => Some(copy.limited.clone()),
@@ -116,6 +122,16 @@ pub(crate) fn render_turn(
                 .small()
                 .label(copy.continue_label.clone())
                 .on_click(move |_, window, cx| on_continue(window, cx)),
+        );
+    }
+    if let Some(on_retry) = actions.on_retry {
+        has_status = true;
+        status = status.child(
+            Button::new(RETRY_ID)
+                .outline()
+                .small()
+                .label(copy.try_again.clone())
+                .on_click(move |_, window, cx| on_retry(window, cx)),
         );
     }
     if has_status {

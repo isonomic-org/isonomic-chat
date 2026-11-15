@@ -24,6 +24,16 @@ pub struct ConversationCopy {
     pub limited: SharedString,
     /// The label of a block this build cannot show.
     pub unknown: SharedString,
+    /// The button that sends a failed prompt again.
+    pub try_again: SharedString,
+    /// The note while the host retries after a transient error.
+    pub retrying: SharedString,
+    /// The note while the connection to the host is being restored.
+    pub reconnecting: SharedString,
+    /// The note while the app a tool needs is away.
+    pub awaiting_client: SharedString,
+    /// The note when the session takes no more input.
+    pub closed: SharedString,
     /// The picked model is not one this app may use.
     pub model_denied: SharedString,
     /// The picked model does not exist.
@@ -44,6 +54,11 @@ impl Default for ConversationCopy {
             refused: "The model declined to answer this.".into(),
             limited: "Stopped at this conversation's limit.".into(),
             unknown: "Content this version can't show".into(),
+            try_again: "Try again".into(),
+            retrying: "Having trouble reaching the model. Trying again…".into(),
+            reconnecting: "Reconnecting…".into(),
+            awaiting_client: "Waiting for an app this chat needs to come back.".into(),
+            closed: "This conversation can't continue. Start a new one.".into(),
             model_denied: "This app isn't allowed to use that model.".into(),
             model_unknown: "That model isn't available any more. Pick another.".into(),
             model_unavailable: "That model isn't installed yet. Download it, or pick another."

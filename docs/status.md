@@ -2,6 +2,20 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-15 · Retry and error states
+
+**Built**
+
+- Model: a turn shows `retrying` while the host retries a transient error, cleared when the reply or the turn's end arrives. `Thread::awaiting_client` follows `session.status`. `Thread::take_retry` gives the prompt of a failed or rejected last turn; a rejected send the host never opened is dropped first, so trying again replaces it.
+- View: "Try again" under a failed or rejected last turn. A note while the host retries. A line above the composer while reconnecting, while a tool's app is away, or once the session is closed, with the composer disabled when closed.
+- Reconnect: when a session's stream ends, the view follows it again from the last `seq` it saw, waiting 250 ms and doubling to at most 8 s. Nothing is missed or shown twice. A refusal other than `disconnected` stops it, and so does a closed session.
+- `ScriptedHost::disconnect` ends every open stream, for tests.
+- CLAUDE.md: the budget rule (one paid check run per push).
+
+**Not yet**
+
+- The first-run hand-off from the window: its shape is not specified here (asked in Worker reports).
+
 ## 2026-11-15 · Model choice
 
 **Built**
