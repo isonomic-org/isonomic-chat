@@ -2,6 +2,12 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · Model names, and the Mac window checked
+
+- A model's name is shown without its quantisation tag: "Qwen3.5 2B (Q4_K_M)" reads "Qwen3.5 2B" (`conversation_model::display_name`, used by the SDK adapter; ids unchanged).
+- A test checks that every icon Chat draws resolves in Isonomic UI's catalog (`AllAssets`). Chat registers no asset source; the window does.
+- Two screenshot states at the Mac window's size (1100 wide, its 2200 px capture at 2x): `home-mac`, `thread-mac`. At that size the 720 column fills most of the 812 content area, as the design's rule gives.
+
 ## 2026-11-16 · The wordmark, by Omar's brand rule
 
 - `SDK_REF` moves to `a3ac3bf` (`UI_REF` `a1b30e1`); harness unchanged.
