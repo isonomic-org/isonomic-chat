@@ -22,7 +22,7 @@ mod metrics;
 mod shell;
 pub mod store;
 
-pub use app::{APP_ID, Chat, LINK_PREFIX};
+pub use app::{APP_ICON, APP_ID, Chat, LINK_PREFIX};
 pub use conversation_host::ConversationHost;
 
 use std::rc::Rc;
