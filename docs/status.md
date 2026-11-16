@@ -2,6 +2,13 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · Fixes found while laying out the screens
+
+- Rail icon: the manifest names `chat`, which Isonomic UI's icon catalog has (`message-circle` is not in it, so the window's rail showed a "C"). A test checks that `icons/<name>.svg` resolves.
+- A model picked in one chat now runs every new chat. The shell kept the pick but never handed it to a new conversation, and a new conversation's catalog arrives after its first send could read it. The view now keeps a pick until its catalog has loaded. Tested end to end.
+- A compaction's divider sits after the last turn the host confirmed, never after a send in flight.
+- The final layouts wait for the version 0.2 layout reference (`docs/design/v0.2/`).
+
 ## 2026-11-16 · SDK 439a069: the QA'd components
 
 - `SDK_REF` moves to `439a069` (its `UI_REF` is isonomic-ui `2e3116b`, with all 86 version 1 components through QA); harness unchanged at `ae4f1a7`. `Cargo.lock` needs no change.
