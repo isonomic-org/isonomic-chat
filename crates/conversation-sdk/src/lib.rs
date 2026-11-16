@@ -80,12 +80,12 @@ impl ConversationHost for SdkHost {
     fn create(&self, request: NewSession) -> HostFuture<SessionId> {
         let agents = self.agents.clone();
         async move {
-            // `request.model` reaches the engine once `sessions.create` carries
-            // `model` (isonomic-sdk, in review); until then the preset's model runs.
+            // `model` overrides the preset's for this session; `None` keeps it.
             let request = CreateSession {
                 preset: PresetId::new(request.preset),
                 title: request.title,
                 location_opt_in: false,
+                model: request.model,
             };
             agents.create_with(request).await.map_err(host_error)
         }
@@ -154,6 +154,10 @@ impl ConversationHost for SdkHost {
                 return Ok(ModelCatalog::default());
             };
             let listed = models.list().await.map_err(host_error)?;
+            let recommended = listed
+                .iter()
+                .find(|m| m.recommended && m.supports("chat"))
+                .map(|m| m.id.clone());
             let mut options = Vec::new();
             for model in listed.into_iter().filter(|m| m.supports("chat")) {
                 // A model whose state cannot be read is offered as unknown,
@@ -166,9 +170,7 @@ impl ConversationHost for SdkHost {
                     availability: state.map_or(Availability::Unknown, availability),
                 });
             }
-            // Apps cannot read the engine's recommendation yet (`models.recommended`
-            // is shell-only), so none is given.
-            Ok(ModelCatalog::new(options, None))
+            Ok(ModelCatalog::new(options, recommended))
         }
         .boxed_local()
     }
