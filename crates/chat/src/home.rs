@@ -1,7 +1,7 @@
 //! Home: the greeting, the composer and the starter chips (Figma
 //! `ChatView/01_NewChat` and `02_Composing`).
 
-use ui::component::button::Button;
+use ui::component::button::{Button, ButtonVariants as _};
 use ui::component::menu::{DropdownMenu as _, PopupMenuItem};
 use ui::component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
 use ui::prelude::*;
@@ -81,5 +81,37 @@ pub(crate) fn render(
                 .child(composer.clone()),
         )
         .child(starters(composer))
+        .into_any_element()
+}
+
+/// Home when no chat model can answer: in place of a composer that cannot
+/// reply, one button asks the window to install the recommended model.
+pub(crate) fn render_install(
+    model: &conversation_model::ModelOption,
+    cx: &mut Context<crate::ChatShell>,
+) -> AnyElement {
+    let id = model.id.clone();
+    let label = copy::install_model(&model.name);
+    v_flex()
+        .id("home-install")
+        .size_full()
+        .items_center()
+        .justify_center()
+        .gap_4()
+        .px_6()
+        .child(
+            div()
+                .text_color(cx.theme().muted_foreground)
+                .child(copy::NO_MODEL),
+        )
+        .child(
+            Button::new("install-model")
+                .primary()
+                .label(label)
+                .on_click(cx.listener(move |shell, _, _, cx| {
+                    shell.install_model(&id);
+                    cx.notify();
+                })),
+        )
         .into_any_element()
 }

@@ -344,7 +344,8 @@ impl ConversationView {
         }
     }
 
-    /// The stream ended. Follow again unless the session is closed.
+    /// The stream ended. Follow again unless the session is closed (failed,
+    /// or purged: `Update::Ended` closes it).
     fn lost(&mut self, cx: &mut Context<Self>) -> bool {
         if self.thread.borrow().input_state() == InputState::Closed {
             return false;

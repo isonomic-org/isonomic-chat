@@ -35,6 +35,13 @@ pub const NO_FILES: &str = "Files you add to this chat appear here.";
 /// The Tools tab with nothing in it.
 pub const NO_TOOLS: &str = "Tools this chat can use appear here.";
 /// Shown where the conversation view will be.
+pub const NO_MODEL: &str = "Chat needs a model on this computer before it can reply.";
+
+/// The button that asks the window to install a model.
+pub fn install_model(name: &str) -> String {
+    format!("Install {name}")
+}
+
 pub const THREAD_PENDING: &str = "This example chat has no conversation behind it.";
 
 /// Chat's words for the kit's conversation view.

@@ -194,3 +194,28 @@ fn the_window_routes_chat_links_to_chat(cx: &mut TestAppContext) {
         assert_eq!(chat.opened(), ["isonomic://chat/s1"])
     });
 }
+
+#[ui::test]
+fn a_model_that_is_not_installed_is_asked_of_the_window(cx: &mut TestAppContext) {
+    let host = TestHost::new();
+    host.engine().models().uninstall("chat-small");
+    let (_open, shell) = mount(cx, &host);
+    wait_until(cx, &shell, |shell| shell.missing_model().is_some());
+    shell.update(cx, |shell, _| {
+        let model = shell
+            .missing_model()
+            .expect("a model to install")
+            .id
+            .clone();
+        assert!(shell.install_model(&model));
+    });
+    let requests = host.requests();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].0, APP_ID);
+    assert_eq!(
+        requests[0].1,
+        isonomic_app::WindowRequest::InstallModel {
+            model: "chat-small".into()
+        }
+    );
+}

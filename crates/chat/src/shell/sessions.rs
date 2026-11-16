@@ -69,6 +69,47 @@ impl ChatShell {
         self._load = Some(task);
     }
 
+    /// Ask the window to install a model. `false` if there is no window to
+    /// ask, or it could not take the request now.
+    pub fn install_model(&mut self, model: &str) -> bool {
+        let asked = self
+            .backend
+            .as_ref()
+            .and_then(|b| b.install_model.as_ref())
+            .is_some_and(|install| install(model));
+        self.install_asked = asked.then(|| model.to_owned().into());
+        asked
+    }
+
+    /// The model Chat last asked the window to install, if it took it.
+    pub fn install_asked(&self) -> Option<&SharedString> {
+        self.install_asked.as_ref()
+    }
+
+    /// The model to install when no chat model can answer: the recommended
+    /// one, else the first listed. `None` while one can answer, or before
+    /// the catalog has loaded.
+    pub fn missing_model(&self) -> Option<&conversation_model::ModelOption> {
+        let catalog = self.catalog.as_ref()?;
+        if catalog.choose(None).is_some() {
+            return None;
+        }
+        catalog.recommended().or_else(|| catalog.options().first())
+    }
+
+    /// Load the models, to know whether any chat model can answer.
+    pub(super) fn load_models(&mut self, backend: &Backend, cx: &mut Context<Self>) {
+        let request = backend.host.models();
+        let task = cx.spawn(async move |this, cx| {
+            let catalog = request.await.unwrap_or_default();
+            let _ = this.update(cx, |this, cx| {
+                this.catalog = Some(catalog);
+                cx.notify();
+            });
+        });
+        self._models = Some(task);
+    }
+
     /// The model new chats run on, once one has been picked.
     pub fn model(&self) -> Option<&str> {
         self.model.as_deref()
@@ -150,8 +191,11 @@ impl ChatShell {
                     *local.borrow_mut() = named;
                 }
                 ConversationEvent::ModelSelected(model) => this.model = Some(model.to_string()),
-                // Downloads belong to the window; Chat shows the words only.
-                ConversationEvent::HostError(_) | ConversationEvent::ModelUnavailable(_) => {}
+                // Downloads belong to the window: ask it to offer this one.
+                ConversationEvent::ModelUnavailable(model) => {
+                    this.install_model(model);
+                }
+                ConversationEvent::HostError(_) => {}
             }
             cx.notify();
         });

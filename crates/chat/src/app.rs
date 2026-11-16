@@ -79,6 +79,14 @@ impl isonomic_app::App for Chat {
         let backend = crate::Backend {
             host: Rc::new(SdkHost::new(cx.client().agents()).with_models(cx.client().models())),
             store: Rc::new(crate::store::SqlStore::new(cx.client().sql())),
+            install_model: Some({
+                let app = cx.clone();
+                Rc::new(move |model: &str| {
+                    app.request(isonomic_app::WindowRequest::InstallModel {
+                        model: model.to_owned(),
+                    })
+                })
+            }),
         };
         let shell = app.new(|shell| ChatShell::new(Some(backend), window, shell));
         let focus = shell.read(app).focus_handle(app);

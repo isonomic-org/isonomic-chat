@@ -75,6 +75,34 @@ fn the_catalog_lists_chat_models_with_their_state() {
         conversation_model::Availability::Unknown,
         "its state comes from models.info"
     );
+    // The engine's recommendation comes from `ModelInfo.recommended`.
+    for profile in ["low", "standard", "high"] {
+        host.engine().models().recommend(profile, None);
+    }
+    let none = host.runtime().block_on(sdk.models()).expect("models");
+    assert!(
+        none.recommended().is_none(),
+        "no recommendation, none shown"
+    );
+    for profile in ["low", "standard", "high"] {
+        host.engine()
+            .models()
+            .recommend(profile, Some("chat-small"));
+    }
+    let catalog = host.runtime().block_on(sdk.models()).expect("models");
+    assert_eq!(
+        catalog.recommended().map(|m| m.id.as_str()),
+        Some("chat-small")
+    );
+    // A picked model goes to sessions.create.
+    let new = NewSession {
+        preset: "chat".into(),
+        title: None,
+        model: Some("chat-small".into()),
+    };
+    host.runtime()
+        .block_on(sdk.create(new))
+        .expect("a session on the picked model");
     // Without the models interface there is no catalog, not an error.
     let bare = SdkHost::new(app.client().agents());
     assert!(

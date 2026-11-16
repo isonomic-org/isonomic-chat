@@ -252,3 +252,111 @@ fn a_late_cancel_does_not_stop_the_continue_that_follows() {
         assert_eq!(thread.turns()[1].state, TurnState::Done);
     });
 }
+
+#[test]
+fn a_purge_ends_the_stream_and_closes_the_thread() {
+    let host = TestHost::new();
+    let (app, _) = host.context::<Probe>();
+    let sdk = SdkHost::new(app.client().agents());
+    host.runtime().block_on(async {
+        let new = NewSession {
+            preset: "chat".into(),
+            title: None,
+            model: None,
+        };
+        let session = sdk.create(new).await.expect("create");
+        let mut updates = sdk.subscribe(&session, 0).await.expect("subscribe");
+        let mut thread = Thread::for_session(session.clone());
+        app.client().agents().purge(None).await.expect("purge");
+        while let Some(update) = updates.next().await {
+            thread.apply(&update);
+        }
+        assert_eq!(thread.input_state(), InputState::Closed);
+    });
+}
+
+#[test]
+fn a_session_keeps_the_model_it_was_created_with() {
+    let host = TestHost::new();
+    // An app without the models capability may not pick a model.
+    let (probe, _) = host.context::<Probe>();
+    let denied = host
+        .runtime()
+        .block_on(SdkHost::new(probe.client().agents()).create(NewSession {
+            preset: "chat".into(),
+            title: None,
+            model: Some("chat-small".into()),
+        }));
+    assert_eq!(
+        denied.expect_err("no models capability").code,
+        "capability_denied"
+    );
+
+    let (app, _) = host.context::<Modeler>();
+    let sdk = SdkHost::new(app.client().agents());
+    host.runtime().block_on(async {
+        let new = NewSession {
+            preset: "chat".into(),
+            title: Some("Picked".into()),
+            model: Some("chat-small".into()),
+        };
+        let picked = sdk.create(new).await.expect("create");
+        let plain = NewSession {
+            preset: "chat".into(),
+            title: Some("Plain".into()),
+            model: None,
+        };
+        sdk.create(plain).await.expect("create");
+        let listed = sdk.list(SessionQuery::default()).await.expect("list");
+        let model = |id: &conversation_model::schema::SessionId| {
+            listed
+                .iter()
+                .find(|e| &e.id == id)
+                .and_then(|e| e.model.clone())
+        };
+        assert_eq!(model(&picked).as_deref(), Some("chat-small"));
+        assert!(
+            listed
+                .iter()
+                .any(|e| e.title.as_deref() == Some("Plain") && e.model.is_none())
+        );
+    });
+}
+
+#[test]
+fn a_gap_ends_the_stream_so_the_view_follows_again() {
+    use isonomic_client::SessionUpdate;
+    assert_eq!(
+        conversation_sdk::update(SessionUpdate::Gap { after: 3, next: 5 }),
+        None
+    );
+    assert_eq!(
+        conversation_sdk::update(SessionUpdate::Ended(
+            isonomic_proto::agents::EndReason::Purged
+        )),
+        Some(conversation_model::Update::Ended)
+    );
+}
+
+/// An app that may use any model.
+struct Modeler;
+
+impl isonomic_app::App for Modeler {
+    fn manifest() -> isonomic_app::Manifest {
+        let mut manifest = Probe::manifest();
+        manifest.id = "com.example.modeler".into();
+        manifest.capabilities.models = Some(isonomic_app::ModelAccess {
+            any: true,
+            ..Default::default()
+        });
+        manifest
+    }
+
+    fn build(
+        cx: isonomic_app::AppContext,
+        window: &mut ui::Window,
+        app: &mut ui::App,
+    ) -> ui::AnyView {
+        Probe::build(cx, window, app)
+    }
+}

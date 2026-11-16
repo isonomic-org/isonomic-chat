@@ -68,11 +68,15 @@ pub fn host_error(error: ClientError) -> HostError {
     }
 }
 
-/// An SDK session update as a kit update.
-pub fn update(update: SessionUpdate) -> Update {
+/// An SDK session update as a kit update, or `None` to end the stream. A
+/// gap ends it, so the view follows again from its last `seq` and reads the
+/// events that were skipped; a purge ends it for good.
+pub fn update(update: SessionUpdate) -> Option<Update> {
     match update {
-        SessionUpdate::Event(event) => Update::Event(event),
-        SessionUpdate::Delta(delta) => Update::Delta(delta),
+        SessionUpdate::Event(event) => Some(Update::Event(event)),
+        SessionUpdate::Delta(delta) => Some(Update::Delta(delta)),
+        SessionUpdate::Ended(_) => Some(Update::Ended),
+        SessionUpdate::Gap { .. } => None,
     }
 }
 
@@ -80,12 +84,12 @@ impl ConversationHost for SdkHost {
     fn create(&self, request: NewSession) -> HostFuture<SessionId> {
         let agents = self.agents.clone();
         async move {
-            // `request.model` reaches the engine once `sessions.create` carries
-            // `model` (isonomic-sdk, in review); until then the preset's model runs.
+            // `model` overrides the preset's for this session; `None` keeps it.
             let request = CreateSession {
                 preset: PresetId::new(request.preset),
                 title: request.title,
                 location_opt_in: false,
+                model: request.model,
             };
             agents.create_with(request).await.map_err(host_error)
         }
@@ -136,6 +140,7 @@ impl ConversationHost for SdkHost {
                     title: summary.title,
                     updated_at: summary.updated_at,
                     archived: summary.archived,
+                    model: summary.model,
                 })
                 .collect())
         }
@@ -154,6 +159,10 @@ impl ConversationHost for SdkHost {
                 return Ok(ModelCatalog::default());
             };
             let listed = models.list().await.map_err(host_error)?;
+            let recommended = listed
+                .iter()
+                .find(|m| m.recommended && m.supports("chat"))
+                .map(|m| m.id.clone());
             let mut options = Vec::new();
             for model in listed.into_iter().filter(|m| m.supports("chat")) {
                 // A model whose state cannot be read is offered as unknown,
@@ -166,9 +175,7 @@ impl ConversationHost for SdkHost {
                     availability: state.map_or(Availability::Unknown, availability),
                 });
             }
-            // Apps cannot read the engine's recommendation yet (`models.recommended`
-            // is shell-only), so none is given.
-            Ok(ModelCatalog::new(options, None))
+            Ok(ModelCatalog::new(options, recommended))
         }
         .boxed_local()
     }
@@ -180,9 +187,12 @@ impl ConversationHost for SdkHost {
                 .subscribe(&session, from_seq)
                 .await
                 .map_err(host_error)?;
-            let updates = stream::unfold(stream, |mut stream| async move {
-                let next = stream.next().await?;
-                Some((update(next), stream))
+            let updates = stream::unfold(Some(stream), |stream| async move {
+                let mut stream = stream?;
+                let next = update(stream.next().await?)?;
+                // Nothing follows an end.
+                let rest = (next != Update::Ended).then_some(stream);
+                Some((next, rest))
             });
             Ok(updates.boxed_local())
         }
