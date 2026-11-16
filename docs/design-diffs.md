@@ -118,7 +118,7 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | --- | --- | --- | --- |
 | N1 | `EmptyState` 360 wide, padding 28 / 24, gap 8; tile 44, icon 22; text wraps at 300; primary button with an icon | Same, with the download icon | Fixed |
 | N2 | Wording "Nothing here yet" | "Install a model to start" / "Install Medium" | Accepted (content) |
-| N3 | After the button: not drawn | The button says "Downloading" and stands still | Fixed (the catalog does not refresh until the kit's host can watch models) |
+| N3 | After the button: not drawn | The button says "Downloading" and stands still; home leaves it the moment the model is ready | Fixed |
 | N4 | Errors as a toast with Retry | In place: the sidebar foot, home's footer and the status bar, each with Try again; a failed save is a quiet line | Accepted (version 1 keeps errors where they happen) |
 | N5 | Page not found | Not built; a deleted chat returns home | Accepted (no route reaches it) |
 
@@ -139,6 +139,6 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | T11 | Thinking row: orb, label, seconds, expands | Isonomic UI's thinking indicator; no seconds; not expandable | Accepted (no expandable row in Isonomic UI) |
 | T12 | Stream cursor block | The text view's fade | Accepted |
 | T13 | Stopped note in the reply | The last turn says it in the status bar with Continue; earlier turns keep the note | Accepted (the bar is the one stop and error bar) |
-| T14 | Run status bar 44 high; Running, Stopped, Error, Done; several buttons | Isonomic UI's run status bar at `b4c9670`: one action | Needs UI: alignment already with the UI worker |
+| T14 | Run status bar: Stop while running; Dismiss, Retry, Resume when stopped; Dismiss, Retry on an error; Steer | Isonomic UI's aligned run status bar at `66e93d3`, the same buttons; cut short has Dismiss and Continue; Steer left out | Fixed / Accepted (no steering in version 1) |
 | T15 | Edit box: input 16 / 24 at the padding edge; 34 high buttons; small shadow | Same (buttons 32: token) | Fixed |
 | T16 | Composer dock 720, disclaimer 8 below, 12 bottom padding | Same | — |

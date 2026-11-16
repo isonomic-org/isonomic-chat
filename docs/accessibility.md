@@ -10,8 +10,8 @@ Bound on Chat's root, so they work from any control inside it (`crates/chat/src/
 | --- | --- |
 | Mod-Shift-O | New chat: home, composer focused |
 | Mod-K | Search: the palette, its field focused |
-| Mod-. | Expand or collapse the sidebar (design 0.2; was Mod-\\) |
-| Alt-Up, Alt-Down | Open the chat above or below the open one, in sidebar order (from home, Down opens the first) |
+| Mod-., Mod-B | Expand or collapse the sidebar: Mod-. is the design's key; Mod-B does the same, since on macOS Cmd-. also means cancel |
+| Alt-Up, Alt-Down | Open the chat above or below the open one, in sidebar order (from home, Down opens the first); they work with focus in the composer (tested) |
 | Enter, Shift-Enter | In the composer: send, new line |
 | Escape | Composer while a reply is written: stop. Palette: close, focus back where it was. Rename field and edit box: cancel |
 | Mod-Enter | Edit box: save |
@@ -23,7 +23,7 @@ Bound on Chat's root, so they work from any control inside it (`crates/chat/src/
 - **Header:** Tab reaches the title button; its menu holds Pin or Unpin, Rename and Delete. Rename opens a field: Enter keeps the new title, Escape leaves it as it was.
 - **Search palette:** opens on its field; typing narrows, Up and Down move, Enter opens, Escape closes. Focus returns to where it was. Tab is not held inside the palette (request below).
 - **Home:** composer, then Send once there is text, then the model picker. The picker opens with Enter or Space onto the chosen model; Up, Down, Home and End move; Enter picks. When models could not be listed, Try again sits where the picker would be. With no model installed, Tab reaches Install, which then reads Downloading and is disabled.
-- **Thread:** the composer and its Send or Stop; the status bar's one action (Continue or Try again); under each finished reply, Copy, Try again and the pager's arrows; under each prompt, Copy and Edit, which show while one of them has focus; each code block's Copy. Edit opens a field with focus in it; Tab reaches Cancel and Save.
+- **Thread:** the composer and its Send or Stop; the status bar's buttons (Stop; Dismiss, Retry, Resume; Dismiss, Try again); under each finished reply, Copy, Try again and the pager's arrows; under each prompt, Copy and Edit, which show while one of them has focus; each code block's Copy. Edit opens a field with focus in it; Tab reaches Cancel and Save.
 - **Not reached:** turns scrolled out of the virtual list are not laid out, so their buttons are not Tab stops until scrolled into view.
 
 ## Accessible names

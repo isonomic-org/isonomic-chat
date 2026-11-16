@@ -17,7 +17,7 @@ What this repository needs from others, and what others asked of it. Newest firs
 
 ### O14 · Kit: a host that reports model changes
 
-**To:** this repository (conversation kit), with the SDK's models watch. **Status:** open. `ConversationHost::models` is one-shot, so after Install the catalog never shows the model as ready until Chat restarts. Add a models stream or watch to the host.
+**To:** this repository (conversation kit). **Status:** done: `ConversationHost::availability` (over `models.info`), and Chat asks it every second while a model is downloading or asked of the window, stopping when it settles. The SDK has no models watch; if it gains one, the poll goes.
 
 ### O12 · Isonomic UI: a run status bar
 

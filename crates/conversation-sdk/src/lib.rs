@@ -127,13 +127,30 @@ impl ConversationHost for SdkHost {
     fn list(&self, query: SessionQuery) -> HostFuture<Vec<SessionEntry>> {
         let agents = self.agents.clone();
         async move {
-            let filter = ListSessions {
-                archived: Some(query.archived),
-                text: query.text,
-                limit: query.limit,
-                ..Default::default()
-            };
-            let (items, _next) = agents.list(filter).await.map_err(host_error)?;
+            // Page through until the list is complete, or `limit` is reached:
+            // the engine sends at most a page at a time.
+            let wanted = (query.limit > 0).then_some(query.limit as usize);
+            let mut items = Vec::new();
+            let mut cursor = None;
+            loop {
+                let filter = ListSessions {
+                    archived: Some(query.archived),
+                    text: query.text.clone(),
+                    cursor: cursor.take(),
+                    ..Default::default()
+                };
+                let (page, next) = agents.list(filter).await.map_err(host_error)?;
+                let empty = page.is_empty();
+                items.extend(page);
+                let full = wanted.is_some_and(|wanted| items.len() >= wanted);
+                match next {
+                    Some(next) if !full && !empty => cursor = Some(next),
+                    _ => break,
+                }
+            }
+            if let Some(wanted) = wanted {
+                items.truncate(wanted);
+            }
             Ok(items
                 .into_iter()
                 .map(|summary| SessionEntry {
@@ -161,6 +178,18 @@ impl ConversationHost for SdkHost {
                 .fork(&session, at, Some(reason))
                 .await
                 .map_err(host_error)
+        }
+        .boxed_local()
+    }
+
+    fn availability(&self, model: &str) -> HostFuture<Availability> {
+        let (models, model) = (self.models.clone(), model.to_owned());
+        async move {
+            let Some(models) = models else {
+                return Ok(Availability::Unknown);
+            };
+            let detail = models.info(&model).await.map_err(host_error)?;
+            Ok(availability(detail.state))
         }
         .boxed_local()
     }

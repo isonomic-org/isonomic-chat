@@ -61,6 +61,10 @@ pub struct ConversationView {
     owners: Vec<(SessionId, usize)>,
     /// The prompt being edited, if any.
     editing: Option<Editing>,
+    /// A load that failed, to try again.
+    load_failed: Option<Start>,
+    /// The last turn (index, revision) whose status bar was dismissed.
+    dismissed: Option<(usize, u64)>,
     _composer_events: ui::Subscription,
 }
 
@@ -117,6 +121,8 @@ impl ConversationView {
             slots: Vec::new(),
             owners: Vec::new(),
             editing: None,
+            load_failed: None,
+            dismissed: None,
             _composer_events: composer_events,
         };
         view.load_models(cx);

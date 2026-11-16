@@ -104,3 +104,12 @@ pub(crate) fn menu_width() -> Pixels {
 pub(crate) fn rename_width() -> Pixels {
     px(300.)
 }
+
+/// How often a model on its way is asked for its state.
+pub(crate) fn model_poll() -> std::time::Duration {
+    std::time::Duration::from_secs(1)
+}
+
+/// Polls to wait for the window to start a download Chat asked for, before
+/// offering Install again (one minute at `model_poll`).
+pub(crate) const ASK_POLLS: u32 = 60;

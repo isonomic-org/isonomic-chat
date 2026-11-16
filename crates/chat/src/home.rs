@@ -182,7 +182,7 @@ pub(crate) fn render_install(
                             .label(label)
                             .disabled(asked)
                             .on_click(cx.listener(move |shell, _, _, cx| {
-                                shell.install_model(&id);
+                                shell.install_model(&id, cx);
                                 cx.notify();
                             })),
                     ),

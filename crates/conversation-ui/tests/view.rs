@@ -5,7 +5,7 @@ extern crate ui as gpui;
 
 use conversation_host::{ConversationHost, ScriptedHost, ScriptedReply};
 use conversation_model::{InputState, TurnState};
-use conversation_ui::{ConversationCopy, ConversationEvent, ConversationView};
+use conversation_ui::{ConversationCopy, ConversationEvent, ConversationView, StatusButton};
 use std::cell::RefCell;
 use std::rc::Rc;
 use ui::test::TestWindowExt as _;
@@ -13,6 +13,14 @@ use ui::{
     AppContext as _, Bounds, Entity, TestAppContext, Window, WindowBounds, WindowHandle,
     WindowOptions, base::Root, px, size,
 };
+
+/// A status bar button's element id, or one that matches nothing when the
+/// bar does not show it.
+fn button(view: &Entity<ConversationView>, cx: &ui::App, which: StatusButton) -> ui::ElementId {
+    view.read(cx)
+        .status_button(which)
+        .unwrap_or_else(|| ui::ElementId::from("not-shown"))
+}
 
 struct Harness {
     window: WindowHandle<Root>,
@@ -155,10 +163,7 @@ fn stop_keeps_the_partial_reply_and_continue_finishes_it(cx: &mut TestAppContext
     assert_eq!(h.state(cx), InputState::Continuable);
 
     h.frame(cx, |window, cx| {
-        window.click(
-            conversation_ui::action_button(conversation_ui::CONTINUE_ID),
-            cx,
-        )
+        window.click(button(&h.view, cx, StatusButton::Continue), cx)
     });
     cx.run_until_parked();
     assert_eq!(h.state(cx), InputState::Busy);
@@ -183,11 +188,11 @@ fn reasoning_shows_before_the_answer(cx: &mut TestAppContext) {
     assert!(reply.is_empty());
     let thinking = cx.update(|cx| h.view.read(cx).thread().turns()[0].thinking());
     assert_eq!(thinking, "Check the ");
-    h.frame(cx, |window, _| {
+    h.frame(cx, |window, cx| {
         assert!(window.try_find("stop").is_some());
         assert!(
             window
-                .try_find(conversation_ui::action_button(conversation_ui::CONTINUE_ID))
+                .try_find(button(&h.view, cx, StatusButton::Continue))
                 .is_none()
         );
     });
@@ -321,20 +326,17 @@ fn a_refused_send_can_be_tried_again(cx: &mut TestAppContext) {
     // Nothing scripted: the host refuses, and try again appears.
     h.send(cx, "Hello");
     assert!(matches!(h.last(cx).1, TurnState::Rejected(_)));
-    h.frame(cx, |window, _| {
+    h.frame(cx, |window, cx| {
         assert!(
             window
-                .try_find(conversation_ui::action_button(conversation_ui::RETRY_ID))
+                .try_find(button(&h.view, cx, StatusButton::TryAgain))
                 .is_some()
         )
     });
 
     h.host.script(ScriptedReply::text("Hi there."));
     h.frame(cx, |window, cx| {
-        window.click(
-            conversation_ui::action_button(conversation_ui::RETRY_ID),
-            cx,
-        )
+        window.click(button(&h.view, cx, StatusButton::TryAgain), cx)
     });
     cx.run_until_parked();
     h.host.finish();
@@ -342,10 +344,10 @@ fn a_refused_send_can_be_tried_again(cx: &mut TestAppContext) {
     let turns = cx.update(|cx| h.view.read(cx).thread().turns().len());
     assert_eq!(turns, 1, "the rejected send is replaced, not repeated");
     assert_eq!(h.last(cx), ("Hi there.".into(), TurnState::Done));
-    h.frame(cx, |window, _| {
+    h.frame(cx, |window, cx| {
         assert!(
             window
-                .try_find(conversation_ui::action_button(conversation_ui::RETRY_ID))
+                .try_find(button(&h.view, cx, StatusButton::TryAgain))
                 .is_none()
         )
     });
@@ -394,10 +396,7 @@ fn stop_at_the_first_delta_then_continue_finishes_in_the_same_turn(cx: &mut Test
     assert_eq!(h.last(cx), ("Welcome ".into(), TurnState::Stopped));
 
     h.frame(cx, |window, cx| {
-        window.click(
-            conversation_ui::action_button(conversation_ui::CONTINUE_ID),
-            cx,
-        )
+        window.click(button(&h.view, cx, StatusButton::Continue), cx)
     });
     cx.run_until_parked();
     assert_eq!(
@@ -443,10 +442,7 @@ fn a_refused_continue_shows_why_on_the_turn(cx: &mut TestAppContext) {
         "The reply is complete.",
     ));
     h.frame(cx, |window, cx| {
-        window.click(
-            conversation_ui::action_button(conversation_ui::CONTINUE_ID),
-            cx,
-        )
+        window.click(button(&h.view, cx, StatusButton::Continue), cx)
     });
     cx.run_until_parked();
     let refusal = cx.update(|cx| h.view.read(cx).thread().turns()[0].refusal.clone());
@@ -456,10 +452,7 @@ fn a_refused_continue_shows_why_on_the_turn(cx: &mut TestAppContext) {
     )));
     // Continuing again clears it once the host opens the turn.
     h.frame(cx, |window, cx| {
-        window.click(
-            conversation_ui::action_button(conversation_ui::CONTINUE_ID),
-            cx,
-        )
+        window.click(button(&h.view, cx, StatusButton::Continue), cx)
     });
     cx.run_until_parked();
     h.host.finish();
@@ -480,10 +473,7 @@ fn a_reply_cut_at_the_limit_offers_continue(cx: &mut TestAppContext) {
     assert_eq!(h.last(cx), ("One two ".into(), TurnState::Truncated));
     assert_eq!(h.state(cx), InputState::Continuable);
     h.frame(cx, |window, cx| {
-        window.click(
-            conversation_ui::action_button(conversation_ui::CONTINUE_ID),
-            cx,
-        )
+        window.click(button(&h.view, cx, StatusButton::Continue), cx)
     });
     cx.run_until_parked();
     h.host.finish();
@@ -525,11 +515,11 @@ fn a_conversation_too_large_shows_the_reason_and_keeps_the_composer(cx: &mut Tes
     h.send(cx, "One more question");
     assert_eq!(h.last(cx).1, TurnState::Failed(reason.into()));
     assert_eq!(h.state(cx), InputState::Ready, "the composer stays usable");
-    h.frame(cx, |window, _| {
+    h.frame(cx, |window, cx| {
         assert!(window.try_find("send").is_some());
         assert!(
             window
-                .try_find(conversation_ui::action_button(conversation_ui::RETRY_ID))
+                .try_find(button(&h.view, cx, StatusButton::TryAgain))
                 .is_none(),
             "the same prompt would not fit either"
         );

@@ -9,6 +9,7 @@ use events::{assistant, compacted, step_end, title_event, too_large, turn_end, w
 
 mod events;
 mod fork;
+mod list;
 mod reply;
 
 pub use reply::ScriptedReply;
@@ -23,7 +24,7 @@ use conversation_model::schema::{
     SessionEvent, SessionId, SessionStart, StepId, StepOutcome, StepStart, StopReason, TitleSource,
     TurnId, TurnStart, TurnStop, User,
 };
-use conversation_model::{ModelCatalog, Update};
+use conversation_model::{Availability, ModelCatalog, Update};
 use futures::channel::mpsc::{UnboundedSender, unbounded};
 use futures::{FutureExt as _, StreamExt as _, future};
 use std::cell::RefCell;
@@ -74,6 +75,8 @@ struct Inner {
     refuse_create: Option<HostError>,
     refuse_resume: Option<HostError>,
     refuse_list: Option<HostError>,
+    /// Sessions whose stream never sends anything.
+    stalled: std::collections::BTreeSet<SessionId>,
     script: VecDeque<ScriptedReply>,
     sessions: BTreeMap<SessionId, Session>,
     next_session: u32,
@@ -351,40 +354,7 @@ impl ConversationHost for ScriptedHost {
     }
 
     fn list(&self, query: SessionQuery) -> HostFuture<Vec<SessionEntry>> {
-        self.call(move |inner| {
-            if let Some(error) = inner.refuse_list.take() {
-                return Err(error);
-            }
-            let mut entries: Vec<SessionEntry> = inner
-                .sessions
-                .iter()
-                .filter(|(_, s)| s.archived == query.archived)
-                .map(|(id, s)| SessionEntry {
-                    id: id.clone(),
-                    title: fork::title(inner, id),
-                    created_at: s.log.first().map(|e| e.at).unwrap_or_default(),
-                    updated_at: s.log.last().map(|e| e.at).unwrap_or_default(),
-                    archived: s.archived,
-                    model: s.log.iter().find_map(|e| match &e.event {
-                        Event::SessionStart(start) => start.model.clone(),
-                        _ => None,
-                    }),
-                    forked_from: fork::forked_from(&s.log),
-                })
-                .filter(|entry| match &query.text {
-                    Some(text) => entry
-                        .title
-                        .as_deref()
-                        .is_some_and(|t| t.contains(text.as_str())),
-                    None => true,
-                })
-                .collect();
-            entries.sort_by(|a, b| b.updated_at.cmp(&a.updated_at).then(b.id.cmp(&a.id)));
-            if query.limit > 0 {
-                entries.truncate(query.limit as usize);
-            }
-            Ok(entries)
-        })
+        self.call(move |inner| inner.list(query))
     }
 
     fn fork(&self, session: &SessionId, at: ForkAt, reason: ForkReason) -> HostFuture<SessionId> {
@@ -404,9 +374,22 @@ impl ConversationHost for ScriptedHost {
         self.call(|inner| Ok(inner.models.clone()))
     }
 
+    fn availability(&self, model: &str) -> HostFuture<Availability> {
+        let model = model.to_owned();
+        self.call(move |inner| {
+            Ok(inner
+                .models
+                .get(&model)
+                .map_or(Availability::Unknown, |option| option.availability))
+        })
+    }
+
     fn subscribe(&self, session: &SessionId, from_seq: Seq) -> HostFuture<UpdateStream> {
         let session = session.clone();
         self.call(move |inner| {
+            if inner.stalled.contains(&session) {
+                return Ok(futures::stream::pending().boxed_local());
+            }
             let state = inner.session(&session)?;
             let (sender, receiver) = unbounded();
             for event in state.log.iter().filter(|e| e.seq > from_seq) {

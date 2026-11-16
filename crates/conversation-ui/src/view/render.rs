@@ -3,7 +3,7 @@
 
 use super::ConversationView;
 use crate::metrics;
-use crate::status::{Action, OnClick, Status};
+use crate::status::{OnClick, Status, StatusButton};
 use crate::turn::{ReplyControls, ending, render_turn};
 use conversation_model::InputState;
 use conversation_model::TurnState;
@@ -16,51 +16,127 @@ use ui::prelude::*;
 use ui::{App, ElementId, SharedString, StyleRefinement, Window, div};
 
 impl ConversationView {
-    /// The status bar: closed, reconnecting or an app away; else how the
-    /// last turn ended, with continue or try again where they apply.
-    fn status(&self, cx: &mut Context<Self>) -> Option<Status> {
-        let thread = self.thread.borrow();
-        let plain = |status: RunStatus, message: &SharedString| Status {
-            status,
-            message: message.clone(),
-            action: None,
-        };
-        if thread.input_state() == InputState::Closed {
-            return Some(plain(RunStatus::Closed, &self.copy.closed));
-        } else if self.reconnecting {
-            return Some(plain(RunStatus::Reconnecting, &self.copy.reconnecting));
-        } else if thread.awaiting_client() {
-            return Some(plain(RunStatus::Reconnecting, &self.copy.awaiting_client));
+    /// What the status bar says and which buttons it shows, left to right:
+    /// a failed load; closed, reconnecting or an app away; a reply being
+    /// written; else how the last turn ended, unless that was dismissed.
+    pub(super) fn status_layout(&self) -> Option<(RunStatus, SharedString, Vec<StatusButton>)> {
+        let copy = &self.copy;
+        if self.load_failed.is_some() {
+            let buttons = vec![StatusButton::Reload];
+            return Some((RunStatus::Failed, copy.load_failed.clone(), buttons));
         }
-        let turn = thread.turns().last()?;
-        let message = ending(turn, &self.copy)?;
-        let view = cx.weak_entity();
-        let retry = turn.state.can_retry()
+        let thread = self.thread.borrow();
+        if thread.input_state() == InputState::Closed {
+            return Some((RunStatus::Closed, copy.closed.clone(), Vec::new()));
+        } else if self.reconnecting {
+            return Some((
+                RunStatus::Reconnecting,
+                copy.reconnecting.clone(),
+                Vec::new(),
+            ));
+        } else if thread.awaiting_client() {
+            return Some((
+                RunStatus::Reconnecting,
+                copy.awaiting_client.clone(),
+                Vec::new(),
+            ));
+        }
+        let index = thread.turns().len().checked_sub(1)?;
+        let turn = &thread.turns()[index];
+        if self.dismissed == Some((index, turn.revision)) {
+            return None;
+        }
+        if turn.retrying.is_some() {
+            return Some((RunStatus::Reconnecting, copy.retrying.clone(), Vec::new()));
+        }
+        if turn.state.is_open() {
+            return Some((
+                RunStatus::Running,
+                copy.working.clone(),
+                vec![StatusButton::Stop],
+            ));
+        }
+        let message = ending(turn, copy)?;
+        let can_continue = thread.input_state().can_continue();
+        let can_retry = turn.state.can_retry()
             && !turn.prompt.is_empty()
             && turn.error_code.as_deref() != Some(conversation_model::TOO_LARGE);
-        let action = if thread.input_state().can_continue() {
-            let click = Box::new(move |_: &mut Window, cx: &mut App| {
-                let _ = view.update(cx, |view, cx| view.resume(cx));
-            }) as OnClick;
-            Some((Action::Continue, self.copy.continue_label.clone(), click))
-        } else if retry {
-            let click = Box::new(move |_: &mut Window, cx: &mut App| {
-                let _ = view.update(cx, |view, cx| view.retry(cx));
-            }) as OnClick;
-            Some((Action::Retry, self.copy.try_again.clone(), click))
-        } else {
-            None
-        };
-        let status = match &turn.state {
-            _ if turn.retrying.is_some() => RunStatus::Reconnecting,
-            TurnState::Stopped => RunStatus::Stopped,
+        let state = turn.state.clone();
+        drop(thread);
+        let mut buttons = vec![StatusButton::Dismiss];
+        let status = match &state {
+            TurnState::Stopped => {
+                if self.can_regenerate(index) {
+                    buttons.push(StatusButton::Retry);
+                }
+                RunStatus::Stopped
+            }
             TurnState::Truncated | TurnState::Limited => RunStatus::CutShort,
-            _ => RunStatus::Failed,
+            _ => {
+                if can_retry {
+                    buttons.push(StatusButton::TryAgain);
+                }
+                RunStatus::Failed
+            }
         };
+        if can_continue {
+            buttons.push(StatusButton::Continue);
+        }
+        Some((status, message, buttons))
+    }
+
+    /// The element id of one of the status bar's buttons, if it shows now.
+    pub fn status_button(&self, which: StatusButton) -> Option<ElementId> {
+        let (_, _, buttons) = self.status_layout()?;
+        let position = buttons.iter().position(|b| *b == which)?;
+        Some(crate::status::button_id(position))
+    }
+
+    /// Hide the status bar until the last turn changes.
+    pub fn dismiss_status(&mut self, cx: &mut Context<Self>) {
+        let thread = self.thread.borrow();
+        if let Some(turn) = thread.turns().last() {
+            self.dismissed = Some((thread.turns().len() - 1, turn.revision));
+        }
+        drop(thread);
+        cx.notify();
+    }
+
+    /// The status bar, with a handler for each button.
+    fn status(&self, cx: &mut Context<Self>) -> Option<Status> {
+        let (status, message, layout) = self.status_layout()?;
+        let view = cx.weak_entity();
+        let stopped = status == RunStatus::Stopped;
+        let index = self.thread.borrow().turns().len().saturating_sub(1);
+        let buttons = layout
+            .into_iter()
+            .map(|which| {
+                let view = view.clone();
+                let label = match which {
+                    StatusButton::Dismiss => self.copy.dismiss.clone(),
+                    StatusButton::Retry => self.copy.retry.clone(),
+                    StatusButton::TryAgain | StatusButton::Reload => self.copy.try_again.clone(),
+                    StatusButton::Continue if stopped => self.copy.resume.clone(),
+                    StatusButton::Continue => self.copy.continue_label.clone(),
+                    StatusButton::Stop => self.copy.stop.clone(),
+                };
+                let click = Box::new(move |_: &mut Window, cx: &mut App| {
+                    let _ = view.update(cx, |view, cx| match which {
+                        StatusButton::Dismiss => view.dismiss_status(cx),
+                        StatusButton::Retry => view.regenerate(index, cx),
+                        StatusButton::TryAgain => view.retry(cx),
+                        StatusButton::Continue => view.resume(cx),
+                        StatusButton::Stop => view.stop(cx),
+                        StatusButton::Reload => view.retry_load(cx),
+                    });
+                }) as OnClick;
+                (label, which, click)
+            })
+            .collect();
         Some(Status {
             status,
             message,
-            action,
+            buttons,
         })
     }
 }

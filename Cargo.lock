@@ -3801,6 +3801,7 @@ dependencies = [
  "isonomic-app",
  "isonomic-client",
  "isonomic-proto",
+ "isonomic-testkit",
  "ui",
 ]
 

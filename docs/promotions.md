@@ -2,6 +2,15 @@
 
 Every decision about where a type, helper, binding or screen lives: the kit (`crates/conversation-*`), Chat (`crates/chat`), or neither (a request to the host). The test: could Agents, an in-app assistant or the Activity tab use it? Newest first.
 
+## 2026-11-16 · Models watch and the status bar's buttons
+
+| Piece | Where | Verdict | Why |
+| --- | --- | --- | --- |
+| `ConversationHost::availability` | `crates/conversation-host`, `crates/conversation-sdk` | Kit | Any app that waits on a model asks the same; mirrors `models.info` |
+| Watching an asked model until it is ready | `crates/chat` `shell/sessions.rs` | Chat | Only Chat asks the window for installs |
+| The status bar's buttons, Dismiss, and a failed load with Try again | `crates/conversation-ui` | Kit | Every conversation surface |
+| Paging the session list | `crates/conversation-sdk` | Kit | The adapter's job: the kit asks for every session |
+
 ## 2026-11-16 · Editing a prompt
 
 | Piece | Where | Verdict | Why |
