@@ -79,6 +79,8 @@ pub struct Turn {
     pub tools: Vec<ToolUse>,
     /// Things this build cannot show.
     pub notices: Vec<Notice>,
+    /// The host is retrying after a transient error; the readable reason.
+    pub retrying: Option<String>,
     /// Where it is.
     pub state: TurnState,
     /// Bumped on every change, so a view re-renders only the turns that moved.
@@ -97,6 +99,7 @@ impl Turn {
             continuing: false,
             tools: Vec::new(),
             notices: Vec::new(),
+            retrying: None,
             state,
             revision: 0,
         }

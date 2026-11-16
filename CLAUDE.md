@@ -12,6 +12,7 @@ Isonomic Chat and the conversation kit. The brief is "Kickoff: Isonomic Chat (ap
 - Branch from main and open a pull request. Required checks: "rust / fmt, clippy, test (ubuntu-latest)" and "rust / file sizes and names". macOS runs after merge.
 - Merge your own pull request once every required check is green. Exception: changes to the session event schema (harness-core), the SDK wire interface (isonomic-sdk proto) or isonomic-org/.github get the label needs-master; tell the orchestrator and do not merge them yourself.
 - GitHub Actions has a hard $40/month budget. Don't trigger extra macOS runs.
+- Every push to a pull request costs a paid check run. Run fmt, clippy and the tests locally first, push each pull request once, and batch related changes.
 - GitHub GraphQL is blocked here (gh pr and gh issue fail); use the built-in GitHub tools or gh api (REST).
 - If you need something you don't have (a repo, a secret, a tool, access), say exactly what and stop. Don't mock or guess around it.
 - Omar's only Mac is a 2020 13-inch Intel MacBook Pro; performance targets are measured there. Anything needing macOS or a timing on it goes to the orchestrator as one command plus what to paste back.

@@ -135,6 +135,14 @@ impl ScriptedHost {
         self
     }
 
+    /// The connection drops: every open stream ends. Sessions and their
+    /// logs stay; subscribing again resumes them.
+    pub fn disconnect(&self) {
+        for session in self.inner.borrow_mut().sessions.values_mut() {
+            session.subscribers.clear();
+        }
+    }
+
     /// Every create request so far, oldest first.
     pub fn created(&self) -> Vec<NewSession> {
         self.inner.borrow().created.clone()

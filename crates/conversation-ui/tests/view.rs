@@ -305,3 +305,50 @@ fn model_errors_read_in_plain_words(cx: &mut TestAppContext) {
         }
     }
 }
+
+#[ui::test]
+fn a_refused_send_can_be_tried_again(cx: &mut TestAppContext) {
+    let h = open(cx);
+    // Nothing scripted: the host refuses, and try again appears.
+    h.send(cx, "Hello");
+    assert!(matches!(h.last(cx).1, TurnState::Rejected(_)));
+    h.frame(cx, |window, _| {
+        assert!(window.try_find("conversation-retry").is_some())
+    });
+
+    h.host.script(ScriptedReply::text("Hi there."));
+    h.frame(cx, |window, cx| window.click("conversation-retry", cx));
+    cx.run_until_parked();
+    h.host.finish();
+    cx.run_until_parked();
+    let turns = cx.update(|cx| h.view.read(cx).thread().turns().len());
+    assert_eq!(turns, 1, "the rejected send is replaced, not repeated");
+    assert_eq!(h.last(cx), ("Hi there.".into(), TurnState::Done));
+    h.frame(cx, |window, _| {
+        assert!(window.try_find("conversation-retry").is_none())
+    });
+}
+
+#[ui::test]
+fn a_dropped_stream_reconnects_and_misses_nothing(cx: &mut TestAppContext) {
+    let h = open(cx);
+    h.host
+        .script(ScriptedReply::text("One two three four five six."));
+    h.send(cx, "Count");
+    h.pump(cx, 2);
+    h.host.disconnect();
+    cx.run_until_parked();
+    assert!(cx.update(|cx| h.view.read(cx).is_reconnecting()));
+
+    // The reply finishes while the view is away.
+    h.host.finish();
+    cx.executor()
+        .advance_clock(std::time::Duration::from_secs(1));
+    cx.run_until_parked();
+    assert!(!cx.update(|cx| h.view.read(cx).is_reconnecting()));
+    assert_eq!(
+        h.last(cx),
+        ("One two three four five six.".into(), TurnState::Done)
+    );
+    assert_eq!(h.state(cx), InputState::Ready);
+}
