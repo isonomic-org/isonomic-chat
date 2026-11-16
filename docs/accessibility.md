@@ -19,9 +19,9 @@ Bound on Chat's root, so they work from any control inside it (`crates/chat/src/
 ## Path through each screen
 
 - **Opening Chat:** focus starts in home's composer, so the first key typed is the prompt.
-- **Sidebar:** Tab reaches the toggle, then each chat's More button. Its menu (Enter or Space) holds Open, Pin or Unpin, Rename and Delete, so every chat can be opened and managed from the keyboard. The New chat and Search rows and the chat rows themselves cannot take focus (Isonomic UI's `SidebarMenuItem` has no focus handle); their shortcuts and the row menu's Open cover them. Request below.
+- **Sidebar:** Tab reaches the toggle, New chat, Search, then each chat row and its More button. Rows show a focus ring; Enter or Space opens one; Up and Down move between rows. Pinned folds with its caret. More's menu holds Open, Pin or Unpin, Rename and Delete.
 - **Header:** Tab reaches the title button; its menu holds Pin or Unpin, Rename and Delete. Rename opens a field: Enter keeps the new title, Escape leaves it as it was.
-- **Search palette:** opens on its field; typing narrows, Up and Down move, Enter opens, Escape closes. Focus returns to where it was. Tab is not held inside the palette (request below).
+- **Search palette:** opens on its field with nothing selected; typing or an arrow selects; Enter opens, Escape closes; Tab stays inside while it is open. Focus returns to where it was.
 - **Home:** composer, then Send once there is text, then the model picker. The picker opens with Enter or Space onto the chosen model; Up, Down, Home and End move; Enter picks. When models could not be listed, Try again sits where the picker would be. With no model installed, Tab reaches Install, which then reads Downloading and is disabled.
 - **Thread:** the composer and its Send or Stop; the status bar's buttons (Stop; Dismiss, Retry, Resume; Dismiss, Try again); under each finished reply, Copy, Try again and the pager's arrows; under each prompt, Copy and Edit, which show while one of them has focus; each code block's Copy. Edit opens a field with focus in it; Tab reaches Cancel and Save.
 - **Not reached:** turns scrolled out of the virtual list are not laid out, so their buttons are not Tab stops until scrolled into view.
@@ -40,18 +40,15 @@ Bound on Chat's root, so they work from any control inside it (`crates/chat/src/
 | Rename field | `shell/header.rs` | "Chat title" |
 | Palette rows | Isonomic UI | The chat's title, or New chat |
 | Composer, Send, Stop | Isonomic UI | "Message", "Send", "Stop the answer" |
-| Model picker | Isonomic UI | "Model: {name}"; its rows have no names (request below) |
+| Model picker | Isonomic UI | "Model: {name}"; rows are list box options named by model and note |
 | Install | `home.rs` | "Install {model}", then "Downloading" |
 | Models Try again | `home.rs` | "Try again" |
 | Prompt Copy, Edit | `conversation-ui/turn.rs` | "Copy prompt", "Edit" |
 | Edit field, Cancel, Save | `conversation-ui/turn.rs` | "Edit message", "Cancel", "Save" |
 | Code block Copy | `conversation-ui/turn.rs` | "Copy code" |
-| Reply Copy, Try again, pager | Isonomic UI's action bar | "Copy", "Regenerate", "Previous version", "Next version" (fixed in the component; request below) |
+| Reply Copy, Try again, pager | Isonomic UI's action bar | "Copy", "Try again", "Previous version", "Next version" |
 | Status bar | Isonomic UI's run status bar | Role status, named by its words; its action by its label |
 
-## Requests to Isonomic UI from this audit
+## Requests to Isonomic UI
 
-- `SidebarMenuItem`: focusable, activated by Enter and Space, arrow keys within a `SidebarMenu`.
-- `CommandPalette`: keep focus inside while open.
-- `ModelPicker`: list box roles, names (model and note) and selected state on rows.
-- `MessageActionBar`: label overrides for its actions and pager.
+The four asks from the audit (focusable sidebar rows, focus held in the palette, named picker rows, action bar labels) landed in isonomic-ui #381 and are in use.

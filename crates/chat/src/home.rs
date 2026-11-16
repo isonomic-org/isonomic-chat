@@ -103,9 +103,19 @@ fn picker(catalog: &ModelCatalog, picked: Option<&str>, cx: &mut Context<ChatShe
         .or_else(|| catalog.choose(None).map(|o| o.id.as_str()))
         .map(str::to_owned);
     let recommended = catalog.recommended().map(|o| o.id.clone());
+    // Design 0.2 model picker B: a "Model" header, the name alone on the
+    // trigger, a trailing check and a filled chosen row, no footer.
     let mut picker = ModelPicker::new("model-picker")
         .align_end(true)
-        .w(metrics::model_picker_width());
+        .w(metrics::model_picker_width())
+        .header(copy::MODEL)
+        .tile(false)
+        .caret(false)
+        .trailing_check(true)
+        .chosen_fill(true)
+        .row_padding(metrics::picker_row_padding())
+        .row_gap(metrics::picker_row_gap())
+        .footer(false);
     for option in catalog.options() {
         let note = match option.availability {
             Availability::NotInstalled => Some(copy::MODEL_NOT_INSTALLED),

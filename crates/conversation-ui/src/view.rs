@@ -90,6 +90,7 @@ impl ConversationView {
             composer.set_dictation(false, cx);
             // The kit sends text only: no files, dropped or pasted.
             composer.set_attach(false, cx);
+            composer.set_comfortable(true, cx);
             composer
         });
         let composer_events =

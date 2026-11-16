@@ -61,6 +61,7 @@ fn title(shell: &ChatShell, cx: &mut Context<ChatShell>) -> Option<AnyElement> {
             .small()
             .h_7()
             .font_medium()
+            .truncate_label(true)
             .label(session.title.clone())
             .accessibility_label(copy::chat_options(&session.title))
             .dropdown_caret(true)
@@ -92,6 +93,7 @@ fn title(shell: &ChatShell, cx: &mut Context<ChatShell>) -> Option<AnyElement> {
                     .separator()
                     .item(
                         PopupMenuItem::new(copy::DELETE)
+                            .destructive()
                             .icon(icons::delete())
                             .on_click(move |_, window, cx| {
                                 delete.update(cx, |shell, cx| {

@@ -1,8 +1,8 @@
 # Design differences
 
-Every visible difference between the version 0.2 design (`docs/design/v0.2/`) and what this repository draws, from the audit of 16 Nov 2026. Each row has one verdict:
+Every visible difference between the version 0.2 design (`docs/design/v0.2/`) and what this repository draws, from the audit of 16 Nov 2026, updated for Isonomic UI `4f1207b` (isonomic-ui #381). Each row has one verdict:
 
-- **Fixed**: layout or structure matched with existing components (fixed in the audit pull request).
+- **Fixed**: matched, with existing components or the options isonomic-ui #381 added.
 - **Needs UI**: Isonomic UI's component cannot do it; the ask is in the row.
 - **Accepted**: Isonomic UI's tokens, type and icons, or outside version 1.
 
@@ -13,7 +13,7 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
 | A1 | Rail 56 wide | Isonomic UI's icon rail, 48 | Accepted (component width) |
-| A2 | Rail padding 12 top, 8 sides; expanded header pt 10, px 12; content px 8 | The sidebar's own 8 / 12 | Needs UI: `Sidebar` header, content and footer padding settable |
+| A2 | Rail padding 12 top, 8 sides; expanded header pt 10, px 12; content px 8 | Same (`header_padding`, `content_padding`) | Fixed |
 | A3 | Rail items centred; toggle, 16, then 28 × 28 nav buttons 4 apart | Same | Fixed |
 | A4 | Rail shows no selected item | Same | Fixed |
 | A5 | Toggle is a 28 × 28 icon button | Same | Fixed |
@@ -26,13 +26,13 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 
 | # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| B1 | Rows 8 from the edge, 271 wide | 12 from the edge, 263 wide | Needs UI: as A2 (content px 8) |
-| B2 | Nav and chat rows 32 high, 1 apart | 28 high, 8 apart | Needs UI: `SidebarMenuItem` height after its defaults; `SidebarMenu` gap settable |
+| B1 | Rows 8 from the edge, 271 wide | Same | Fixed |
+| B2 | Nav and chat rows 32 high, 1 apart | Same; rows are Tab stops with a focus ring (Enter, Space, Up, Down) | Fixed |
 | B3 | Row padding 10 left (chats 6 right), icon to label 10 | Same | Fixed |
 | B4 | A selected chat row keeps regular weight | Same | Fixed |
-| B5 | Group label 30 high, pt 10, pb 4, with a caret that collapses Pinned | 32 high, px 8, no caret, not collapsible | Needs UI: `SidebarGroup` padding and a collapsible group |
-| B6 | Groups 1 apart | 12 apart | Needs UI: `Sidebar` content gap settable |
-| B7 | A row's More shows on hover only | Always shown | Accepted (keeps it reachable; rows cannot take focus) |
+| B5 | Group label 30 high, pt 10, pb 4, with a caret that collapses Pinned | Same; Pinned folds | Fixed |
+| B6 | Groups 1 apart | Same | Fixed |
+| B7 | A row's More shows on hover only | Always shown | Accepted (rows now take focus, but More stays visible so its menu is found without hovering) |
 | B8 | Status dot in a 20 × 20 box, More 10 after it | Same | Fixed |
 | B9 | Dots: running, unread, attention | Running only | Accepted (version 1) |
 | B10 | On home, New chat stays selected under the palette | Same; Search is never shown selected | Fixed |
@@ -44,7 +44,7 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
 | C1 | Title button 28 high, 14 / 20 medium | Same | Fixed |
-| C2 | Long titles: no rule | The label clips and pushes the caret out | Needs UI: `Button` label truncation that keeps the dropdown caret |
+| C2 | Long titles: no rule | The title truncates with an ellipsis and keeps its caret | Fixed |
 | C3 | Inline rename field 300 × 32 | Same, named "Chat title"; Escape cancels | Fixed |
 | C4 | Title menu (page undecided) | Pin or Unpin, Rename, separator, Delete, with icons, 220 wide; the same order as a row's menu | Fixed (order, icons, width) |
 | C5 | Device, running pill, side panel, Share; incognito on home | Left out | Accepted (version 1) |
@@ -54,16 +54,16 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 
 | # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| D1 | 640 wide, centred | The palette caps itself at 520; now centred | Fixed (centred) / Needs UI: `CommandPalette` width setter |
-| D2 | Placeholder "Search or ask…" | "Type a command" | Needs UI: `CommandPalette::placeholder` |
-| D3 | Esc key chip in the input; input 53 high, 16 / 24 | No chip; about 48 high, 14 px | Needs UI: input suffix slot and size |
-| D4 | Rows 36 high, 16 px icon, meta such as "2h" on the right | 32 high, no icon, keys only | Needs UI: `PaletteCommand::icon`, `::meta`, row height 36 |
+| D1 | 640 wide, centred | Same | Fixed |
+| D2 | Placeholder "Search or ask…" | Same | Fixed |
+| D3 | Esc key chip in the input; input 53 high, 16 / 24 | Same (large input) | Fixed |
+| D4 | Rows 36 high, 16 px icon, meta such as "2h" on the right | 36 high; New chat has its icon; chat rows have none and no meta | Fixed (height) / Needs UI: `PaletteCommand::icon` takes only the component icon set, which has no chat icon; Chat keeps no last-active time to show as meta |
 | D5 | Chats under "Recents", then "Actions" | Same | Fixed |
 | D6 | New chat shows its shortcut | Same | Fixed |
-| D7 | Typed query: results grouped "Chats" | One "Best matches" heading | Needs UI: keep groups while filtering, or set the heading |
-| D8 | Footer hints as key chips plus label | Plain text hints | Needs UI: settable footer hints |
-| D9 | Nothing selected until the person types or presses an arrow | First row always selected | Needs UI: no cursor on open |
-| D10 | No-results state not drawn | "No commands match." | Needs UI: `CommandPalette::empty_text` |
+| D7 | Typed query: results grouped "Chats" | Groups kept while filtering ("Recents", "Actions") | Fixed |
+| D8 | Footer hints as key chips plus label | "↑↓ Navigate", "↵ Open" as plain text | Fixed (words) / Needs UI: hints as key chips |
+| D9 | Nothing selected until the person types or presses an arrow | Same | Fixed |
+| D10 | No-results state not drawn | "No chats match." | Fixed |
 | D11 | Tabs, filters, compose mode, groups by status | Left out | Accepted (version 1 searches titles) |
 | D12 | Radius 14, `shadow/2xl` | Theme radius and shadow | Accepted (tokens) |
 
@@ -73,7 +73,7 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | --- | --- | --- | --- |
 | E1 | 220 wide | Same | Fixed |
 | E2 | Open, Pin or Unpin, Rename, Delete, each with a 16 icon | Same | Fixed |
-| E3 | Delete in the destructive tone | Default tone | Needs UI: `PopupMenuItem::destructive()` |
+| E3 | Delete in the destructive tone | Same | Fixed |
 | E4 | Open in new tab, Add to project | Left out | Accepted (version 1) |
 
 ## Home (`home.md`)
@@ -92,8 +92,8 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 
 | # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| K1 | 720 × 96; padding 14 / 12 / 10 / 16; 14 above a 32 toolbar | 720 × about 85 | Needs UI: `PromptComposer` comfortable size |
-| K2 | Send and stop: round 32, filled `gray/900` | Small rounded squares; stop is not filled | Needs UI: round 32 trailing button, stop filled like send |
+| K1 | 720 × 96; padding 14 / 12 / 10 / 16; 14 above a 32 toolbar | Same (comfortable composer) | Fixed |
+| K2 | Send and stop: round 32, filled `gray/900` | Same | Fixed |
 | K3 | Empty shows voice; plus; context ring | No voice, no plus (attaching off), no ring | Accepted (version 1) |
 | K4 | Focus look not drawn | Ring colour border | Accepted (token) |
 | K5 | Placeholders and disclaimer | Match exactly | — |
@@ -103,12 +103,12 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
 | M1 | Menu 380 wide | Same | Fixed |
-| M2 | Menu header "Model" | None (it draws only with meter columns) | Needs UI: `ModelPicker::header` without columns |
-| M3 | Trigger is the model's name only | Letter tile, name, chevron | Needs UI: `tile(false)`, `caret(false)` on trigger and rows |
-| M4 | Trailing check slot; chosen row filled | Check after the name; the fill follows the active row | Needs UI: trailing check slot, chosen-row fill apart from the active row |
-| M5 | Rows 8 / 10 padding, 12 gap | 44 high, 8 padding, 10 gap | Needs UI: row padding and gap |
-| M6 | No footer | Key-hint footer always shown | Needs UI: `footer(false)` |
-| M7 | Rows are named for assistive technology | Rows are plain, unnamed | Needs UI: list box roles and names on rows |
+| M2 | Menu header "Model" | Same | Fixed |
+| M3 | Trigger is the model's name only | Same; rows have no tile | Fixed |
+| M4 | Trailing check slot; chosen row filled | Same | Fixed |
+| M5 | Rows 8 / 10 padding, 12 gap | Same | Fixed |
+| M6 | No footer | Same | Fixed |
+| M7 | Rows are named for assistive technology | List box options, named by model and note | Fixed |
 | M8 | Taglines, ratings, settings | Notes only: Recommended, Not installed, Downloading, Unavailable | Accepted (version 1: honest data only) |
 | M9 | Choosing a model that is not installed installs it | Only Not installed asks the window; Downloading and Unavailable do nothing | Fixed |
 
@@ -128,14 +128,14 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | --- | --- | --- | --- |
 | T1 | Column min(720, width − 64); 32 above and below; 24 between turns | Same (the scroller's own insets removed) | Fixed |
 | T2 | Bubble 16 / 24, padding 16 / 10, wraps at 560 | Same | Fixed |
-| T3 | Hover row: 28 buttons, gap 2, hidden but keeping its space | Same; it also shows while one of its buttons has focus | Fixed |
+| T3 | Hover row: 28 buttons, gap 2, hidden but keeping its space | 24 buttons (16 icons), gap 2; it also shows while one of its buttons has focus | Fixed / Needs UI: as T8 |
 | T4 | Hover row holds time, retry, edit, copy | Copy and Edit | Accepted (try again sits on the reply; turns carry no time) |
 | T5 | One heading level, 18 / 28 | Every level 18 | Fixed |
-| T6 | Lists: text 28 in, marker 4 in, `gray/500` markers | About 22 and 1 | Needs UI: `TextViewStyle` list indent, marker gap and marker colour |
+| T6 | Lists: text 28 in, marker 4 in, `gray/500` markers | Indent and marker gap set; text measures about 20 in; markers the theme's muted colour | Fixed (partly) / Needs UI: `list_indent` reaching the full 28 |
 | T7 | Code block: no header, padding 14 / 12, radius 10 | The text view's fence with a copy button | Accepted (fences stay the text view's; isonomic-ui #375) |
-| T8 | Reply actions: copy, read aloud, votes, retry, time; 28 buttons | Copy and Try again; 20 buttons | Accepted (version 1) / Needs UI: `MessageActionBar` button size |
-| T9 | Pager before the actions, 8 apart | After Try again | Needs UI: `MessageActionBar` pager position |
-| T10 | Retry is called as the app says ("Try again") | The bar says "Regenerate", "Copy", "Previous version", "Next version" | Needs UI: `MessageActionBar` label overrides |
+| T8 | Reply actions: copy, read aloud, votes, retry, time; 28 buttons with 16 icons | Copy and Try again; 24 buttons with 16 icons | Accepted (version 1) / Needs UI: an icon size apart from the button size (an exact 28 scales the icon to 21) |
+| T9 | Pager before the actions, 8 apart | Same | Fixed |
+| T10 | Retry is called as the app says ("Try again") | Same ("Try again", "Copy") | Fixed |
 | T11 | Thinking row: orb, label, seconds, expands | Isonomic UI's thinking indicator; no seconds; not expandable | Accepted (no expandable row in Isonomic UI) |
 | T12 | Stream cursor block | The text view's fade | Accepted |
 | T13 | Stopped note in the reply | The last turn says it in the status bar with Continue; earlier turns keep the note | Accepted (the bar is the one stop and error bar) |

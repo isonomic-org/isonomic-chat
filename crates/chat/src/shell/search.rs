@@ -9,6 +9,7 @@ use ui::{AnyElement, Entity, FocusHandle, Focusable as _, Subscription, Window, 
 
 use super::ChatShell;
 use crate::{copy, metrics};
+use ui::component::Size;
 
 /// The id of the New chat command; every other id is a chat's.
 const NEW_CHAT: &str = "action:new-chat";
@@ -37,10 +38,30 @@ impl ChatShell {
             })
             .collect();
         commands.push(
-            PaletteCommand::new(NEW_CHAT, copy::ACTIONS, copy::NEW_CHAT).keys(crate::NEW_CHAT_KEY),
+            PaletteCommand::new(NEW_CHAT, copy::ACTIONS, copy::NEW_CHAT)
+                // The palette takes Isonomic UI's component icons, which have
+                // no chat icon: chat rows go without one.
+                .icon(ui::component::IconName::Plus)
+                .keys(crate::NEW_CHAT_KEY),
         );
         let return_focus = window.focused(cx);
-        let palette = cx.new(|cx| CommandPalette::new(commands, window, cx));
+        // Design 0.2 `SearchPalette`: 640 wide, "Search or ask…", Esc in the
+        // field, 36 rows, groups kept while filtering, nothing selected
+        // until the person types or moves, focus held inside.
+        let palette = cx.new(|cx| {
+            let mut palette = CommandPalette::new(commands, window, cx);
+            palette.set_width(metrics::palette_width(), cx);
+            palette.set_placeholder(copy::SEARCH_PLACEHOLDER, window, cx);
+            palette.set_input_size(Size::Large, cx);
+            palette.set_escape_hint(true, cx);
+            palette.set_row_height(metrics::palette_row(), cx);
+            palette.set_keep_groups(true, cx);
+            palette.set_footer_hints(copy::PALETTE_HINTS, cx);
+            palette.set_select_first(false, cx);
+            palette.set_empty_text(copy::NO_MATCHES, cx);
+            palette.set_hold_focus(true, cx);
+            palette
+        });
         let events = cx.subscribe_in(&palette, window, |this, _, event, window, cx| match event {
             PaletteEvent::Run(id) if id.as_ref() == NEW_CHAT => {
                 this.close_search(window, cx);
