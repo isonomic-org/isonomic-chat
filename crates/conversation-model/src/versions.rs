@@ -151,6 +151,41 @@ pub fn plan(root: &SessionId, branches: &[Branch]) -> Path {
     path
 }
 
+/// The conversations among `branches`, newest activity first: each root
+/// (a session that is not a fork) with the latest `updated_at` of any
+/// session in its tree. A fork whose root is not listed (archived, say)
+/// counts for nothing. Ties keep the listed order.
+pub fn newest_first(branches: &[Branch]) -> Vec<(SessionId, u64)> {
+    let root_of = |branch: &Branch| {
+        let mut current = branch;
+        let mut steps = 0;
+        while let Some((parent, _)) = &current.forked_from {
+            match branches.iter().find(|b| &b.id == parent) {
+                // A cycle cannot come from a host; stop all the same.
+                Some(next) if steps < branches.len() => {
+                    current = next;
+                    steps += 1;
+                }
+                _ => break,
+            }
+        }
+        current.id.clone()
+    };
+    let mut roots: Vec<(SessionId, u64)> = branches
+        .iter()
+        .filter(|b| b.forked_from.is_none())
+        .map(|b| (b.id.clone(), b.updated_at))
+        .collect();
+    for branch in branches {
+        let root = root_of(branch);
+        if let Some(entry) = roots.iter_mut().find(|(id, _)| *id == root) {
+            entry.1 = entry.1.max(branch.updated_at);
+        }
+    }
+    roots.sort_by_key(|(_, at)| std::cmp::Reverse(*at));
+    roots
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -166,6 +201,22 @@ mod tests {
             created_at: at,
             updated_at: at,
         }
+    }
+
+    #[test]
+    fn a_chat_is_as_new_as_its_newest_version() {
+        let branches = [
+            branch("a", None, 9),
+            branch("b", None, 5),
+            branch("c", Some(("b", 3)), 6),
+            branch("d", Some(("c", 4)), 20),
+            branch("lone", Some(("gone", 1)), 30),
+        ];
+        let order: Vec<_> = newest_first(&branches)
+            .into_iter()
+            .map(|(id, at)| (id.0, at))
+            .collect();
+        assert_eq!(order, [("b".to_owned(), 20), ("a".to_owned(), 9)]);
     }
 
     #[test]

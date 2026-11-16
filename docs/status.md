@@ -2,6 +2,11 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · The chat list by newest version
+
+- A chat is as new as its newest version: the list orders chats by the latest change in any of their sessions (`conversation_model::newest_first`), pins still on top in pin order. A fork whose first session is not listed (an archived chat) never shows as a chat.
+- Tested in the model and against the SDK test engine: an older chat with a version made after a newer chat is listed first, and is not without the change.
+
 ## 2026-11-16 · Editing a prompt
 
 - Edit (under a prompt, on hover) opens Isonomic UI's textarea in place of the bubble, with Cancel and Save; Mod-Enter saves. Save forks before that turn with reason edit and sends the new prompt there; it is a new version of the turn, in the same pager as try again. An empty or unchanged prompt does nothing.

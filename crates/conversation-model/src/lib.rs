@@ -21,7 +21,7 @@ pub use input::InputState;
 pub use models::{Availability, ModelCatalog, ModelOption};
 pub use thread::{TOO_LARGE, Thread};
 pub use turn::{Notice, ToolUse, Turn, TurnState};
-pub use versions::{Branch, Path, Slot, plan};
+pub use versions::{Branch, Path, Slot, newest_first, plan};
 
 use schema::{LiveDelta, SessionEvent};
 
