@@ -2,6 +2,12 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · SDK at 4947e43: chat icons in search, list indent
+
+- `SDK_REF` moves to `4947e43` (`UI_REF` `ecd21d1`, isonomic-ui #385); harness unchanged.
+- Search rows show the chat icon (any catalog icon now), and New chat its plus. List text sits 28 in, as designed.
+- Still open: Copy under a prompt and the reply action bar take no icon size (only `Button` does), so those stay 24 px buttons with 16 px icons; Edit matches Copy. The serif wordmark and greeting stay the theme's sans until Omar chooses a typeface.
+
 ## 2026-11-16 · How long ago, in search
 
 - Each chat keeps when it was last active: the newest change in any of its versions, from the host's list, or now for a chat started here. Search shows it on the right of the row in the design's short form ("now", "20m", "2h", "3d", "2w", "4mo", "1y").
