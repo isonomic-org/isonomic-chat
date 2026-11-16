@@ -2,6 +2,11 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · Stop and continue, checked after the first run on the Mac
+
+- From the Intel Mac run (a reply stopped at its first character, then continue left it `Stopped` with no new text): the kit's path is correct. With the scripted host, a reply stopped at its first delta continues in the same turn; on the real harness, a late or doubled cancel does not stop the continue that follows. Both are tested now.
+- Fixed: a continue the host refused was dropped silently, so the turn stayed `Stopped` with nothing said, which matches what was seen. The reason now shows on the turn (`Turn::refusal`) and the view reports `HostError`. The refusal clears when the host opens the turn again.
+
 ## 2026-11-15 · Retry and error states
 
 **Built**

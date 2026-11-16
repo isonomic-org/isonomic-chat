@@ -257,7 +257,18 @@ impl ConversationView {
             return;
         };
         let request = self.host.resume(&session);
-        self.request(request, cx);
+        self._request = Some(cx.spawn(async move |this, cx| {
+            if let Err(error) = request.await {
+                let _ = this.update(cx, |this, cx| {
+                    // A refused continue is shown on the turn, never dropped.
+                    this.thread
+                        .borrow_mut()
+                        .fail_continue(error.message.clone());
+                    this.rows_changed(cx);
+                    cx.emit(ConversationEvent::HostError(error.message.into()));
+                });
+            }
+        }));
     }
 
     fn request(&mut self, request: conversation_host::HostFuture<()>, cx: &mut Context<Self>) {
