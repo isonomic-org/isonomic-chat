@@ -8,7 +8,7 @@ use ui::prelude::*;
 use ui::{AnyElement, Entity, FocusHandle, Focusable as _, Subscription, Window, div};
 
 use super::ChatShell;
-use crate::{copy, metrics};
+use crate::{copy, icons, metrics};
 use ui::component::Size;
 
 /// The id of the New chat command; every other id is a chat's.
@@ -36,7 +36,8 @@ impl ChatShell {
             .iter()
             .map(|session| {
                 let command =
-                    PaletteCommand::new(session.id.clone(), copy::RECENTS, session.title.clone());
+                    PaletteCommand::new(session.id.clone(), copy::RECENTS, session.title.clone())
+                        .icon(icons::chat());
                 // How long ago the chat was active, such as "2h".
                 match session.active_at {
                     Some(at) => command.meta(copy::short_age(now.saturating_sub(at))),
@@ -46,9 +47,7 @@ impl ChatShell {
             .collect();
         commands.push(
             PaletteCommand::new(NEW_CHAT, copy::ACTIONS, copy::NEW_CHAT)
-                // The palette takes Isonomic UI's component icons, which have
-                // no chat icon: chat rows go without one.
-                .icon(ui::component::IconName::Plus)
+                .icon(icons::new_chat())
                 .keys(crate::NEW_CHAT_KEY),
         );
         let return_focus = window.focused(cx);
