@@ -10,6 +10,12 @@ pub const SEARCH: &str = "Search";
 pub const PINNED: &str = "Pinned";
 /// The sidebar group of the other chats, newest first.
 pub const RECENTS: &str = "Recents";
+/// The search palette's placeholder.
+pub const SEARCH_PLACEHOLDER: &str = "Search or ask…";
+/// The search palette's footer hints.
+pub const PALETTE_HINTS: [&str; 2] = ["↑↓ Navigate", "↵ Open"];
+/// The search palette when nothing matches.
+pub const NO_MATCHES: &str = "No chats match.";
 /// The palette group of actions.
 pub const ACTIONS: &str = "Actions";
 /// A row's menu button.
@@ -39,6 +45,8 @@ pub const SAVE_FAILED: &str = "A change couldn't be saved.";
 pub const NO_MODEL: &str = "Chat needs a model on this computer before it can reply.";
 /// The title of home's empty state when no chat model is installed.
 pub const NO_MODEL_TITLE: &str = "Install a model to start";
+/// The model picker's header.
+pub const MODEL: &str = "Model";
 /// A model's note in the picker: the engine recommends it.
 pub const MODEL_RECOMMENDED: &str = "Recommended";
 /// A model's note in the picker: its file is not on this computer.

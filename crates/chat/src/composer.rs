@@ -31,6 +31,8 @@ impl Composer {
             field.set_dictation(false, cx);
             // Version 1 has no attachments.
             field.set_attach(false, cx);
+            // Design 0.2's size: 96 high, round 32 send and stop.
+            field.set_comfortable(true, cx);
             field
         });
         let subscription = cx.subscribe(&field, |_, _, event, cx| match event {

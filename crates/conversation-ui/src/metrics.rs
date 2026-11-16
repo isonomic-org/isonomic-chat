@@ -46,9 +46,14 @@ pub(crate) fn heading_size() -> Pixels {
     px(18.)
 }
 
-/// An icon button under a prompt (28 x 28).
-pub(crate) fn icon_button() -> Pixels {
+/// How far a list item's text is set in (design 0.2: 28).
+pub(crate) fn list_indent() -> Pixels {
     px(28.)
+}
+
+/// The space between a list marker and its text.
+pub(crate) fn list_marker_gap() -> Pixels {
+    px(8.)
 }
 
 /// Width of the field that edits a sent prompt.

@@ -56,9 +56,9 @@ pub(super) fn render(
     // shows no selection.
     let home = shell.route() == &Route::Home && !collapsed;
     let nav_item = |label: &'static str| {
-        let item = SidebarMenuItem::new(label);
+        let item = SidebarMenuItem::new(label).focusable(true);
         if collapsed {
-            item.p_1p5()
+            item.p_1p5().height(metrics::icon_button())
         } else {
             row_padding(item)
         }
@@ -76,7 +76,11 @@ pub(super) fn render(
                 .on_click(|_, window, cx| window.dispatch_action(Box::new(SearchChats), cx)),
         )
         .collapsed(collapsed);
-    let nav = if collapsed { nav.gap_1() } else { nav };
+    let nav = if collapsed {
+        nav.gap_1()
+    } else {
+        nav.gap(metrics::row_gap())
+    };
     let header = v_flex()
         .w_full()
         .map(|this| {
@@ -96,6 +100,16 @@ pub(super) fn render(
         .h_full()
         .border_r_1()
         .border_color(cx.theme().sidebar_border)
+        // Design 0.2: header pt 10, px 12 (rail pt 12, px 8); content px 8,
+        // groups 1 apart.
+        .header_padding(if collapsed {
+            metrics::rail_padding()
+        } else {
+            metrics::header_padding()
+        })
+        .content_padding(metrics::content_padding())
+        .footer_padding(metrics::header_padding())
+        .content_gap(metrics::row_gap())
         .header(header);
     if !collapsed {
         let (pinned, recents): (Vec<_>, Vec<_>) =
@@ -163,13 +177,25 @@ fn group(
                 cx.listener(move |shell, _, window, cx| shell.open_session(id.clone(), window, cx)),
             )
     });
-    SidebarGroup::new(label).child(SidebarMenu::new().children(rows))
+    let group = SidebarGroup::new(label)
+        .padding(metrics::group_label_padding())
+        .child(SidebarMenu::new().gap(metrics::row_gap()).children(rows));
+    // Pinned folds away with its caret, as the design draws it.
+    if label == copy::PINNED {
+        group.foldable(true).default_open(true)
+    } else {
+        group
+    }
 }
 
 /// A row's padding: 10 on the left, 6 on the right, 10 between icon and
 /// label (design 0.2 `SidebarNavItem`, `SidebarSessionRow`).
 fn row_padding(item: SidebarMenuItem) -> SidebarMenuItem {
-    item.pl_2p5().pr_1p5().gap_x_2p5()
+    item.pl_2p5()
+        .pr_1p5()
+        .gap_x_2p5()
+        .height(metrics::row_height())
+        .focusable(true)
 }
 
 /// A row's menu: open, pin or unpin, rename, delete.
@@ -223,6 +249,7 @@ fn row_menu(
                 .separator()
                 .item(
                     PopupMenuItem::new(copy::DELETE)
+                        .destructive()
                         .icon(icons::delete())
                         .on_click(move |_, window, cx| {
                             delete.update(cx, |shell, cx| {

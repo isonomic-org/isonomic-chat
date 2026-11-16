@@ -2,7 +2,7 @@
 //! (`docs/design/v0.2/`). Colours, type and spacing come from the theme;
 //! the few sizes that belong to Chat's layout live here and nowhere else.
 
-use ui::{Pixels, px};
+use ui::{Edges, Pixels, px};
 
 /// Width of the expanded app sidebar, its border included. Collapsed, it is
 /// Isonomic UI's icon rail.
@@ -113,3 +113,57 @@ pub(crate) fn model_poll() -> std::time::Duration {
 /// Polls to wait for the window to start a download Chat asked for, before
 /// offering Install again (one minute at `model_poll`).
 pub(crate) const ASK_POLLS: u32 = 60;
+
+/// A sidebar row's height (design 0.2 `SidebarNavItem`, `SidebarSessionRow`).
+pub(crate) fn row_height() -> Pixels {
+    px(32.)
+}
+
+/// The space between sidebar rows, and between its groups.
+pub(crate) fn row_gap() -> Pixels {
+    px(1.)
+}
+
+fn edges(top: f32, right: f32, bottom: f32, left: f32) -> Edges<Pixels> {
+    Edges {
+        top: px(top),
+        right: px(right),
+        bottom: px(bottom),
+        left: px(left),
+    }
+}
+
+/// The expanded sidebar's header and footer padding: 10 top, 12 sides.
+pub(crate) fn header_padding() -> Edges<Pixels> {
+    edges(10., 12., 8., 12.)
+}
+
+/// The rail's padding: 12 top, 8 sides.
+pub(crate) fn rail_padding() -> Edges<Pixels> {
+    edges(12., 8., 8., 8.)
+}
+
+/// The sidebar's content padding: 8 at the sides.
+pub(crate) fn content_padding() -> Edges<Pixels> {
+    edges(0., 8., 0., 8.)
+}
+
+/// A sidebar group label: 10 top, 4 bottom, 10 sides.
+pub(crate) fn group_label_padding() -> Edges<Pixels> {
+    edges(10., 10., 4., 10.)
+}
+
+/// A search palette row's height.
+pub(crate) fn palette_row() -> Pixels {
+    px(36.)
+}
+
+/// A model picker row's padding: 8 top and bottom, 10 sides.
+pub(crate) fn picker_row_padding() -> Edges<Pixels> {
+    edges(8., 10., 8., 10.)
+}
+
+/// The gap inside a model picker row.
+pub(crate) fn picker_row_gap() -> Pixels {
+    px(12.)
+}

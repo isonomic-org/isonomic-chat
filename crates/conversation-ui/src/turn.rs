@@ -16,7 +16,7 @@ use ui::component::input::{Textarea, TextareaState};
 use ui::component::message::{Message, MessageAlignment, MessageContent};
 use ui::component::text::{TextView, TextViewStyle};
 use ui::component::{ActiveTheme as _, Icon, Sizable as _, Size, h_flex, v_flex};
-use ui::extra::message_action_bar::{MessageAction, MessageActionBar};
+use ui::extra::message_action_bar::{MessageAction, MessageActionBar, MessageActionLabel};
 use ui::extra::thinking_indicator::{OrbState, ThinkingIndicator};
 use ui::prelude::*;
 use ui::{
@@ -155,12 +155,12 @@ fn prompt(
                         .value(turn.prompt.clone())
                         .tooltip(copy.copy_prompt.clone())
                         .accessibility_label(copy.copy_prompt.clone())
-                        .with_size(Size::Size(metrics::icon_button())),
+                        .with_size(Size::Small),
                 )
                 .children(on_edit.map(|on_edit| {
                     Button::new(ElementId::NamedInteger("prompt-edit".into(), index as u64))
                         .ghost()
-                        .with_size(Size::Size(metrics::icon_button()))
+                        .with_size(Size::Small)
                         .icon(IconName::Edit)
                         .tooltip(copy.edit.clone())
                         .on_click(move |_, window, cx| on_edit(window, cx))
@@ -268,6 +268,9 @@ fn reply(
                 // Design 0.2 has one heading level, 18 / 28 semibold; blocks
                 // 12 apart (the text view's own paragraph gap).
                 .style(TextViewStyle::default().heading_font_size(|_, _| metrics::heading_size()))
+                // Lists: text 28 in, the marker in that column.
+                .list_indent(metrics::list_indent())
+                .list_marker_gap(metrics::list_marker_gap())
                 .code_block_actions(move |block, _, _| {
                     let code = block.code();
                     Clipboard::new(ElementId::Name(
@@ -307,6 +310,12 @@ fn reply(
             index as u64,
         ))
         .quiet(false)
+        // Design 0.2: the pager first, the app's own words; small buttons
+        // keep the 16 px icon (an exact 28 would scale it to 21).
+        .button_size(Size::Small)
+        .pager_first(true)
+        .label(MessageActionLabel::Regenerate, copy.try_again.clone())
+        .label(MessageActionLabel::Copy, copy.copy.clone())
         .text(text);
         if controls.on_regenerate.is_some() || controls.versions.is_some() {
             actions.push(MessageAction::Regenerate);
