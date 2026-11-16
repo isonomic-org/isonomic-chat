@@ -10,6 +10,7 @@ use events::{assistant, compacted, step_end, title_event, too_large, turn_end, w
 mod events;
 mod fork;
 mod list;
+mod refuse;
 mod reply;
 
 pub use reply::ScriptedReply;
@@ -75,6 +76,8 @@ struct Inner {
     refuse_create: Option<HostError>,
     refuse_resume: Option<HostError>,
     refuse_list: Option<HostError>,
+    /// The next rename, archive or fork fails with this.
+    refuse_write: Option<HostError>,
     /// Sessions whose stream never sends anything.
     stalled: std::collections::BTreeSet<SessionId>,
     /// Whether list answers wait for `release_lists`, and those waiting.
@@ -350,6 +353,7 @@ impl ConversationHost for ScriptedHost {
     fn rename(&self, session: &SessionId, title: String) -> HostFuture<()> {
         let session = session.clone();
         self.call(move |inner| {
+            inner.write()?;
             inner.session(&session)?.titled = true;
             inner.emit(&session, None, None, title_event(title, TitleSource::User));
             Ok(())
@@ -362,12 +366,16 @@ impl ConversationHost for ScriptedHost {
 
     fn fork(&self, session: &SessionId, at: ForkAt, reason: ForkReason) -> HostFuture<SessionId> {
         let session = session.clone();
-        self.call(move |inner| inner.fork(&session, at, reason))
+        self.call(move |inner| {
+            inner.write()?;
+            inner.fork(&session, at, reason)
+        })
     }
 
     fn archive(&self, session: &SessionId, archived: bool) -> HostFuture<()> {
         let session = session.clone();
         self.call(move |inner| {
+            inner.write()?;
             inner.session(&session)?.archived = archived;
             Ok(())
         })

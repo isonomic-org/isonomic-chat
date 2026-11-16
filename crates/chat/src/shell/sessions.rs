@@ -398,7 +398,10 @@ impl ChatShell {
         self.sessions.insert(at, session);
         if let Some(backend) = &self.backend {
             let request = backend.store.set_pinned(id, pinned);
-            self.save(async move { request.await.map_err(|e| e.to_string()) }, cx);
+            self.save(
+                async move { request.await.map_err(|e| (e.to_string(), None)) },
+                cx,
+            );
         }
         cx.notify();
     }
@@ -410,6 +413,9 @@ impl ChatShell {
             return;
         };
         let session = SessionId::new(id.to_string());
+        // A delete the host refused is undone; one archived but not unpinned
+        // stays done (an archived chat is not listed, pinned or not).
+        let restore = matches!(change, Change::Delete).then(|| id.clone());
         let (request, unpin) = match change {
             Change::Rename(title) => (backend.host.rename(&session, title), None),
             Change::Delete => (
@@ -419,9 +425,9 @@ impl ChatShell {
         };
         self.save(
             async move {
-                request.await.map_err(|e| e.message)?;
+                request.await.map_err(|e| (e.message, restore))?;
                 if let Some(unpin) = unpin {
-                    unpin.await?;
+                    unpin.await.map_err(|e| (e, None))?;
                 }
                 Ok(())
             },
@@ -439,10 +445,13 @@ impl ChatShell {
         self.save_error.as_ref()
     }
 
-    /// Run a write and keep count of the ones in flight.
+    /// Run a write and keep count of the ones in flight. A write that fails
+    /// says why, and the list loads again, so the sidebar shows what the
+    /// host and the store hold rather than the change that did not land; a
+    /// chat whose delete failed comes back.
     fn save(
         &mut self,
-        write: impl std::future::Future<Output = Result<(), String>> + 'static,
+        write: impl std::future::Future<Output = Result<(), (String, Option<SharedString>)>> + 'static,
         cx: &mut Context<Self>,
     ) {
         self.saving += 1;
@@ -450,7 +459,16 @@ impl ChatShell {
             let result = write.await;
             let _ = this.update(cx, |this, cx| {
                 this.saving -= 1;
-                this.save_error = result.err().map(SharedString::from);
+                match result {
+                    Ok(()) => this.save_error = None,
+                    Err((message, restore)) => {
+                        this.save_error = Some(message.into());
+                        if let Some(id) = restore {
+                            this.deleted.remove(&id);
+                        }
+                        this.reload(cx);
+                    }
+                }
                 cx.notify();
             });
         })

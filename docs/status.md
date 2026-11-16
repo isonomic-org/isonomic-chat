@@ -2,6 +2,13 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · Writes that fail (non-visual hardening)
+
+- A rename, delete or pin that the host or the store refuses says why (`save_error`), and the chat list loads again, so the sidebar shows what they hold rather than the change that did not land. A chat whose delete was refused comes back; one archived but not unpinned stays deleted (an archived chat is not listed). A later write that goes through clears the error.
+- Tested in `crates/chat/tests/reload.rs`: a refused delete, rename and pin, and a failed list that loads on Try again. The delete and pin tests fail without the reload.
+- A fork the host refuses, on try again or on an edited prompt, leaves the thread and its versions as they were and reports the error; the next attempt goes through (`conversation-ui/tests/refusals.rs`).
+- Test hooks: `ScriptedHost::refuse_next_write` (rename, archive, fork) and `MemoryStore::refuse_writes` / `accept_writes`.
+
 ## 2026-11-16 · The thread against the 0.2 frame
 
 - The chat header has no rule under it: design 0.2 has none (`app-shell.md`); the rule came from an older frame. The title stays 14 / 20 medium, the bundled Medium face.
