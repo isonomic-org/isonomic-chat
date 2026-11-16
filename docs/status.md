@@ -2,6 +2,13 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · SDK at a6276aa (UI_REF 2b8a583): a quiet composer
+
+- `SDK_REF` moves to `a6276aa`; harness unchanged. `Cargo.lock` needs no change.
+- Both composers (home and the thread) take Isonomic UI's quiet focus: no blue border, as design 0.2 draws them. Empty, each is 96 high (the comfortable size at `2b8a583`). The palette's chip reads "Esc" on macOS too.
+- The greeting and empty-state icon is `Beacon`, a four-point star: the closest drawing in the set to the design's sparkle with a plus (`Sparkles` draws a wand). Omar may choose another.
+- Thread spacing checked against `screens/thread.md`: 58 from a prompt bubble to its reply's first line (6, the prompt's 28 actions row that keeps its space when hidden, 24), 12 from the reply to its action row, 24 to the next prompt. All match.
+
 ## 2026-11-16 · Earlier replies stay whole; reloads keep deletes; the Mac comparison
 
 - **Thread:** the conversation view owns the text view state behind each reply, kept in step after every update, instead of the one the text view finds by element id each frame. A reply that has ended is drawn from one parse of its whole text. On the Mac, a finished reply was drawn as its first streamed token ("Here") once a later turn started; that was not reproduced here (scripted host and SDK test engine, frames drawn while parses were pending), so this removes every path through which a finished reply could show a partial parse. Tested in `conversation-ui/tests/stream.rs`; screenshot state `thread-earlier-reply`.
