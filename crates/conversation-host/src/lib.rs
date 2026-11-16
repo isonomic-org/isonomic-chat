@@ -73,6 +73,8 @@ pub struct SessionEntry {
     pub updated_at: u64,
     /// Whether it is archived.
     pub archived: bool,
+    /// The model picked when it was created; `None` when the preset's runs.
+    pub model: Option<String>,
 }
 
 /// Which sessions to list.

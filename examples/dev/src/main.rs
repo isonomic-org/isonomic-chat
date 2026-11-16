@@ -62,6 +62,7 @@ fn main() {
                         Some(isonomic_chat::Backend {
                             host,
                             store: Rc::new(isonomic_chat::store::MemoryStore::default()),
+                            install_model: None,
                         }),
                         window,
                         cx,

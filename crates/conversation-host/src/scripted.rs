@@ -239,6 +239,7 @@ impl ConversationHost for ScriptedHost {
                 },
                 parent: None,
                 profile: None,
+                model: request.model.clone(),
             });
             inner.emit(&id, None, None, start);
             if let Some(title) = request.title {
@@ -375,6 +376,10 @@ impl ConversationHost for ScriptedHost {
                     }),
                     updated_at: s.log.last().map(|e| e.at).unwrap_or_default(),
                     archived: s.archived,
+                    model: s.log.iter().find_map(|e| match &e.event {
+                        Event::SessionStart(start) => start.model.clone(),
+                        _ => None,
+                    }),
                 })
                 .filter(|entry| match &query.text {
                     Some(text) => entry

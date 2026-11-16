@@ -2,6 +2,15 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · SDK 12ddf2f: the picked model, stream ends, installing a model
+
+- `SDK_REF` moves to `12ddf2f`; every harness crate is at `9a3809f`, the SDK's URL and rev character for character. `Cargo.lock` regenerated.
+- A new chat passes the picked model to `sessions.create`; the session's model shows in `SessionEntry.model` (from the summary, or from `session.start` in the scripted host). An app without the `models` capability that names a model gets `capability_denied`, which is tested.
+- The catalog's recommendation comes from `ModelInfo.recommended`.
+- Stream ends: `SessionUpdate::Gap` ends the kit's stream, so the view follows again from its last `seq` and reads what was skipped. `SessionUpdate::Ended` (a purge) becomes `Update::Ended`, which closes the thread, so the view stops following.
+- Installing a model: `Backend::install_model` is the window's install step, wired in `Chat::build` to `AppContext::request(WindowRequest::InstallModel { model })`. Chat calls it on `ModelUnavailable`, and from home: when no chat model can answer, home shows one button that asks to install the recommended model, in place of a composer that cannot reply.
+- Chat preset version 2: no test here asserts the preset version or its text, so nothing changed.
+
 ## 2026-11-16 · Stop and continue, checked after the first run on the Mac
 
 - From the Intel Mac run (a reply stopped at its first character, then continue left it `Stopped` with no new text): the kit's path is correct. With the scripted host, a reply stopped at its first delta continues in the same turn; on the real harness, a late or doubled cancel does not stop the continue that follows. Both are tested now.

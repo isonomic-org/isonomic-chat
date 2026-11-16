@@ -33,6 +33,7 @@ fn open_with(
     let backend = isonomic_chat::Backend {
         host,
         store: Rc::new(isonomic_chat::store::MemoryStore::default()),
+        install_model: None,
     };
     open_on(cx, Some(backend))
 }
@@ -335,5 +336,61 @@ fn a_stored_chat_reopens_with_its_history_and_rename_and_delete_reach_the_host(
     cx.update(|cx| {
         assert_eq!(shell.read(cx).route(), &Route::Home);
         assert!(shell.read(cx).sessions().is_empty());
+    });
+}
+
+#[ui::test]
+fn with_no_model_installed_home_asks_the_window_to_install_the_recommended_one(
+    cx: &mut TestAppContext,
+) {
+    use conversation_model::{Availability, ModelCatalog, ModelOption};
+    let host = ScriptedHost::new();
+    let option = |id: &str, availability| ModelOption {
+        id: id.into(),
+        name: id.into(),
+        remote: false,
+        availability,
+    };
+    host.set_models(ModelCatalog::new(
+        vec![
+            option("small", Availability::NotInstalled),
+            option("large", Availability::NotInstalled),
+        ],
+        Some("large".into()),
+    ));
+    let asked = Rc::new(std::cell::RefCell::new(Vec::<String>::new()));
+    let log = asked.clone();
+    let backend = isonomic_chat::Backend {
+        host: Rc::new(host),
+        store: Rc::new(isonomic_chat::store::MemoryStore::default()),
+        install_model: Some(Rc::new(move |model: &str| {
+            log.borrow_mut().push(model.to_owned());
+            true
+        })),
+    };
+    let (window, shell) = open_on(cx, Some(backend));
+    cx.run_until_parked();
+    with_window(cx, window, |window, cx| {
+        assert_eq!(
+            shell
+                .read(cx)
+                .missing_model()
+                .map(|m| m.id.clone())
+                .as_deref(),
+            Some("large")
+        );
+        window.render_frame(cx);
+        window.click("install-model", cx);
+    });
+    assert_eq!(*asked.borrow(), ["large"]);
+    cx.update(|cx| {
+        assert_eq!(
+            shell
+                .read(cx)
+                .install_asked()
+                .map(|m| m.to_string())
+                .as_deref(),
+            Some("large")
+        )
     });
 }

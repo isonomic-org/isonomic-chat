@@ -68,11 +68,15 @@ pub fn host_error(error: ClientError) -> HostError {
     }
 }
 
-/// An SDK session update as a kit update.
-pub fn update(update: SessionUpdate) -> Update {
+/// An SDK session update as a kit update, or `None` to end the stream. A
+/// gap ends it, so the view follows again from its last `seq` and reads the
+/// events that were skipped; a purge ends it for good.
+pub fn update(update: SessionUpdate) -> Option<Update> {
     match update {
-        SessionUpdate::Event(event) => Update::Event(event),
-        SessionUpdate::Delta(delta) => Update::Delta(delta),
+        SessionUpdate::Event(event) => Some(Update::Event(event)),
+        SessionUpdate::Delta(delta) => Some(Update::Delta(delta)),
+        SessionUpdate::Ended(_) => Some(Update::Ended),
+        SessionUpdate::Gap { .. } => None,
     }
 }
 
@@ -136,6 +140,7 @@ impl ConversationHost for SdkHost {
                     title: summary.title,
                     updated_at: summary.updated_at,
                     archived: summary.archived,
+                    model: summary.model,
                 })
                 .collect())
         }
@@ -182,9 +187,12 @@ impl ConversationHost for SdkHost {
                 .subscribe(&session, from_seq)
                 .await
                 .map_err(host_error)?;
-            let updates = stream::unfold(stream, |mut stream| async move {
-                let next = stream.next().await?;
-                Some((update(next), stream))
+            let updates = stream::unfold(Some(stream), |stream| async move {
+                let mut stream = stream?;
+                let next = update(stream.next().await?)?;
+                // Nothing follows an end.
+                let rest = (next != Update::Ended).then_some(stream);
+                Some((next, rest))
             });
             Ok(updates.boxed_local())
         }

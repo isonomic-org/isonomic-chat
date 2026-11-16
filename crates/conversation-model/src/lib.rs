@@ -30,6 +30,9 @@ pub enum Update {
     Event(Box<SessionEvent>),
     /// A lossy live delta of a reply in progress.
     Delta(LiveDelta),
+    /// The session is gone (purged): nothing more will come. Do not follow
+    /// it again.
+    Ended,
 }
 
 impl From<SessionEvent> for Update {

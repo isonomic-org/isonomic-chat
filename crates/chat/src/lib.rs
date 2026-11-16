@@ -35,7 +35,12 @@ pub struct Backend {
     pub host: Rc<dyn ConversationHost>,
     /// Pins.
     pub store: Rc<dyn store::Store>,
+    /// Ask the window to install a model; `true` if it took the request.
+    pub install_model: Option<InstallModel>,
 }
+
+/// The window's model install step, as Chat asks for it.
+pub type InstallModel = Rc<dyn Fn(&str) -> bool>;
 pub use shell::{ChatShell, Route};
 
 use ui::{App, KeyBinding};

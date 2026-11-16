@@ -64,6 +64,9 @@ pub struct ChatShell {
     loaded: bool,
     saving: usize,
     model: Option<String>,
+    catalog: Option<conversation_model::ModelCatalog>,
+    install_asked: Option<SharedString>,
+    _models: Option<ui::Task<()>>,
     save_error: Option<SharedString>,
     _load: Option<ui::Task<()>>,
     rename: Option<Rename>,
@@ -100,6 +103,9 @@ impl ChatShell {
             loaded: backend.is_none(),
             saving: 0,
             model: None,
+            catalog: None,
+            install_asked: None,
+            _models: None,
             save_error: None,
             _load: None,
             rename: None,
@@ -107,6 +113,7 @@ impl ChatShell {
             _subscriptions: vec![subscription],
         };
         if let Some(backend) = backend {
+            shell.load_models(&backend, cx);
             shell.load(backend, cx);
         }
         shell
@@ -292,7 +299,10 @@ impl ChatShell {
 
     fn render_body(&mut self, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
         match self.route {
-            Route::Home => home::render(self.day_part, &self.composer, window, cx),
+            Route::Home => match self.missing_model().cloned() {
+                Some(model) => home::render_install(&model, cx),
+                None => home::render(self.day_part, &self.composer, window, cx),
+            },
             Route::Session(ref id) => match self.threads.get(id) {
                 Some(thread) => self.render_conversation(thread.clone(), cx),
                 None => self.render_thread(cx),

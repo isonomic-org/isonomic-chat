@@ -156,6 +156,10 @@ impl Thread {
         match update {
             Update::Event(event) => self.apply_event(event),
             Update::Delta(delta) => self.apply_delta(delta),
+            Update::Ended => {
+                self.closed = true;
+                self.revision += 1;
+            }
         }
     }
 
