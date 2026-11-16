@@ -25,8 +25,12 @@ pub(crate) fn bubble_width() -> Pixels {
     px(560.)
 }
 
-/// A bubble's padding at the sides and top and bottom, less its 1 px
-/// border (design 16 and 10).
+/// A prompt bubble's corner radius (design 0.2: 18).
+pub(crate) fn bubble_radius() -> Pixels {
+    px(18.)
+}
+
+/// A prompt bubble's side padding (design 0.2: 16, less its 1 px border).
 pub(crate) fn bubble_pad_x() -> Pixels {
     px(15.)
 }
@@ -46,14 +50,16 @@ pub(crate) fn heading_size() -> Pixels {
     px(18.)
 }
 
-/// How far a list item's text is set in (design 0.2: 28).
+/// How far a list item's text is set in: design 0.2 puts a bullet 4 in and
+/// its text 21 in. The marker column is right-aligned, so a number ("1.",
+/// 14 wide) widens it to 24; the design has 28 there.
 pub(crate) fn list_indent() -> Pixels {
-    px(28.)
+    px(21.)
 }
 
-/// The space between a list marker and its text.
+/// The space between a list marker and its text (design 0.2: 10).
 pub(crate) fn list_marker_gap() -> Pixels {
-    px(8.)
+    px(10.)
 }
 
 /// An icon button under a prompt or a reply (28 x 28).

@@ -4,6 +4,12 @@ What this repository needs from others, and what others asked of it. Newest firs
 
 ## Out
 
+### O16 · Isonomic UI: lists and the reply pager
+
+**To:** isonomic-ui (for the orchestrator to file). **Status:** open.
+- `TextView`: an indent per list kind. Design 0.2 sets bullet text 21 in and numbered text 28 in, both markers 4 in; one right-aligned marker column cannot give both (T6).
+- `MessageActionBar`: the pager's "2 / 2" at 12 in the muted colour (T8).
+
 ### O15 · Isonomic UI: from the Mac comparison of 16 Nov
 
 **To:** isonomic-ui (filed by the orchestrator). **Status:** done at isonomic-ui `2b8a583`, in use: quiet focus, the 96 high comfortable composer, "Esc" on every platform. The set has no sparkle with a plus; Chat uses `Beacon`, a four-point star, until Omar decides. Each is a row marked "Needs UI" in `docs/design-diffs.md`:

@@ -2,6 +2,13 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · The thread against the 0.2 frame
+
+- The chat header has no rule under it: design 0.2 has none (`app-shell.md`); the rule came from an older frame. The title stays 14 / 20 medium, the bundled Medium face.
+- Reply text is 16 / 24 (it inherited about 26). The prompt bubble takes the theme's `accent` neutral, the closest to the design's `gray/100`, at radius 18; `muted` nearly vanished on white.
+- The reply's action row is mid grey until pointed at, then the text colour (the bar's quiet mode), with 16 px icons in 28 px buttons.
+- Lists, from `message-content.md`: a bullet 4 in and its text 21 in, as designed. Numbers share the right-aligned marker column, so their text is 24 in where the design has 28.
+
 ## 2026-11-16 · SDK at a6276aa (UI_REF 2b8a583): a quiet composer
 
 - `SDK_REF` moves to `a6276aa`; harness unchanged. `Cargo.lock` needs no change.

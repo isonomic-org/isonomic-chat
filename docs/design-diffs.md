@@ -43,7 +43,7 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 
 | # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| C1 | Title button 28 high, 14 / 20 medium; a 1 px rule under the header | Same | Fixed |
+| C1 | Title button 28 high, 14 / 20 medium; no rule under the header (`app-shell.md`) | Same: medium (the bundled Medium face), no rule | Fixed |
 | C2 | Long titles: no rule | The title truncates with an ellipsis and keeps its caret | Fixed |
 | C3 | Inline rename field 300 × 32 | Same, named "Chat title"; Escape cancels | Fixed |
 | C4 | Title menu (page undecided) | Pin or Unpin, Rename, separator, Delete, with icons, 220 wide; the same order as a row's menu | Fixed (order, icons, width) |
@@ -127,13 +127,13 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
 | T1 | Column min(720, width − 64); 32 above and below; 24 between turns | Same (the scroller's own insets removed) | Fixed |
-| T2 | Bubble 16 / 24, padding 16 / 10, wraps at 560 | Same | Fixed |
+| T2 | Bubble 16 / 24, padding 16 / 10, wraps at 560; fill `gray/100`, radius 18 | Same; fill the theme's `accent` neutral (5 %, the closest to `gray/100`; `muted`, 3 %, nearly vanished on white), radius 18 | Fixed (fill: token) |
 | T3 | Hover row: 28 buttons, gap 2, hidden but keeping its space | Same: 28 buttons with 16 icons; it also shows while one of its buttons has focus | Fixed |
 | T4 | Hover row holds time, retry, edit, copy | Copy and Edit | Accepted (try again sits on the reply; turns carry no time) |
 | T5 | One heading level, 18 / 28 | Every level 18 | Fixed |
-| T6 | Lists: text 28 in, marker 4 in, `gray/500` markers | Text 28 in; the marker in its column; markers the theme's muted colour | Fixed (colour: token) |
+| T6 | Bullets: marker 4 in, text 21 in; numbers: marker 4 in, text 28 in; `gray/500` markers; text 16 / 24 | Bullets as designed; numbers' text 24 in, marker 0 (one right-aligned marker column for both kinds); markers the theme's muted colour; 16 / 24 | Fixed (bullets, line height) / Needs UI: an indent per list kind |
 | T7 | Code block: no header, padding 14 / 12, radius 10 | The text view's fence with a copy button | Accepted (fences stay the text view's; isonomic-ui #375) |
-| T8 | Reply actions: copy, read aloud, votes, retry, time; 28 buttons with 16 icons | Copy and Try again, 28 buttons with 16 icons | Fixed (size) / Accepted (version 1: no read aloud, votes or times) |
+| T8 | Reply actions: copy, read aloud, votes, retry, time; 28 buttons with 16 `gray/500` icons, 2 apart | Copy and Try again, 28 buttons with 16 icons; mid grey until pointed at, then the text colour (the bar's quiet mode); the pager's numbers 14 | Fixed / Accepted (version 1: no read aloud, votes or times) / Needs UI: the pager at 12 |
 | T9 | Pager before the actions, 8 apart | Same | Fixed |
 | T10 | Retry is called as the app says ("Try again") | Same ("Try again", "Copy") | Fixed |
 | T11 | Thinking row: orb, label, seconds, expands | Isonomic UI's thinking indicator; no seconds; not expandable | Accepted (no expandable row in Isonomic UI) |
