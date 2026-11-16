@@ -2,6 +2,26 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · Shell and sidebar to design 0.2
+
+- The context panel is gone. The app sidebar (288 px) has the toggle and the wordmark, the nav (New chat, Search), and the Pinned and Recents groups; each row has a chat icon, a running dot while its reply is written, and a menu (Pin or Unpin, Rename, Delete). Collapsed, it is Isonomic UI's icon rail: the toggle and the nav only. Below 1,040 px the window collapses it.
+- The header is 52 px: on a chat, its title with a menu (Rename, Pin or Unpin, Delete); on home, nothing.
+- Search (`cmd-k`, or the nav item) opens Isonomic UI's command palette over the shell, with the chats by title and the New chat action; Enter opens, Escape or a click outside closes.
+- Any chat can be deleted from its row (`ChatShell::delete_session`).
+- The list's empty and failed states, the live-data rules (no invented name, no example data on a backend) and the screenshot harness come from the earlier layout work. Differences from 0.2: `docs/design-diffs.md`, S1 to S10.
+
+## 2026-11-16 · Final layouts of the version 1 screens
+
+Built from the components Chat already uses, with Isonomic UI's spacing, type and theme tokens; nothing restyled, no new widgets, no new agent components.
+
+- **Home:** Isonomic UI's prompt composer, the same one the thread uses, with the model menu from the catalog; the picked model runs every new chat (it was only applied at the view level before, and is now tested end to end). With no chat model installed, one button asks the window to install the recommended one.
+- **Thread:** the divider of a compaction now sits after the last turn the host confirmed, never after a send in flight (it had landed under the new prompt).
+- **Narrow and wide:** below 1,100 px the context panel gives way, below 860 px the sidebar too; the header's toggle still opens it, and both come back when the window widens. The header title truncates and Share keeps only its icon.
+- **Live versus examples:** on a backend, the greeting names no one and the context panel shows its empty state instead of example connections.
+- **Chat list states:** "Chats you start appear here." and a failed list with its reason and Try again (`ChatShell::reload`); a failed write says so.
+- **Rail icon:** `chat` from Isonomic UI's icon catalog (was `message-circle`, which is not in it), with a test that it resolves.
+- **Screenshots:** `tests/screenshots.rs` now renders 13 states in both themes, including live ones on the scripted host (thread, narrow thread, streaming, errors, live home, models, failed list, install a model). All were looked at.
+- **Keyboard:** every control is an Isonomic UI button or field, so Tab reaches it; the sidebar, context panel and new chat keep their shortcuts.
 ## 2026-11-16 · Fixes found while laying out the screens
 
 - Rail icon: the manifest names `chat`, which Isonomic UI's icon catalog has (`message-circle` is not in it, so the window's rail showed a "C"). A test checks that `icons/<name>.svg` resolves.
@@ -91,92 +111,4 @@ Newest first. Every deviation from the brief is recorded here.
 - `SDK_REF` moves to `c68bf0d`. `crates/ui` re-exports `isonomic_app::ui` instead of depending on isonomic-ui, so the SDK's `UI_REF` is the pin. The conversation components still come from `isonomic-ui-extra` directly until the SDK re-exports them (requests O8). `UI_REF` stays until the shared workflow reads the pin from the SDK checkout.
 - The tokio workaround for the SDK's `TestHost` is gone (isonomic-sdk #22).
 
-## 2026-11-15 · The SDK adapter
-
-**Built**
-
-- `conversation-sdk`: `SdkHost` implements `ConversationHost` on the SDK's agents interface (`sessions.create`, `send`, `continue`, `cancel`, `rename`, `subscribe`) under the app's own token. Session updates pass through unchanged: the SDK re-exports the same harness-core the kit folds. Engine errors keep their wire code and words.
-- Chat's manifest asks for `agents` and nothing else, and `Chat::build` runs every new chat on `SdkHost`.
-- `SDK_REF` moves to `21ed50d` (isonomic-sdk main with the agents interface and the testkit's in-memory agents host).
-- Real turns in tests, no engine: through `SdkHost` (stream, title, a reply cut off at the output limit, continue in the same turn, stop with nothing running, continue refused), and inside the mounted Chat app (a chat sent from home gets the host's reply under `com.isonomic.chat`).
-- Fix: the fold ignores steps that are not the reply. The title step runs after `turn.end` in the same turn, and its text had been added to the reply.
-
-**Not yet**
-
-- The host refuses to continue a turn whose title step ran after it, because the last reply it sees is the title's (requests O7).
-- Approvals, questions and client tool results come after V1's plain text turns.
-
-## 2026-11-15 · The conversation kit and the thread screen
-
-**Built**
-
-- `conversation-model`: `Thread` folds one session's durable events and live deltas into turns (prompt, reasoning, the reply as it streams, tools used, how it ended). Continue keeps the reply in its turn; deltas are dropped once the durable reply arrives; replayed events are ignored; optimistic sends are adopted by the host's turn. `InputState` says whether the composer offers send, stop or continue. Tested against every harness fixture.
-- `conversation-host`: the `ConversationHost` trait, shaped like the SDK's `sessions.create`, `send`, `continue`, `cancel`, `rename` and `subscribe`, and `ScriptedHost`, which plays scripted replies word by word as real schema-v1 events, with stop sealing the partial reply and continue finishing it.
-- `conversation-ui`: `ConversationView`, with the turns in Isonomic UI's virtualized message scroller, replies as Markdown text views, the thinking indicator before the first words, Isonomic UI's prompt composer (send turns into stop) and continue under a reply that stopped early. The app supplies the words (`ConversationCopy`) and the preset.
-- Chat: a chat sent from home opens a `ConversationView` on the host Chat is given and sends the prompt; the model's title replaces the one taken from the prompt. The window build has no host until the SDK adapter lands, so there a new chat opens empty, as before. `examples/dev` runs on the scripted host.
-
-**Deviations**
-
-- Until the SDK's agents interface re-exports it, the kit takes harness-core and its fixtures over ssh at the SDK's URL and rev (`7a73ca6`), so cargo builds one copy. CI passes `harness: true`.
-- Approvals, questions, artifacts and memory are not folded yet; the turns ignore them, and unknown events and blocks show as a generic notice.
-
-## 2026-11-15 · The app crate the window mounts
-
-**Built**
-
-- `crates/chat` is now the package `isonomic-chat`. `isonomic_chat::Chat` implements `isonomic_app::App`: id `com.isonomic.chat`, no capabilities yet, and a root view that holds the shell. Key bindings register once, however often the window builds Chat. `open_link` takes `isonomic://chat/...` links.
-- Pins: isonomic-ui moves to `4c912f6` (`UI_REF`, the V1 pin for every repo); isonomic-sdk is pinned at `7c488c2` (`SDK_REF`), both sibling checkouts by path, the same as the window. CI checks out both (`ui: true`, `sdk: true`).
-- Tests against the SDK's `TestHost`: the manifest, mounting on home with no calls of Chat's own, link routing, and building twice.
-
-**Deviations**
-
-- `rust-toolchain.toml` pins Rust 1.98: rustfmt on 1.100 reformats macro arguments in Isonomic UI, and `cargo fmt --all --check` covers path dependencies.
-- `isonomic-chat`'s `test-support` feature asks tokio for its multi-thread runtime, which the SDK's `TestHost` needs (requests O6).
-
-## 2026-11-15 · Shell and home with static data
-
-**Built**
-
-- `ChatShell`: the sidebar (collapse, new chat, the chats with pinned first), the header (Untitled and Titled, a title menu with Rename and Delete, Share disabled, the context-panel toggle) and the context panel (Context and Tools tabs; Files and Connections). Hidden panels give their width to the conversation.
-- Home: a greeting by part of the day, the composer stand-in, and five starter chips that each open three example prompts and fill the composer.
-- Sending from home starts a chat titled from the first line of the text, below the pinned ones, and opens it. The opened chat shows where the conversation view will go, above the docked composer and the disclaimer.
-- Keys: new chat (`cmd-shift-o`, `ctrl-shift-o` off macOS), toggle the sidebar (`cmd-\`), toggle the context panel (`cmd-alt-\`).
-- `examples/dev` opens Chat in a window; `crates/chat/tests/screenshots.rs` renders home, composing, titled and panels-hidden in light and dark.
-- Tests: 4 unit tests (greeting, day parts, titles, starters) and 6 headless window tests (routing, send waits for text, sending starts a chat, keyboard new chat, keyboard toggles, rename keeps a new title and ignores an empty one, delete).
-
-**Looked at**
-
-All eight screenshots, against `ChatView/01`, `02` and `04`. Every visible difference is in `design-diffs.md`.
-
-**Deviations**
-
-- The composer, the chat list and the context rows are stand-ins until Isonomic UI ships the Prompt composer (#206) and the stacked list item (#208) and the kit's bindings exist.
-- Long chat titles clip without an ellipsis (isonomic-ui #210).
-
-## 2026-11-15 · Step 0
-
-**Prerequisites** (checked 15 Nov 2026, 00:30 UTC)
-
-| Prerequisite | State | Where |
-| --- | --- | --- |
-| Harness event schema v1 and its JSON Schema | **missing** from `main`: in review | isonomic-harness #2 (schema), stacked under #3 |
-| The six recorded fixtures | **missing** from `main`: in review | isonomic-harness #3 (`chat-basic`, `tool-heavy`, `approval`, `autonomous-run`, `client-gone`; `long-thread` is generated) |
-| 13 conversation components on the Isonomic UI foundation | **present** on `main` (merged 15 Nov, 00:19 UTC) | Permission prompt #28, Approval card #27, Tool call card #21, Question card #20, Message action bar #24, Reasoning steps panel #17, Sourced answer #18, Streamed answer #166, File dropzone #19, Code block #5, Model picker #29, Usage meter #30, Context usage grid #153. Sev 1 #168 (Enter on Deny) is closed |
-| SDK app crate | **missing** from `main`: in review | isonomic-sdk #6 (App trait, AppContext, TestHost), blocked on the `UI_DEPLOY_KEY` secret |
-| SDK agents interface and the testkit's in-memory host | **missing** | Not started in isonomic-sdk; `Capabilities.agents` is reserved |
-| The desktop's move to Isonomic UI | **missing** | isonomic-desktop `crates/ui` still re-exports the old kit at 0.9.1 |
-
-None blocks the shell and home, which use static data. The kit's models wait for the schema and fixtures; the SDK adapter waits for the agents interface; linking into the desktop waits for its move to Isonomic UI.
-
-**Built**
-
-- The workspace: `crates/ui` (the single re-export of Isonomic UI and its conversation components), stubs for `crates/chat`, `examples/dev` and `xtask`.
-- `UI_REF` pins Isonomic UI at `4cf5571`, the first commit with all 13 conversation components. Isonomic UI is a sibling checkout at `../isonomic-ui`, as in isonomic-sdk.
-- `Cargo.lock` is committed; CI runs with `--locked`.
-- `docs/promotions.md` (the desktop inventory), `docs/name-map.md` and three requests in isonomic-ui: #206 (Prompt composer), #207 (Thinking indicator), #208 (stacked list item).
-
-**Deviations**
-
-- `ci.yml` came from the master session's `ci/shared-workflow` branch (issue #1); `ui: true` and `--locked` were added through the web editor, since the connector cannot write workflow files.
-- Pushes that the connector cannot carry (`Cargo.lock`) go through git on Omar's Mac with the @QadmiriOmar login.
-- The first CI run did not start: GitHub reported the organization's Actions payment or spending limit. Escalated to Omar.
+Earlier entries: `status-archive.md`.

@@ -3,54 +3,29 @@
 
 use ui::assets::IconName;
 
-/// Show or hide the sidebar.
+/// Expand or collapse the sidebar.
 pub fn toggle_sidebar() -> IconName {
     IconName::PanelLeft
 }
 
 /// Start a new chat.
 pub fn new_chat() -> IconName {
-    IconName::Pen
-}
-
-/// A pinned chat.
-pub fn pinned() -> IconName {
-    IconName::Pin
-}
-
-/// Show or hide the context panel.
-pub fn toggle_context() -> IconName {
-    IconName::Layers
-}
-
-/// Share a chat.
-pub fn share() -> IconName {
-    IconName::Share
-}
-
-/// The Context tab.
-pub fn context() -> IconName {
-    IconName::Layers
-}
-
-/// The Tools tab.
-pub fn tools() -> IconName {
-    IconName::Tools
-}
-
-/// Add to a context section.
-pub fn add() -> IconName {
     IconName::Plus
 }
 
-/// Attach files in the composer.
-pub fn attach() -> IconName {
-    IconName::Attachment
+/// Search chats.
+pub fn search() -> IconName {
+    IconName::Search
 }
 
-/// Send from the composer.
-pub fn send() -> IconName {
-    IconName::Send
+/// A chat in the sidebar.
+pub fn chat() -> IconName {
+    IconName::Chat
+}
+
+/// A row's menu.
+pub fn more() -> IconName {
+    IconName::Ellipsis
 }
 
 /// The mark beside the greeting.
@@ -72,14 +47,10 @@ pub fn starter(index: usize) -> IconName {
 /// Every icon Chat draws, for a host that registers only the icons in use.
 pub const ALL: &[IconName] = &[
     IconName::PanelLeft,
-    IconName::Pen,
-    IconName::Pin,
-    IconName::Layers,
-    IconName::Share,
-    IconName::Tools,
     IconName::Plus,
-    IconName::Attachment,
-    IconName::Send,
+    IconName::Search,
+    IconName::Chat,
+    IconName::Ellipsis,
     IconName::ChevronDown,
     IconName::Isonomic,
     IconName::TextCreation,
@@ -87,7 +58,4 @@ pub const ALL: &[IconName] = &[
     IconName::Code,
     IconName::Cafe,
     IconName::Idea,
-    IconName::Folder,
-    IconName::Notebook,
-    IconName::Chat,
 ];

@@ -71,6 +71,7 @@ struct Inner {
     created: Vec<NewSession>,
     refuse_create: Option<HostError>,
     refuse_resume: Option<HostError>,
+    refuse_list: Option<HostError>,
     script: VecDeque<ScriptedReply>,
     sessions: BTreeMap<SessionId, Session>,
     next_session: u32,
@@ -119,6 +120,11 @@ impl ScriptedHost {
     /// Every create request so far, oldest first.
     pub fn created(&self) -> Vec<NewSession> {
         self.inner.borrow().created.clone()
+    }
+
+    /// Refuse the next list with this error.
+    pub fn refuse_list(&self, error: HostError) {
+        self.inner.borrow_mut().refuse_list = Some(error);
     }
 
     /// Refuse the next continue with this error.
@@ -344,6 +350,9 @@ impl ConversationHost for ScriptedHost {
 
     fn list(&self, query: SessionQuery) -> HostFuture<Vec<SessionEntry>> {
         self.call(move |inner| {
+            if let Some(error) = inner.refuse_list.take() {
+                return Err(error);
+            }
             let mut entries: Vec<SessionEntry> = inner
                 .sessions
                 .iter()

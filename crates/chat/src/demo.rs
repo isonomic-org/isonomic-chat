@@ -2,7 +2,6 @@
 //! wired. Development data only: none of it ships as a default.
 
 use ui::SharedString;
-use ui::assets::IconName;
 
 /// One chat in the sidebar.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -43,44 +42,5 @@ pub fn sessions() -> Vec<SessionSummary> {
     .collect()
 }
 
-/// A connection shown in the context panel.
-#[derive(Clone, Debug)]
-pub struct Connection {
-    /// Its name.
-    pub name: SharedString,
-    /// What is connected.
-    pub detail: SharedString,
-    /// Its icon.
-    pub icon: IconName,
-}
-
-/// The context panel's connections.
-pub fn connections() -> Vec<Connection> {
-    [
-        ("Team drive", "Connected · 3 folders", IconName::Folder),
-        (
-            "Notes workspace",
-            "Connected · Growth strategy",
-            IconName::Notebook,
-        ),
-        (
-            "Analytics database",
-            "Connected · Read only",
-            IconName::Layers,
-        ),
-        ("Issue tracker", "Connected · 2 projects", IconName::Chat),
-    ]
-    .into_iter()
-    .map(|(name, detail, icon)| Connection {
-        name: name.into(),
-        detail: detail.into(),
-        icon,
-    })
-    .collect()
-}
-
 /// The person's first name, for the greeting.
 pub const FIRST_NAME: &str = "Omar";
-
-/// The model label in the composer.
-pub const MODEL: &str = "Local model";
