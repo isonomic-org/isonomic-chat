@@ -394,3 +394,30 @@ fn with_no_model_installed_home_asks_the_window_to_install_the_recommended_one(
         )
     });
 }
+
+#[ui::test]
+fn a_picked_model_runs_the_next_chat(cx: &mut TestAppContext) {
+    use conversation_model::{Availability, ModelCatalog, ModelOption};
+    let host = ScriptedHost::new();
+    let option = |id: &str| ModelOption {
+        id: id.into(),
+        name: id.into(),
+        remote: false,
+        availability: Availability::Installed,
+    };
+    host.set_models(ModelCatalog::new(
+        vec![option("small"), option("medium")],
+        Some("medium".into()),
+    ));
+    host.script(ScriptedReply::text("Hi."));
+    let (window, shell) = open_with(cx, host.clone());
+    cx.run_until_parked();
+    cx.update(|cx| shell.update(cx, |shell, cx| shell.pick_model("small".into(), cx)));
+    with_window(cx, window, |window, cx| {
+        shell.update(cx, |shell, cx| shell.set_draft("Hello", window, cx));
+        window.render_frame(cx);
+        window.press("enter", cx);
+    });
+    cx.run_until_parked();
+    assert_eq!(host.created()[0].model.as_deref(), Some("small"));
+}

@@ -110,6 +110,12 @@ impl ChatShell {
         self._models = Some(task);
     }
 
+    /// Pick the model new chats run on.
+    pub fn pick_model(&mut self, model: String, cx: &mut Context<Self>) {
+        self.model = Some(model);
+        cx.notify();
+    }
+
     /// The model new chats run on, once one has been picked.
     pub fn model(&self) -> Option<&str> {
         self.model.as_deref()
@@ -154,8 +160,16 @@ impl ChatShell {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Entity<ConversationView> {
-        let thread = cx
-            .new(|cx| ConversationView::new(host, crate::PRESET, copy::conversation(), window, cx));
+        let model = self.model.clone();
+        let thread = cx.new(|cx| {
+            let mut view =
+                ConversationView::new(host, crate::PRESET, copy::conversation(), window, cx);
+            // The model picked in an earlier chat runs this one.
+            if let Some(model) = model {
+                view.select_model(model, cx);
+            }
+            view
+        });
         self.watch(id.clone(), &thread, cx);
         self.threads.insert(id, thread.clone());
         thread
