@@ -35,17 +35,20 @@ pub(super) fn render(shell: &ChatShell, cx: &mut Context<ChatShell>) -> impl Int
                     .on_click(|_, window, cx| window.dispatch_action(Box::new(ToggleSidebar), cx)),
             )
         })
-        .child(h_flex().flex_1().min_w_0().child(title))
+        .child(h_flex().flex_1().min_w_0().overflow_hidden().child(title))
         .when(titled, |this| {
-            this.child(
-                Button::new("share")
-                    .outline()
-                    .small()
-                    .icon(icons::share())
-                    .label(copy::SHARE)
-                    .tooltip(copy::SHARE_LATER)
-                    .disabled(true),
-            )
+            let share = Button::new("share")
+                .outline()
+                .small()
+                .icon(icons::share())
+                .tooltip(copy::SHARE_LATER)
+                .disabled(true);
+            // Narrow, Share keeps its icon; the tooltip still names it.
+            this.child(if shell.is_narrow() {
+                share
+            } else {
+                share.label(copy::SHARE)
+            })
         })
         .child(
             Button::new("context-toggle")

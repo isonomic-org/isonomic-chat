@@ -23,8 +23,15 @@ pub(crate) fn header_height() -> Pixels {
     px(54.)
 }
 
-/// Lines the composer grows to before it scrolls.
-pub(crate) const COMPOSER_ROWS: (usize, usize) = (3, 10);
-
 /// Longest generated title, in characters.
 pub(crate) const TITLE_MAX_CHARS: usize = 48;
+
+/// Narrower than this, the context panel gives its width to the conversation.
+pub(crate) fn context_panel_breakpoint() -> Pixels {
+    px(1100.)
+}
+
+/// Narrower than this, the sidebar collapses too; the header's toggle opens it.
+pub(crate) fn sidebar_breakpoint() -> Pixels {
+    px(860.)
+}

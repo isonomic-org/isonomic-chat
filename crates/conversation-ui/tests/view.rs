@@ -496,3 +496,25 @@ fn a_conversation_too_large_shows_the_reason_and_keeps_the_composer(cx: &mut Tes
     });
     assert_eq!(retry.as_deref(), Some(conversation_model::TOO_LARGE));
 }
+
+#[ui::test]
+fn a_compaction_during_a_send_divides_before_the_new_prompt(cx: &mut TestAppContext) {
+    let h = open(cx);
+    h.host.script(ScriptedReply::text("Done."));
+    h.host.script(ScriptedReply::text("Next."));
+    h.send(cx, "Hello");
+    h.host.finish();
+    cx.run_until_parked();
+    let session = h.host.sessions()[0].clone();
+    h.host
+        .compact(&session, "Earlier messages are not shown to the model.");
+    // The person sends before the compaction reaches the view.
+    cx.update(|cx| h.view.update(cx, |view, cx| view.send("Again".into(), cx)));
+    cx.run_until_parked();
+    cx.update(|cx| {
+        let view = h.view.read(cx);
+        let turns = view.thread().turns().to_vec();
+        assert!(turns[0].divider_after.is_some(), "after the confirmed turn");
+        assert!(turns[1].divider_after.is_none());
+    });
+}

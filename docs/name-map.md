@@ -9,7 +9,7 @@ Verified 15 Nov 2026 against the Figma file and isonomic-ui `main` at `4cf5571` 
 | Figma component | Isonomic UI component | Kit binding or owner | Status |
 | --- | --- | --- | --- |
 | `ChatMessage` (role × state: Thinking, Streaming, Complete) | `component::text::TextView` (Markdown) for bodies; `extra::streamed_answer::StreamedAnswer` for a reply with sources; `component::avatar::Avatar` | `Message` (user, assistant, system, error, refusal) | on main |
-| `PromptComposer` (state: Empty, Filled, Streaming) | Prompt composer, queued next in #1 | `PromptComposer` over composer-model | **missing**: request #206; Chat shows a placeholder (`Textarea` and `Button`) |
+| `PromptComposer` (state: Empty, Filled, Streaming) | `extra::prompt_composer::PromptComposer` | the kit's `ConversationView` (thread) and Chat's `Composer` (home) | on main: home and thread use the same component; the model menu shows the catalog |
 | `MessageActions` (role: Assistant, User) | `extra::message_action_bar::MessageActionBar` (copy, regenerate, version switch, rating) | `MessageActions` registry, `BranchSwitcher` | on main |
 | `ThinkingIndicator` | Proposal #14 (orbs and shimmer label), not queued | `ThinkingIndicator` | **missing**: request #207; placeholder is a plain muted label |
 | `ThinkingOrb`, `AgentOrb` | Proposal #14 | used inside `ThinkingIndicator` | **missing**: request #207 |

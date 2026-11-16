@@ -21,7 +21,7 @@ pub(super) fn render(shell: &ChatShell, cx: &mut Context<ChatShell>) -> impl Int
     };
     let view = cx.entity();
     let body = match shell.context_tab {
-        ContextTab::Context => context(cx),
+        ContextTab::Context => context(shell.is_live(), cx),
         ContextTab::Tools => empty_line(copy::NO_TOOLS, cx),
     };
 
@@ -62,8 +62,15 @@ fn tab(label: &'static str, icon: ui::assets::IconName) -> Tab {
     Tab::new().label(label).prefix(Icon::new(icon).small())
 }
 
-fn context(cx: &App) -> AnyElement {
-    let rows = demo::connections().into_iter().map(|connection| {
+fn context(live: bool, cx: &App) -> AnyElement {
+    // Live, Chat has no connections yet; the examples are for the dev shell.
+    let examples = if live {
+        Vec::new()
+    } else {
+        demo::connections()
+    };
+    let empty = examples.is_empty();
+    let rows = examples.into_iter().map(|connection| {
         row(
             Icon::new(connection.icon),
             connection.name,
@@ -82,7 +89,11 @@ fn context(cx: &App) -> AnyElement {
         .child(section(
             "connections",
             copy::CONNECTIONS,
-            v_flex().gap_1().children(rows).into_any_element(),
+            if empty {
+                empty_line(copy::NO_CONNECTIONS, cx)
+            } else {
+                v_flex().gap_1().children(rows).into_any_element()
+            },
             cx,
         ))
         .into_any_element()

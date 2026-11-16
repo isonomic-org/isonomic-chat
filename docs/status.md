@@ -2,6 +2,19 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · Final layouts of the version 1 screens
+
+Built from the components Chat already uses, with Isonomic UI's spacing, type and theme tokens; nothing restyled, no new widgets, no new agent components.
+
+- **Home:** Isonomic UI's prompt composer, the same one the thread uses, with the model menu from the catalog; the picked model runs every new chat (it was only applied at the view level before, and is now tested end to end). With no chat model installed, one button asks the window to install the recommended one.
+- **Thread:** the divider of a compaction now sits after the last turn the host confirmed, never after a send in flight (it had landed under the new prompt).
+- **Narrow and wide:** below 1,100 px the context panel gives way, below 860 px the sidebar too; the header's toggle still opens it, and both come back when the window widens. The header title truncates and Share keeps only its icon.
+- **Live versus examples:** on a backend, the greeting names no one and the context panel shows its empty state instead of example connections.
+- **Chat list states:** "Chats you start appear here." and a failed list with its reason and Try again (`ChatShell::reload`); a failed write says so.
+- **Rail icon:** `chat` from Isonomic UI's icon catalog (was `message-circle`, which is not in it), with a test that it resolves.
+- **Screenshots:** `tests/screenshots.rs` now renders 13 states in both themes, including live ones on the scripted host (thread, narrow thread, streaming, errors, live home, models, failed list, install a model). All were looked at.
+- **Keyboard:** every control is an Isonomic UI button or field, so Tab reaches it; the sidebar, context panel and new chat keep their shortcuts.
+
 ## 2026-11-16 · SDK 439a069: the QA'd components
 
 - `SDK_REF` moves to `439a069` (its `UI_REF` is isonomic-ui `2e3116b`, with all 86 version 1 components through QA); harness unchanged at `ae4f1a7`. `Cargo.lock` needs no change.

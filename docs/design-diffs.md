@@ -35,7 +35,7 @@ Figma: `A0H5z7vRJfA8J7HYFy1aKW`, section "Start a Basic Chat / Flow v1" (`19:992
 
 | # | Figma | Built | Why |
 | --- | --- | --- | --- |
-| H1 | Composer toolbar: "Add files", "Voice", model selector, "Send message" | Stand-in: "Add files" (disabled), the model label (disabled, caret on the right), "Send" | Prompt composer not built yet (isonomic-ui #206); voice is out of scope |
+| H1 | Composer toolbar: "Add files", "Voice", model selector, "Send message" | Isonomic UI's prompt composer: the plus menu, the model menu (when models are known), and the send arrow, which becomes stop | Isonomic UI as built is the design source; dictation is off and voice is out of scope |
 | H2 | Model selector shows a third-party model name and logo | "Local model", no logo | No third-party names |
 | H3 | Send disabled: blue at 40% opacity | The theme's disabled primary | D3 |
 | H4 | Greeting mark: the old logo glyph | The Isonomic mark from the icon set | The icon set has it |
@@ -43,7 +43,13 @@ Figma: `A0H5z7vRJfA8J7HYFy1aKW`, section "Start a Basic Chat / Flow v1" (`19:992
 
 ## Thread (frames 03–05)
 
-The thread view is the kit's `ConversationView` and arrives with the bindings. Until then, opening a chat shows the titled header, one muted line where the conversation will be, and the docked composer with the disclaimer under it, as in `ChatView/04` and `05`.
+The thread is the kit's `ConversationView`: the prompt on the trailing side on a muted bubble, the reply as Markdown, notes and Continue or Try again under a turn, a quiet divider for a compaction, and the composer with the disclaimer under it. Example chats with no conversation behind them show one muted line.
+
+| Id | Figma | Built | Why |
+| --- | --- | --- | --- |
+| L1 | Fixed three-column layout | Below 1,100 px the context panel gives way, below 860 px the sidebar too (the header's toggle opens it); both come back when the window widens | Narrow windows keep the conversation readable |
+| L2 | Empty sidebar, no error state | "Chats you start appear here." and a failed list with Try again, in the sidebar's footer | Isonomic UI's sidebar takes only menus in its body; its footer is the slot for a note |
+| L3 | Greeting with the person's name | No name when Chat runs on a backend: the SDK has no identity in version 1 | Never invent a name |
 
 ## Icon matches
 

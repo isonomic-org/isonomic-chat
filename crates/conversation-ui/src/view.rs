@@ -41,6 +41,7 @@ pub struct ConversationView {
     focus: FocusHandle,
     title: Option<String>,
     catalog: ModelCatalog,
+    catalog_loaded: bool,
     wanted: Option<String>,
     _models: Option<Task<()>>,
     reconnecting: bool,
@@ -89,6 +90,7 @@ impl ConversationView {
             focus: cx.focus_handle(),
             title: None,
             catalog: ModelCatalog::default(),
+            catalog_loaded: false,
             wanted: None,
             _models: None,
             reconnecting: false,
@@ -110,7 +112,9 @@ impl ConversationView {
     /// it, else the one the catalog would choose, else the preset's.
     pub fn model(&self) -> Option<&str> {
         match self.wanted.as_deref() {
-            Some(id) if self.catalog.get(id).is_some() => Some(id),
+            // Until the catalog arrives, a pick the app made stands; once it
+            // has, only a listed model does.
+            Some(id) if !self.catalog_loaded || self.catalog.get(id).is_some() => Some(id),
             _ => self.catalog.choose(None).map(|o| o.id.as_str()),
         }
     }
@@ -129,6 +133,7 @@ impl ConversationView {
             let catalog = request.await.unwrap_or_default();
             let _ = this.update(cx, |this, cx| {
                 this.catalog = catalog;
+                this.catalog_loaded = true;
                 this.show_models(cx);
             });
         }));

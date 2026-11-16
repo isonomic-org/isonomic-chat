@@ -321,7 +321,10 @@ impl Thread {
             }
             Event::Compacted(compacted) => {
                 if let Some(summary) = &compacted.summary {
-                    match self.turns.len().checked_sub(1) {
+                    // After the last turn the host has confirmed: a send in
+                    // flight comes after the compaction, not before it.
+                    let confirmed = self.turns.iter().rposition(|t| !t.ids.is_empty());
+                    match confirmed {
                         Some(last) => {
                             self.turns[last].divider_after = Some(summary.text.clone());
                             self.touch(last);
