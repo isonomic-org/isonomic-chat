@@ -2,6 +2,11 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · SDK at 8f21cb6: the window's QA ids
+
+- `SDK_REF` moves to `8f21cb6` (`UI_REF` `527d955`, stable ids); harness unchanged. `Cargo.lock` needs no change.
+- Each chat row is `chat-row-<session id>`; its menu items are `chat-row-menu-<id>-open`, `-pin`, `-rename`, `-delete`. Palette rows are Isonomic UI's `command-<id>` (time at `command-<id>-meta`); the model picker's list and rows come from `model_picker::list_id` and `row_id`. All are tested in `tests/ids.rs` and listed in `docs/accessibility.md`.
+
 ## 2026-11-16 · Model names, and the Mac window checked
 
 - A model's name is shown without its quantisation tag: "Qwen3.5 2B (Q4_K_M)" reads "Qwen3.5 2B" (`conversation_model::display_name`, used by the SDK adapter; ids unchanged).
