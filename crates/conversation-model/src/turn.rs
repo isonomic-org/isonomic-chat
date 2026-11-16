@@ -32,6 +32,11 @@ impl TurnState {
         matches!(self, TurnState::Sending | TurnState::Running)
     }
 
+    /// Whether sending the same prompt again could succeed.
+    pub fn can_retry(&self) -> bool {
+        matches!(self, TurnState::Failed(_) | TurnState::Rejected(_))
+    }
+
     /// Whether the reply can be continued from where it stopped.
     pub fn can_continue(&self) -> bool {
         matches!(self, TurnState::Stopped | TurnState::Truncated)
@@ -79,6 +84,11 @@ pub struct Turn {
     pub tools: Vec<ToolUse>,
     /// Things this build cannot show.
     pub notices: Vec<Notice>,
+    /// The stable code of the error that ended the turn, if it failed.
+    pub error_code: Option<String>,
+    /// A quiet divider after this turn: older messages were summarized and
+    /// the note says so. Never a message.
+    pub divider_after: Option<String>,
     /// Why the host refused a request about this turn, such as continue.
     pub refusal: Option<String>,
     /// The host is retrying after a transient error; the readable reason.
@@ -101,6 +111,8 @@ impl Turn {
             continuing: false,
             tools: Vec::new(),
             notices: Vec::new(),
+            error_code: None,
+            divider_after: None,
             refusal: None,
             retrying: None,
             state,

@@ -2,7 +2,7 @@
 
 use conversation_host::{ConversationHost, HostError, NewSession};
 use conversation_model::schema::{Block, SessionId};
-use conversation_model::{InputState, ModelCatalog, Thread, TurnState, Update};
+use conversation_model::{InputState, ModelCatalog, Thread, Update};
 use futures::StreamExt as _;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -427,8 +427,10 @@ impl Render for ConversationView {
                         let _ = view.update(cx, |view, cx| view.resume(cx));
                     }) as OnClick
                 });
-                let failed = matches!(turn.state, TurnState::Failed(_) | TurnState::Rejected(_));
-                let on_retry = (last && failed && !turn.prompt.is_empty()).then(|| {
+                let retry = turn.state.can_retry()
+                    && !turn.prompt.is_empty()
+                    && turn.error_code.as_deref() != Some(conversation_model::TOO_LARGE);
+                let on_retry = (last && retry).then(|| {
                     let view = view.clone();
                     Box::new(move |_: &mut Window, cx: &mut App| {
                         let _ = view.update(cx, |view, cx| view.retry(cx));

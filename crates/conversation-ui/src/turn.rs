@@ -138,6 +138,19 @@ pub(crate) fn render_turn(
     if has_status {
         row = row.child(status);
     }
+    if let Some(note) = &turn.divider_after {
+        row = row.child(
+            div()
+                .id("turn-divider")
+                .w_full()
+                .pt_2()
+                .border_t_1()
+                .border_color(cx.theme().border)
+                .text_xs()
+                .text_color(cx.theme().muted_foreground)
+                .child(note.clone()),
+        );
+    }
     row.into_any_element()
 }
 

@@ -244,3 +244,33 @@ fn awaiting_client_follows_the_session_status() {
     assert!(Thread::from_events(&fixture.events[..=gone_at]).awaiting_client());
     assert!(!Thread::from_events(&fixture.events).awaiting_client());
 }
+
+#[test]
+fn the_compaction_in_autonomous_run_is_a_divider_not_a_turn() {
+    let fixture = fixtures::autonomous_run();
+    let at = fixture
+        .events
+        .iter()
+        .position(|e| matches!(&e.event, Event::Compacted(c) if c.summary.is_some()))
+        .expect("the fixture summarizes day 1");
+    let session = fixture.events[at].session.clone();
+    let events = session_of(&fixture.events, &session);
+    let before = Thread::from_events(events.iter().take_while(|e| e.seq < fixture.events[at].seq));
+    let after = Thread::from_events(
+        events
+            .iter()
+            .take_while(|e| e.seq <= fixture.events[at].seq),
+    );
+    assert_eq!(before.turns().len(), after.turns().len());
+    let divided =
+        after.turns().iter().any(|t| t.divider_after.is_some()) || after.divider().is_some();
+    assert!(divided);
+}
+
+fn session_of(events: &[SessionEvent], id: &SessionId) -> Vec<SessionEvent> {
+    events
+        .iter()
+        .filter(|e| &e.session == id)
+        .cloned()
+        .collect()
+}

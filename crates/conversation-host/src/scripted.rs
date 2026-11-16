@@ -5,9 +5,12 @@
 //! Stop seals the partial reply exactly as the engine does, and continue
 //! streams the words that were left.
 
-use events::{assistant, step_end, title_event, turn_end, words};
+use events::{assistant, compacted, step_end, title_event, too_large, turn_end, words};
 
 mod events;
+mod reply;
+
+pub use reply::ScriptedReply;
 
 use crate::{
     ConversationHost, HostError, HostFuture, NewSession, SessionEntry, SessionQuery, UpdateStream,
@@ -28,56 +31,14 @@ use std::rc::Rc;
 /// The first event's time: 14 Nov 2026, 12:00 UTC. Each event adds 10 ms.
 const EPOCH_MS: u64 = 1_794_657_600_000;
 
-/// One reply the host will give, in order.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct ScriptedReply {
-    /// Reasoning streamed before the answer.
-    pub reasoning: Option<String>,
-    /// The answer.
-    pub text: String,
-    /// A title set after the first turn.
-    pub title: Option<String>,
-    /// Decline instead of answering; `text` is the refusal.
-    pub refuse: bool,
-}
-
-impl ScriptedReply {
-    /// A plain answer.
-    pub fn text(text: impl Into<String>) -> Self {
-        Self {
-            text: text.into(),
-            ..Self::default()
-        }
-    }
-
-    /// Stream this reasoning first.
-    pub fn with_reasoning(mut self, reasoning: impl Into<String>) -> Self {
-        self.reasoning = Some(reasoning.into());
-        self
-    }
-
-    /// Set the session's title after this reply, if it is the first.
-    pub fn with_title(mut self, title: impl Into<String>) -> Self {
-        self.title = Some(title.into());
-        self
-    }
-
-    /// A refusal with this message.
-    pub fn refusal(text: impl Into<String>) -> Self {
-        Self {
-            text: text.into(),
-            refuse: true,
-            ..Self::default()
-        }
-    }
-}
-
 /// A reply being written.
 struct Open {
     turn: TurnId,
     step: StepId,
     reasoning: VecDeque<String>,
     text: VecDeque<String>,
+    /// Words held back by the output limit, for continue.
+    cut: Option<VecDeque<String>>,
     written_reasoning: String,
     written_text: String,
     title: Option<String>,
@@ -142,6 +103,17 @@ impl ScriptedHost {
         for session in self.inner.borrow_mut().sessions.values_mut() {
             session.subscribers.clear();
         }
+    }
+
+    /// The host compacts the session: older messages are no longer shown to
+    /// the model, and `note` says so.
+    pub fn compact(&self, session: &SessionId, note: &str) {
+        let mut inner = self.inner.borrow_mut();
+        let through = inner
+            .sessions
+            .get(session)
+            .map_or(0, |s| s.log.len() as Seq);
+        inner.emit(session, None, None, compacted(through, note));
     }
 
     /// Every create request so far, oldest first.
@@ -266,12 +238,19 @@ impl ConversationHost for ScriptedHost {
             });
             inner.emit(&session, Some(&turn), None, start);
             inner.emit(&session, Some(&turn), None, Event::User(User { content }));
+            if let Some(reason) = reply.too_large {
+                inner.emit(&session, Some(&turn), None, too_large(reason));
+                return Ok(());
+            }
             let step = inner.start_step(&session, &turn);
+            let mut text = words(&reply.text);
+            let cut = reply.cut_after.map(|n| text.split_off(n.min(text.len())));
             let open = Open {
                 turn,
                 step,
                 reasoning: words(reply.reasoning.as_deref().unwrap_or_default()),
-                text: words(&reply.text),
+                text,
+                cut,
                 written_reasoning: String::new(),
                 written_text: String::new(),
                 title: reply.title,
@@ -307,6 +286,7 @@ impl ConversationHost for ScriptedHost {
                 step,
                 reasoning: VecDeque::new(),
                 text: leftover.text,
+                cut: None,
                 written_reasoning: String::new(),
                 written_text: String::new(),
                 title: leftover.title,
@@ -543,9 +523,22 @@ impl Inner {
             self.emit(id, turn, None, turn_end(TurnStop::Refused, None));
             return;
         }
-        self.emit(id, turn, step, assistant(&open, StopReason::End));
+        let cut = open.cut.clone().filter(|rest| !rest.is_empty());
+        let stop = if cut.is_some() {
+            StopReason::MaxTokens
+        } else {
+            StopReason::End
+        };
+        let sealed = self.emit(id, turn, step, assistant(&open, stop));
         self.emit(id, turn, step, step_end(StepOutcome::Complete));
         self.emit(id, turn, None, turn_end(TurnStop::Done, None));
+        if let (Some(rest), Some(session)) = (cut, self.sessions.get_mut(id)) {
+            session.leftover = Some(Leftover {
+                text: rest,
+                after: sealed,
+                title: None,
+            });
+        }
         if let Some(title) = open.title.filter(|_| give_title) {
             self.emit(id, None, None, title_event(title, TitleSource::Model));
         }
