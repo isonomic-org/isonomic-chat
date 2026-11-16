@@ -9,6 +9,11 @@ pub(crate) fn column_width() -> Pixels {
     px(720.)
 }
 
+/// Width of the field that edits a sent prompt.
+pub(crate) fn edit_width() -> Pixels {
+    px(560.)
+}
+
 /// How long to wait before following a session again after its stream
 /// ended: a quarter second, doubling with each try, at most eight seconds.
 pub(crate) fn reconnect_wait(tries: u32) -> Duration {

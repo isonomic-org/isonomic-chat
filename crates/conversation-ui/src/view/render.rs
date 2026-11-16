@@ -141,8 +141,32 @@ fn controls(view: &WeakEntity<ConversationView>, index: usize, cx: &App) -> Repl
         }) as crate::turn::VersionHandler;
         (count, current, pick)
     });
+    let on_edit = (this.can_regenerate(index) && this.editing().is_none()).then(|| {
+        let view = view.clone();
+        Rc::new(move |window: &mut Window, cx: &mut App| {
+            let _ = view.update(cx, |view, cx| view.begin_edit(index, window, cx));
+        }) as crate::turn::Handler
+    });
+    let editing = this
+        .editing
+        .as_ref()
+        .filter(|editing| editing.index == index)
+        .map(|editing| {
+            let (save, cancel) = (view.clone(), view.clone());
+            crate::turn::EditBox {
+                field: editing.field.clone(),
+                on_save: Rc::new(move |window: &mut Window, cx: &mut App| {
+                    let _ = save.update(cx, |view, cx| view.save_edit(window, cx));
+                }),
+                on_cancel: Rc::new(move |window: &mut Window, cx: &mut App| {
+                    let _ = cancel.update(cx, |view, cx| view.cancel_edit(window, cx));
+                }),
+            }
+        });
     ReplyControls {
         on_regenerate,
         versions,
+        on_edit,
+        editing,
     }
 }

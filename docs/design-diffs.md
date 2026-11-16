@@ -34,7 +34,8 @@ Every visible difference between the design and what this repository draws. The 
 | # | Design 0.2 | Built | Why |
 | --- | --- | --- | --- |
 | T1 | Prompt bubble wraps at 560 | Isonomic UI's message bubble, which wraps at 80 % of the column (576 at 720) | The component's own limit |
-| T2 | Prompt hover actions: time, retry, edit, copy | Copy only, shown on hover; the row keeps its space | Try again sits on the reply; edit is not built yet; turns carry no time |
+| T2 | Prompt hover actions: time, retry, edit, copy | Copy and Edit, shown on hover; the row keeps its space | Try again sits on the reply; turns carry no time |
+| T11 | Edit box: 560 wide, border 2 `gray/900`, radius 16, Cancel and Save; no pager on the prompt | Isonomic UI's textarea in a 560 box with a 2 px foreground border, Cancel (outline) and Save (primary); Mod-Enter saves. The versions show in the reply's pager | The design leaves the pager on an edited prompt undrawn; one pager per turn |
 | T3 | Reply actions: copy, read aloud, thumbs up and down, retry, time; version pager beside them | Isonomic UI's message action bar: Copy and Try again, always shown; the pager ("2 / 2") beside Try again once a reply has versions | Votes and read aloud have no service; no time; the pager is the action bar's own |
 | T4 | Stream cursor block under the text | None; the thinking indicator shows until text arrives | The text view streams with its own fade |
 | T5 | Thinking row: orb, label, seconds, caret; expands to a summary or log | Isonomic UI's thinking indicator: orb and the last line of thinking, not expandable, no seconds | No expandable thinking row in Isonomic UI |

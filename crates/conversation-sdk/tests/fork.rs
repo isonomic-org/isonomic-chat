@@ -111,3 +111,56 @@ fn a_fork_logs_only_its_start_and_lists_its_parent() {
         assert_eq!(branch.turns()[0].reply(), "Because it is quiet.");
     });
 }
+
+#[test]
+fn an_edited_prompt_forks_with_reason_edit_and_runs_the_new_prompt() {
+    let host = TestHost::new();
+    let (app, _) = host.context::<Probe>();
+    let sdk = SdkHost::new(app.client().agents());
+    host.engine().agents().with(|memory| {
+        memory.model.text("Apple.");
+        memory.model.text("Fruit");
+        memory.model.text("Cherry.");
+    });
+
+    host.runtime().block_on(async {
+        let new = NewSession {
+            preset: "chat".into(),
+            title: None,
+            model: None,
+        };
+        let parent = sdk.create(new).await.expect("create");
+        let mut updates = sdk.subscribe(&parent, 0).await.expect("subscribe");
+        let mut thread = Thread::for_session(parent.clone());
+        sdk.send(&parent, text("Name a fruit")).await.expect("send");
+        until(&mut thread, &mut updates, |t| t.title().is_some()).await;
+
+        let first = thread.turns()[0].ids[0].clone();
+        let child = sdk
+            .fork(&parent, ForkAt::Before(first), ForkReason::Edit)
+            .await
+            .expect("fork");
+        let mut own = sdk.subscribe(&child, 0).await.expect("subscribe");
+        let mut branch = Thread::for_session(child.clone());
+        sdk.send(&child, text("Name a red fruit"))
+            .await
+            .expect("send");
+        let mut reason = None;
+        while !branch
+            .turns()
+            .first()
+            .is_some_and(|turn| turn.state == TurnState::Done)
+        {
+            let update = own.next().await.expect("an update");
+            if let Update::Event(event) = &update
+                && let Event::Forked(forked) = &event.event
+            {
+                reason = Some(forked.reason.clone());
+            }
+            branch.apply(&update);
+        }
+        assert_eq!(reason, Some(ForkReason::Edit));
+        assert_eq!(branch.turns()[0].prompt, "Name a red fruit");
+        assert_eq!(branch.turns()[0].reply(), "Cherry.");
+    });
+}

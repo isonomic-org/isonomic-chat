@@ -2,6 +2,12 @@
 
 Every decision about where a type, helper, binding or screen lives: the kit (`crates/conversation-*`), Chat (`crates/chat`), or neither (a request to the host). The test: could Agents, an in-app assistant or the Activity tab use it? Newest first.
 
+## 2026-11-16 · Editing a prompt
+
+| Piece | Where | Verdict | Why |
+| --- | --- | --- | --- |
+| The edit field on a sent prompt, and `ConversationView::edit` | `crates/conversation-ui` `view/edit.rs`, `turn.rs` | Kit | Any conversation surface edits a prompt the same way; the words come from `ConversationCopy` |
+
 ## 2026-11-16 · Try again and versions
 
 | Piece | Where | Verdict | Why |

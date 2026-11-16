@@ -13,9 +13,11 @@ use ui::{App, Entity, EventEmitter, FocusHandle, Focusable, SharedString, Task, 
 
 use crate::ConversationCopy;
 
+mod edit;
 mod render;
 mod versions;
 
+use edit::Editing;
 use versions::{SlotAt, Start};
 
 /// What a conversation view reports to the app that mounts it.
@@ -57,6 +59,8 @@ pub struct ConversationView {
     slots: Vec<SlotAt>,
     /// Each session shown, with the index of its first own turn.
     owners: Vec<(SessionId, usize)>,
+    /// The prompt being edited, if any.
+    editing: Option<Editing>,
     _composer_events: ui::Subscription,
 }
 
@@ -110,6 +114,7 @@ impl ConversationView {
             _load: None,
             slots: Vec::new(),
             owners: Vec::new(),
+            editing: None,
             _composer_events: composer_events,
         };
         view.load_models(cx);

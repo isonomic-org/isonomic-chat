@@ -28,6 +28,12 @@ pub struct ConversationCopy {
     pub try_again: SharedString,
     /// The copy button's name, under a prompt and a reply.
     pub copy: SharedString,
+    /// The edit button under a prompt.
+    pub edit: SharedString,
+    /// Keep the edited prompt and send it as a new version.
+    pub save: SharedString,
+    /// Close the edit field and keep the prompt.
+    pub cancel: SharedString,
     /// The note while the host retries after a transient error.
     pub retrying: SharedString,
     /// The note while the connection to the host is being restored.
@@ -58,6 +64,9 @@ impl Default for ConversationCopy {
             unknown: "Content this version can't show".into(),
             try_again: "Try again".into(),
             copy: "Copy".into(),
+            edit: "Edit".into(),
+            save: "Save".into(),
+            cancel: "Cancel".into(),
             retrying: "Having trouble reaching the model. Trying again…".into(),
             reconnecting: "Reconnecting…".into(),
             awaiting_client: "Waiting for an app this chat needs to come back.".into(),

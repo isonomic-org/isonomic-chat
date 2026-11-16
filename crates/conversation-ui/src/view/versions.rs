@@ -112,6 +112,33 @@ impl ConversationView {
     /// Write the reply of the turn at `index` again, as a new version: fork
     /// the session the turn was written in, before it, and send its prompt.
     pub fn regenerate(&mut self, index: usize, cx: &mut Context<Self>) {
+        self.rewrite(index, None, ForkReason::Regenerate, cx);
+    }
+
+    /// Send an edited prompt in place of the one at `index`, as a new
+    /// version of that turn. An empty or unchanged prompt does nothing.
+    pub fn edit(&mut self, index: usize, prompt: String, cx: &mut Context<Self>) {
+        let same = self
+            .thread
+            .borrow()
+            .turns()
+            .get(index)
+            .is_none_or(|turn| turn.prompt == prompt);
+        if prompt.trim().is_empty() || same {
+            return;
+        }
+        self.rewrite(index, Some(prompt), ForkReason::Edit, cx);
+    }
+
+    /// Fork before the turn at `index` and send `prompt` (or the turn's own)
+    /// in the fork, which becomes the version that shows.
+    fn rewrite(
+        &mut self,
+        index: usize,
+        prompt: Option<String>,
+        reason: ForkReason,
+        cx: &mut Context<Self>,
+    ) {
         if !self.can_regenerate(index) {
             return;
         }
@@ -119,7 +146,7 @@ impl ConversationView {
             let thread = self.thread.borrow();
             let turn = &thread.turns()[index];
             (
-                turn.prompt.clone(),
+                prompt.unwrap_or_else(|| turn.prompt.clone()),
                 thread.turns()[..index].to_vec(),
                 turn.start_seq,
                 turn.ids.first().cloned(),
@@ -137,11 +164,9 @@ impl ConversationView {
         let (Some(parent), Some(turn)) = (parent, turn) else {
             return;
         };
-        let request = self.host.fork(
-            &parent,
-            ForkAt::Before(turn.clone()),
-            ForkReason::Regenerate,
-        );
+        let request = self
+            .host
+            .fork(&parent, ForkAt::Before(turn.clone()), reason);
         self._request = Some(cx.spawn(async move |this, cx| match request.await {
             Ok(child) => {
                 let _ = this.update(cx, |this, cx| {
