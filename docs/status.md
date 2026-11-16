@@ -2,6 +2,13 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · SDK at 1f28327: the serif, and 28 px buttons
+
+- `SDK_REF` moves to `1f28327` (`UI_REF` `0a8f39d`); harness unchanged.
+- The wordmark (20 / 28, medium: the heaviest bundled weight) and the home greeting (34 / 42, regular) are in the bundled serif, as design 0.2 draws them.
+- Copy and Edit under a prompt and the reply action row are 28 px buttons with 16 px icons.
+- What still differs from the design is decided for version 1 or is Isonomic UI's tokens: see `docs/design-diffs.md`.
+
 ## 2026-11-16 · SDK at 4947e43: chat icons in search, list indent
 
 - `SDK_REF` moves to `4947e43` (`UI_REF` `ecd21d1`, isonomic-ui #385); harness unchanged.

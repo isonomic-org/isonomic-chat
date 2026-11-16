@@ -167,3 +167,23 @@ pub(crate) fn picker_row_padding() -> Edges<Pixels> {
 pub(crate) fn picker_row_gap() -> Pixels {
     px(12.)
 }
+
+/// The wordmark's size and line height (design 0.2: 20 / 28).
+pub(crate) fn wordmark_size() -> Pixels {
+    px(20.)
+}
+
+/// See [`wordmark_size`].
+pub(crate) fn wordmark_line() -> Pixels {
+    px(28.)
+}
+
+/// The home greeting's size and line height (design 0.2: 34 / 42).
+pub(crate) fn greeting_size() -> Pixels {
+    px(34.)
+}
+
+/// See [`greeting_size`].
+pub(crate) fn greeting_line() -> Pixels {
+    px(42.)
+}
