@@ -201,13 +201,13 @@ fn a_model_that_is_not_installed_is_asked_of_the_window(cx: &mut TestAppContext)
     host.engine().models().uninstall("chat-small");
     let (_open, shell) = mount(cx, &host);
     wait_until(cx, &shell, |shell| shell.missing_model().is_some());
-    shell.update(cx, |shell, _| {
+    shell.update(cx, |shell, cx| {
         let model = shell
             .missing_model()
             .expect("a model to install")
             .id
             .clone();
-        assert!(shell.install_model(&model));
+        assert!(shell.install_model(&model, cx));
     });
     let requests = host.requests();
     assert_eq!(requests.len(), 1);

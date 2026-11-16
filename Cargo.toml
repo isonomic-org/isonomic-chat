@@ -40,6 +40,7 @@ harness-testkit = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.gi
 isonomic-app = { path = "../isonomic-sdk/crates/app", features = ["extra"] }
 isonomic-client = { path = "../isonomic-sdk/crates/client" }
 isonomic-proto = { path = "../isonomic-sdk/crates/proto" }
+isonomic-testkit = { path = "../isonomic-sdk/crates/testkit" }
 serde_json = "1"
 
 # Isonomic UI's copy of GPUI's macros, which resolve GPUI paths through the

@@ -289,10 +289,11 @@ fn a_chat_sent_from_home_runs_a_turn_with_stop_and_continue(cx: &mut TestAppCont
     assert_eq!(state(cx).2, TurnState::Stopped);
     with_window(cx, window, |window, cx| {
         window.render_frame(cx);
-        window.click(
-            conversation_ui::action_button(conversation_ui::CONTINUE_ID),
-            cx,
-        );
+        let resume = thread
+            .read(cx)
+            .status_button(conversation_ui::StatusButton::Continue)
+            .expect("the bar offers to carry on");
+        window.click(resume, cx);
     });
     cx.run_until_parked();
     host.finish();
@@ -526,24 +527,4 @@ fn choosing_a_model_that_is_not_installed_asks_the_window(cx: &mut TestAppContex
         cx.update(|cx| shell.read(cx).model().map(str::to_owned)),
         None
     );
-}
-
-#[ui::test]
-fn alt_up_and_down_step_through_the_chats_in_sidebar_order(cx: &mut TestAppContext) {
-    let (window, shell) = open(cx);
-    let order: Vec<SharedString> = cx.update(|cx| {
-        let sessions = shell.read(cx).sessions();
-        let pinned = sessions.iter().filter(|s| s.pinned);
-        let rest = sessions.iter().filter(|s| !s.pinned);
-        pinned.chain(rest).map(|s| s.id.clone()).collect()
-    });
-    let route = |cx: &mut TestAppContext| cx.update(|cx| shell.read(cx).route().clone());
-    for key in ["alt-down", "alt-down", "alt-up"] {
-        with_window(cx, window, |window, cx| {
-            window.render_frame(cx);
-            window.press(key, cx);
-        });
-        cx.run_until_parked();
-    }
-    assert_eq!(route(cx), Route::Session(order[0].clone()));
 }

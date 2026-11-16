@@ -28,6 +28,7 @@ ui.workspace = true
 [dev-dependencies]
 futures = { workspace = true, features = ["executor"] }
 isonomic-app = { workspace = true, features = ["test-support"] }
+isonomic-testkit.workspace = true
 ui = { workspace = true, features = ["test-support"] }
 
 [lints]

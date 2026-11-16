@@ -76,6 +76,25 @@ impl ModelCatalog {
         self.options.iter().find(|o| o.id == id)
     }
 
+    /// Record a model's availability as the host now reports it. `false`
+    /// if the model is not listed or nothing changed.
+    pub fn set_availability(&mut self, id: &str, availability: Availability) -> bool {
+        match self.options.iter_mut().find(|o| o.id == id) {
+            Some(option) if option.availability != availability => {
+                option.availability = availability;
+                true
+            }
+            _ => false,
+        }
+    }
+
+    /// The models that are on their way: downloading now.
+    pub fn downloading(&self) -> impl Iterator<Item = &ModelOption> {
+        self.options
+            .iter()
+            .filter(|o| o.availability == Availability::Downloading)
+    }
+
     /// The model to use: `wanted` if it is listed and can answer, else the
     /// recommended one if it can, else the first that can, else none.
     pub fn choose(&self, wanted: Option<&str>) -> Option<&ModelOption> {

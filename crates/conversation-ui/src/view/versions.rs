@@ -6,10 +6,13 @@
 //! where the next one forked, and the last is followed live.
 
 use super::ConversationView;
+use crate::metrics;
 use conversation_host::{ConversationHost, ForkAt, SessionQuery};
 use conversation_model::schema::{Event, ForkReason, Seq, SessionId, TurnId};
 use conversation_model::{Branch, Path, Slot, Thread, Turn, Update, plan};
 use futures::StreamExt as _;
+use futures::future::{self, Either};
+use ui::BackgroundExecutor;
 use ui::prelude::*;
 
 /// A turn with more than one version, where it shows.
@@ -26,6 +29,7 @@ pub(super) struct SlotAt {
 /// Where to start a load: the session, the turns it carries on from, the
 /// `seq` of its own log already among them, and the fork point whose other
 /// versions to leave out (they are already in a slot).
+#[derive(Clone)]
 pub(super) struct Start {
     pub(super) session: SessionId,
     pub(super) carried: Vec<Turn>,
@@ -50,6 +54,7 @@ impl ConversationView {
     /// then follow the last session live.
     pub(super) fn load(&mut self, start: Start, cx: &mut Context<Self>) {
         let host = self.host.clone();
+        self.load_failed = None;
         self._follow = None;
         *self.thread.borrow_mut() =
             Thread::with_turns(start.session.clone(), start.carried.clone())
@@ -71,7 +76,15 @@ impl ConversationView {
                 })
                 .collect();
             let path = plan(&start.session, &branches);
-            let (thread, slots, owners) = fold(host.as_ref(), &path, start).await;
+            let executor = cx.background_executor().clone();
+            let folded = fold(host.as_ref(), &path, start.clone(), &executor).await;
+            let Ok((thread, slots, owners)) = folded else {
+                let _ = this.update(cx, |this, cx| {
+                    this.load_failed = Some(start);
+                    this.rows_changed(cx);
+                });
+                return;
+            };
             let _ = this.update(cx, |this, cx| {
                 this.owners.extend(owners);
                 for found in slots {
@@ -90,6 +103,19 @@ impl ConversationView {
                 }
             });
         }));
+    }
+
+    /// Whether opening the conversation failed (a log that ended early or
+    /// stalled); the status bar offers Try again.
+    pub fn load_failed(&self) -> bool {
+        self.load_failed.is_some()
+    }
+
+    /// Load the conversation again after a failure.
+    pub fn retry_load(&mut self, cx: &mut Context<Self>) {
+        if let Some(start) = self.load_failed.take() {
+            self.load(start, cx);
+        }
     }
 
     /// The versions of the turn at `index`, if it has more than one: how
@@ -269,21 +295,30 @@ impl ConversationView {
     }
 }
 
+/// A session's log did not reach the point the next version forked at in
+/// time: it ended early, or stalled.
+pub(super) struct FoldFailed;
+
 /// Fold the sessions of `path`: each up to where the next forked, the last
 /// not at all (it is followed live). Returns the thread to follow, the
 /// versions found, and where each session's own turns start.
+///
+/// Each session is read for at most `metrics::fold_limit()`; one that ends
+/// before its fork point, or stalls, fails the load instead of leaving the
+/// thread loading.
 async fn fold(
     host: &dyn ConversationHost,
     path: &Path,
     start: Start,
-) -> (Thread, Vec<SlotAt>, Vec<(SessionId, usize)>) {
+    executor: &BackgroundExecutor,
+) -> Result<(Thread, Vec<SlotAt>, Vec<(SessionId, usize)>), FoldFailed> {
     let (mut carried, mut after) = (start.carried, start.after);
     let mut slots = Vec::new();
     let mut owners = Vec::new();
     let mut last = Thread::new();
     for (session, leave) in &path.sessions {
         owners.push((session.clone(), carried.len()));
-        let mut thread = Thread::with_turns(session.clone(), carried).starting_after(after);
+        let thread = Thread::with_turns(session.clone(), carried).starting_after(after);
         let Some(leave) = *leave else {
             for slot in path.slots.iter().filter(|s| &s.parent == session) {
                 slots.push(SlotAt {
@@ -292,22 +327,14 @@ async fn fold(
                     turn: None,
                 });
             }
-            return (thread, slots, owners);
+            return Ok((thread, slots, owners));
         };
-        let mut next = None;
-        if let Ok(mut updates) = host.subscribe(session, after).await {
-            while let Some(update) = updates.next().await {
-                if let Update::Event(event) = &update
-                    && event.seq > leave
-                {
-                    if matches!(event.event, Event::TurnStart(_)) {
-                        next = event.turn.clone();
-                    }
-                    break;
-                }
-                thread.apply(&update);
-            }
-        }
+        let read = Box::pin(read_to(host, session, after, leave, thread, executor));
+        let limit = Box::pin(executor.timer(metrics::fold_limit()));
+        let (thread, next) = match future::select(read, limit).await {
+            Either::Left((Some(read), _)) => read,
+            _ => return Err(FoldFailed),
+        };
         for slot in path.slots.iter().filter(|s| &s.parent == session) {
             let index = thread.turn_after(slot.seq);
             let turn = if slot.seq == leave {
@@ -328,5 +355,41 @@ async fn fold(
         after = 0;
         last = thread;
     }
-    (last, slots, owners)
+    Ok((last, slots, owners))
+}
+
+/// Read a session's log into `thread` up to and including `leave`, then
+/// glance at the event after it for the turn a fork there writes again.
+/// `None` if the log ends before `leave`.
+async fn read_to(
+    host: &dyn ConversationHost,
+    session: &SessionId,
+    after: Seq,
+    leave: Seq,
+    mut thread: Thread,
+    executor: &BackgroundExecutor,
+) -> Option<(Thread, Option<TurnId>)> {
+    let mut updates = host.subscribe(session, after).await.ok()?;
+    while thread.last_seq() < leave {
+        let update = updates.next().await?;
+        if let Update::Event(event) = &update
+            && event.seq > leave
+        {
+            // The fork point itself was never sent: a gap in the log.
+            return None;
+        }
+        thread.apply(&update);
+    }
+    // The fork point is reached. Nothing may follow it (a fork after the
+    // last turn), so wait only a moment for the next event.
+    let glance = Box::pin(executor.timer(metrics::glance()));
+    let next = match future::select(updates.next(), glance).await {
+        Either::Left((Some(Update::Event(event)), _))
+            if matches!(event.event, Event::TurnStart(_)) =>
+        {
+            event.turn.clone()
+        }
+        _ => None,
+    };
+    Some((thread, next))
 }

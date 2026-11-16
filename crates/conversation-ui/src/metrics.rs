@@ -4,6 +4,17 @@
 use std::time::Duration;
 use ui::{Pixels, px};
 
+/// The longest a session's log is read when opening a conversation, before
+/// the load fails with Try again.
+pub(crate) fn fold_limit() -> Duration {
+    Duration::from_secs(10)
+}
+
+/// How long to wait for the event after a fork point, which may not exist.
+pub(crate) fn glance() -> Duration {
+    Duration::from_millis(250)
+}
+
 /// Widest the column of turns, the status bar and the composer grow.
 pub(crate) fn column_width() -> Pixels {
     px(720.)

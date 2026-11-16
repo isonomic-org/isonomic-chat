@@ -164,3 +164,28 @@ fn an_edited_prompt_forks_with_reason_edit_and_runs_the_new_prompt() {
         assert_eq!(branch.turns()[0].reply(), "Cherry.");
     });
 }
+
+#[test]
+fn the_list_pages_through_every_session() {
+    let host = TestHost::new();
+    let (app, _) = host.context::<Probe>();
+    let sdk = SdkHost::new(app.client().agents());
+    host.runtime().block_on(async {
+        // More than the engine's page of 50.
+        for n in 0..60 {
+            let new = NewSession {
+                preset: "chat".into(),
+                title: Some(format!("Chat {n}")),
+                model: None,
+            };
+            sdk.create(new).await.expect("create");
+        }
+        let all = sdk.list(SessionQuery::default()).await.expect("list");
+        assert_eq!(all.len(), 60);
+        let some = SessionQuery {
+            limit: 55,
+            ..Default::default()
+        };
+        assert_eq!(sdk.list(some).await.expect("list").len(), 55);
+    });
+}

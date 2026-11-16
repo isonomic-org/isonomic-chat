@@ -48,6 +48,18 @@ pub struct ConversationCopy {
     pub awaiting_client: SharedString,
     /// The note when the session takes no more input.
     pub closed: SharedString,
+    /// A conversation whose log could not be read when it was opened.
+    pub load_failed: SharedString,
+    /// The status bar while a reply is written.
+    pub working: SharedString,
+    /// Hide the status bar.
+    pub dismiss: SharedString,
+    /// Write a stopped reply again.
+    pub retry: SharedString,
+    /// Carry on with a stopped reply.
+    pub resume: SharedString,
+    /// Stop the reply being written.
+    pub stop: SharedString,
     /// The picked model is not one this app may use.
     pub model_denied: SharedString,
     /// The picked model does not exist.
@@ -80,6 +92,12 @@ impl Default for ConversationCopy {
             reconnecting: "Reconnecting…".into(),
             awaiting_client: "Waiting for an app this chat needs to come back.".into(),
             closed: "This conversation can't continue. Start a new one.".into(),
+            load_failed: "This chat couldn't load.".into(),
+            working: "Working".into(),
+            dismiss: "Dismiss".into(),
+            retry: "Retry".into(),
+            resume: "Resume".into(),
+            stop: "Stop".into(),
             model_denied: "This app isn't allowed to use that model.".into(),
             model_unknown: "That model isn't available any more. Pick another.".into(),
             model_unavailable: "That model isn't installed yet. Download it, or pick another."

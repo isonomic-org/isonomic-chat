@@ -11,7 +11,7 @@ mod scripted;
 pub use scripted::{ScriptedHost, ScriptedReply};
 
 use conversation_model::schema::{Block, ForkReason, Seq, SessionId, TurnId};
-use conversation_model::{ModelCatalog, Update};
+use conversation_model::{Availability, ModelCatalog, Update};
 use futures::future::LocalBoxFuture;
 use futures::stream::LocalBoxStream;
 use std::fmt;
@@ -98,7 +98,7 @@ pub struct SessionQuery {
     pub archived: bool,
     /// Only those whose title contains this text.
     pub text: Option<String>,
-    /// At most this many; 0 means the host's default.
+    /// At most this many; 0 means every one (the host pages through them).
     pub limit: u32,
 }
 
@@ -135,6 +135,10 @@ pub trait ConversationHost {
 
     /// The chat models the caller may use, with whether each can answer now.
     fn models(&self) -> HostFuture<ModelCatalog>;
+
+    /// One model's availability now. The window owns downloads; an app
+    /// watches a model it asked for by asking this while it is on its way.
+    fn availability(&self, model: &str) -> HostFuture<Availability>;
 
     /// Follow a session from just after `from_seq` (0 for everything).
     fn subscribe(&self, session: &SessionId, from_seq: Seq) -> HostFuture<UpdateStream>;

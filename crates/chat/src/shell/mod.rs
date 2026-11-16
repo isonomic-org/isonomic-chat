@@ -63,6 +63,10 @@ pub struct ChatShell {
     install_asked: Option<SharedString>,
     models_failed: bool,
     _models: Option<ui::Task<()>>,
+    /// Watches the models on their way, while any is.
+    _watch: Option<ui::Task<()>>,
+    /// Polls since the window was asked for a model it has not started.
+    asked_polls: u32,
     save_error: Option<SharedString>,
     _load: Option<ui::Task<()>>,
     rename: Option<Rename>,
@@ -107,6 +111,8 @@ impl ChatShell {
             install_asked: None,
             models_failed: false,
             _models: None,
+            _watch: None,
+            asked_polls: 0,
             save_error: None,
             _load: None,
             rename: None,

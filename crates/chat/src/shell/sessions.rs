@@ -12,20 +12,16 @@ use ui::{Entity, SharedString, Window};
 
 use super::ChatShell;
 use crate::Backend;
-use crate::copy;
 use crate::demo::SessionSummary;
-
-/// How many chats the sidebar loads.
-const LIST_LIMIT: u32 = 200;
+use crate::{copy, metrics};
 
 impl ChatShell {
     /// Load the chats and the pins, newest activity first, pinned on top.
     pub(super) fn load(&mut self, backend: Backend, cx: &mut Context<Self>) {
         let task = cx.spawn(async move |this, cx| {
-            let query = SessionQuery {
-                limit: LIST_LIMIT,
-                ..Default::default()
-            };
+            // Every session: a chat's versions count in the list, so a limit
+            // could push chats out.
+            let query = SessionQuery::default();
             let listed = backend.host.list(query).await;
             let pins = backend.store.pins().await.unwrap_or_default();
             let _ = this.update(cx, |this, cx| {
@@ -83,16 +79,100 @@ impl ChatShell {
         self._load = Some(task);
     }
 
-    /// Ask the window to install a model. `false` if there is no window to
-    /// ask, or it could not take the request now.
-    pub fn install_model(&mut self, model: &str) -> bool {
+    /// Ask the window to install a model, then watch it until it is ready.
+    /// `false` if there is no window to ask, or it could not take the
+    /// request now.
+    pub fn install_model(&mut self, model: &str, cx: &mut Context<Self>) -> bool {
         let asked = self
             .backend
             .as_ref()
             .and_then(|b| b.install_model.as_ref())
             .is_some_and(|install| install(model));
         self.install_asked = asked.then(|| model.to_owned().into());
+        self.asked_polls = 0;
+        if asked {
+            self.watch_models(cx);
+        }
         asked
+    }
+
+    /// Watch the models on their way (downloading, or asked of the window)
+    /// until each settles: home leaves Downloading the moment the model is
+    /// ready. The SDK has no models watch, so this asks each one's state on
+    /// a short interval while any is pending, and stops when none is.
+    pub(super) fn watch_models(&mut self, cx: &mut Context<Self>) {
+        let Some(backend) = self.backend.clone() else {
+            return;
+        };
+        if self._watch.is_some() || self.pending_models().is_empty() {
+            return;
+        }
+        self._watch = Some(cx.spawn(async move |this, cx| {
+            loop {
+                cx.background_executor().timer(metrics::model_poll()).await;
+                let pending = this
+                    .update(cx, |this, _| this.pending_models())
+                    .unwrap_or_default();
+                if pending.is_empty() {
+                    break;
+                }
+                for id in pending {
+                    let state = backend.host.availability(&id).await;
+                    if this
+                        .update(cx, |this, cx| this.model_changed(&id, state.ok(), cx))
+                        .is_err()
+                    {
+                        return;
+                    }
+                }
+            }
+            let _ = this.update(cx, |this, _| this._watch = None);
+        }));
+    }
+
+    /// The models still on their way. The one asked of the window counts
+    /// until it is ready or failed, for at most `metrics::ASK_POLLS` polls
+    /// while the window has not started it.
+    fn pending_models(&mut self) -> Vec<String> {
+        let mut pending: Vec<String> = self
+            .catalog
+            .iter()
+            .flat_map(|catalog| catalog.downloading())
+            .map(|option| option.id.clone())
+            .collect();
+        if let Some(asked) = self.install_asked.clone() {
+            let state = self
+                .catalog
+                .as_ref()
+                .and_then(|c| c.get(&asked))
+                .map(|o| o.availability);
+            let waiting = state != Some(Availability::Downloading);
+            if waiting {
+                self.asked_polls += 1;
+            }
+            if waiting && self.asked_polls > metrics::ASK_POLLS {
+                // The window never started it: offer Install again.
+                self.install_asked = None;
+            } else if !pending.contains(&asked.to_string()) {
+                pending.push(asked.to_string());
+            }
+        }
+        pending
+    }
+
+    /// A model's state as the host reported it.
+    fn model_changed(&mut self, id: &str, state: Option<Availability>, cx: &mut Context<Self>) {
+        let Some(state) = state else {
+            return;
+        };
+        if let Some(catalog) = self.catalog.as_mut() {
+            catalog.set_availability(id, state);
+        }
+        let settled = matches!(state, Availability::Installed | Availability::Unavailable);
+        if settled && self.install_asked.as_deref() == Some(id) {
+            self.install_asked = None;
+        }
+        cx.notify();
     }
 
     /// The model Chat last asked the window to install, if it took it.
@@ -120,6 +200,7 @@ impl ChatShell {
             let _ = this.update(cx, |this, cx| {
                 this.models_failed = listed.is_err();
                 this.catalog = Some(listed.unwrap_or_default());
+                this.watch_models(cx);
                 cx.notify();
             });
         });
@@ -160,7 +241,7 @@ impl ChatShell {
         match availability {
             Some(Availability::Installed) => self.pick_model(id, cx),
             Some(Availability::NotInstalled) => {
-                self.install_model(&id);
+                self.install_model(&id, cx);
                 cx.notify();
             }
             // Downloading, unavailable or unknown: nothing to do yet.
@@ -273,7 +354,7 @@ impl ChatShell {
                 ConversationEvent::ModelSelected(model) => this.model = Some(model.to_string()),
                 // Downloads belong to the window: ask it to offer this one.
                 ConversationEvent::ModelUnavailable(model) => {
-                    this.install_model(model);
+                    this.install_model(model, cx);
                 }
                 ConversationEvent::HostError(_) => {}
             }
