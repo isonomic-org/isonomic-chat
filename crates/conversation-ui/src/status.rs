@@ -1,99 +1,63 @@
 //! The status bar above the composer: the one place that says the
 //! conversation is reconnecting or closed, or how the last reply ended, with
-//! continue and try again beside it.
-//!
-//! A plain placeholder until Isonomic UI has a run status bar (requested;
-//! see `docs/name-map.md`): an icon, the words, the buttons, on the theme's
-//! muted or danger colours.
+//! the one thing to do about it (continue, or try again). Drawn by Isonomic
+//! UI's run status bar; the kit picks the state, the words and the action.
 
-use ui::assets::IconName;
-use ui::component::button::{Button, ButtonVariants as _};
-use ui::component::{ActiveTheme as _, Icon, Sizable as _, StyledExt as _, h_flex};
+use ui::extra::run_status_bar::{RunStatus, RunStatusBar};
 use ui::prelude::*;
-use ui::{AnyElement, App, SharedString, Window, div};
+use ui::{AnyElement, App, ElementId, SharedString, Window};
 
 use crate::metrics;
 
-/// Element id of the continue button.
-pub(crate) const CONTINUE_ID: &str = "conversation-continue";
+/// Element id of the bar when its action continues the reply. Its button
+/// is the child `(CONTINUE_ID, "action")`.
+pub const CONTINUE_ID: &str = "conversation-continue";
 
-/// Element id of the try-again button.
-pub(crate) const RETRY_ID: &str = "conversation-retry";
+/// Element id of the bar when its action tries the prompt again. Its button
+/// is the child `(RETRY_ID, "action")`.
+pub const RETRY_ID: &str = "conversation-retry";
+
+/// Element id of the bar when it has no action.
+const STATUS_ID: &str = "conversation-status";
+
+/// The button of a bar whose id is `bar`, such as [`CONTINUE_ID`].
+pub fn action_button(bar: &'static str) -> ElementId {
+    (ElementId::from(bar), "action").into()
+}
 
 /// A button's click handler.
 pub(crate) type OnClick = Box<dyn Fn(&mut Window, &mut App) + 'static>;
 
-/// What the bar says and offers.
-pub(crate) struct Status {
-    /// The words.
-    pub(crate) message: SharedString,
-    /// An error, drawn in the danger colours.
-    pub(crate) error: bool,
-    /// The person stopped the reply.
-    pub(crate) stopped: bool,
-    /// Continue the reply, labelled.
-    pub(crate) on_continue: Option<(SharedString, OnClick)>,
-    /// Send the prompt again, labelled.
-    pub(crate) on_retry: Option<(SharedString, OnClick)>,
+/// What the action does.
+pub(crate) enum Action {
+    /// Continue the reply from where it stopped.
+    Continue,
+    /// Send the prompt again.
+    Retry,
 }
 
-pub(crate) fn render(status: Status, cx: &App) -> AnyElement {
-    let theme = cx.theme();
-    let (bg, border, fg) = if status.error {
-        (
-            theme.danger.opacity(0.08),
-            theme.danger.opacity(0.3),
-            theme.danger,
-        )
-    } else {
-        (theme.muted, theme.border, theme.foreground)
+/// What the bar says and offers.
+pub(crate) struct Status {
+    pub(crate) status: RunStatus,
+    /// The words.
+    pub(crate) message: SharedString,
+    /// The action, its label and its handler.
+    pub(crate) action: Option<(Action, SharedString, OnClick)>,
+}
+
+pub(crate) fn render(status: Status) -> AnyElement {
+    let id = match &status.action {
+        Some((Action::Continue, ..)) => CONTINUE_ID,
+        Some((Action::Retry, ..)) => RETRY_ID,
+        None => STATUS_ID,
     };
-    let icon = if status.error {
-        IconName::CircleAlert
-    } else if status.stopped {
-        IconName::Stop
-    } else {
-        IconName::Info
-    };
-    let primary = status.on_continue.is_some();
-    h_flex()
-        .id("conversation-status")
-        .w_full()
-        .max_w(metrics::column_width())
-        .gap_2()
-        .py_1p5()
-        .pl_3()
-        .pr_1p5()
-        .items_center()
-        .border_1()
-        .rounded_lg()
-        .bg(bg)
-        .border_color(border)
-        .text_color(fg)
-        .child(Icon::new(icon).small().text_color(fg))
-        .child(
-            div()
-                .flex_1()
-                .min_w_0()
-                .text_sm()
-                .font_medium()
-                .child(status.message),
-        )
-        .children(status.on_retry.map(|(label, on_click)| {
-            let button = Button::new(RETRY_ID).small().label(label);
-            let button = if primary {
-                button.outline()
-            } else {
-                button.primary()
-            };
-            button.on_click(move |_, window, cx| on_click(window, cx))
-        }))
-        .children(status.on_continue.map(|(label, on_click)| {
-            Button::new(CONTINUE_ID)
-                .primary()
-                .small()
-                .label(label)
-                .on_click(move |_, window, cx| on_click(window, cx))
-        }))
-        .into_any_element()
+    let mut bar = RunStatusBar::new(id, status.status)
+        .message(status.message)
+        .max_w(metrics::column_width());
+    if let Some((_, label, on_click)) = status.action {
+        bar = bar
+            .action_label(label)
+            .on_action(move |_, window, cx| on_click(window, cx));
+    }
+    bar.into_any_element()
 }

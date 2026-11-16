@@ -29,6 +29,8 @@ impl Composer {
         let field = cx.new(|cx| {
             let mut field = PromptComposer::new(copy::COMPOSER_HOME, window, cx);
             field.set_dictation(false, cx);
+            // Version 1 has no attachments.
+            field.set_attach(false, cx);
             field
         });
         let subscription = cx.subscribe(&field, |_, _, event, cx| match event {

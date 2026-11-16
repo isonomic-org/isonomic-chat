@@ -53,4 +53,8 @@ pub const ALL: &[IconName] = &[
     IconName::Stop,
     IconName::CircleAlert,
     IconName::Info,
+    // The run status bar's: stopped, cut short, and the reconnecting spinner.
+    IconName::Square,
+    IconName::TriangleAlert,
+    IconName::Loader,
 ];
