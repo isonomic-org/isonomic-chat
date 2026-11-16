@@ -50,15 +50,24 @@ pub(crate) fn heading_size() -> Pixels {
     px(18.)
 }
 
-/// How far a list item's text is set in: design 0.2 puts a bullet 4 in and
-/// its text 21 in. The marker column is right-aligned, so a number ("1.",
-/// 14 wide) widens it to 24; the design has 28 there.
-pub(crate) fn list_indent() -> Pixels {
+/// How far a bulleted item's text is set in (design 0.2: 21).
+pub(crate) fn bullet_indent() -> Pixels {
     px(21.)
 }
 
-/// The space between a list marker and its text (design 0.2: 10).
-pub(crate) fn list_marker_gap() -> Pixels {
+/// The space between a bullet and its text: with the bullet's own width,
+/// it starts 4 in (design 0.2: 4, a 7 wide bullet, 10).
+pub(crate) fn bullet_gap() -> Pixels {
+    px(10.)
+}
+
+/// How far a numbered item's text is set in (design 0.2: 28).
+pub(crate) fn ordered_indent() -> Pixels {
+    px(28.)
+}
+
+/// The space between a number and its text (design 0.2: 10).
+pub(crate) fn ordered_gap() -> Pixels {
     px(10.)
 }
 

@@ -284,9 +284,12 @@ fn reply(
                             TextViewStyle::default()
                                 .heading_font_size(|_, _| metrics::heading_size()),
                         )
-                        // Lists: text 28 in, the marker in that column.
-                        .list_indent(metrics::list_indent())
-                        .list_marker_gap(metrics::list_marker_gap())
+                        // Lists: bullets 4 in with their text 21 in;
+                        // numbers 4 in with their text 28 in.
+                        .bullet_list_indent(metrics::bullet_indent())
+                        .bullet_list_marker_gap(metrics::bullet_gap())
+                        .ordered_list_indent(metrics::ordered_indent())
+                        .ordered_list_marker_gap(metrics::ordered_gap())
                         .code_block_actions(move |block, _, _| {
                             let code = block.code();
                             Clipboard::new(ElementId::Name(
@@ -333,6 +336,8 @@ fn reply(
         .button_size(Size::Size(metrics::icon_button()))
         .icon_size(Size::Size(metrics::icon_size()))
         .pager_first(true)
+        // The pager's numbers and arrows at 12 in the muted colour.
+        .pager_quiet(true)
         .label(MessageActionLabel::Regenerate, copy.try_again.clone())
         .label(MessageActionLabel::Copy, copy.copy.clone())
         .text(text);

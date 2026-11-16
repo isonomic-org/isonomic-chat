@@ -17,7 +17,7 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | A3 | Rail items centred; toggle, 16, then 28 × 28 nav buttons 4 apart | Same | Fixed |
 | A4 | Rail shows no selected item | Same | Fixed |
 | A5 | Toggle is a 28 × 28 icon button | Same | Fixed |
-| A6 | Wordmark serif semibold 20 / 28 | Isonomic UI's `Wordmark`: "Isonomic" in IBM Plex Sans Regular, "Chat" in Light, at 20 | Follows Omar's brand rule, not the reference: the wordmark is never in the serif |
+| A6 | Wordmark serif semibold 20 / 28, beside the toggle | The window's shell header in the sidebar's top row (`hosts_shell_header`): its product wordmark, "Isonomic" in IBM Plex Sans Regular and "Chat" in Light, beside the toggle; collapsed, the app's icon above it. The window's own rail is gone. Without a window (tests, screenshots) Chat draws the same wordmark | Follows Omar's brand rule, not the reference: the wordmark is never in the serif |
 | A7 | Account row and rail avatar; Projects, Artifacts, Scheduled, Customize | Left out | Accepted (version 1; no account ID yet) |
 | A8 | Scrim `gray/900` at 25 % | Theme `overlay` | Accepted (token) |
 | A9 | Narrow windows not shown | Below 1,040 the sidebar collapses to its rail | Accepted (collapse rule) |
@@ -131,9 +131,9 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | T3 | Hover row: 28 buttons, gap 2, hidden but keeping its space | Same: 28 buttons with 16 icons; it also shows while one of its buttons has focus | Fixed |
 | T4 | Hover row holds time, retry, edit, copy | Copy and Edit | Accepted (try again sits on the reply; turns carry no time) |
 | T5 | One heading level, 18 / 28 | Every level 18 | Fixed |
-| T6 | Bullets: marker 4 in, text 21 in; numbers: marker 4 in, text 28 in; `gray/500` markers; text 16 / 24 | Bullets as designed; numbers' text 24 in, marker 0 (one right-aligned marker column for both kinds); markers the theme's muted colour; 16 / 24 | Fixed (bullets, line height) / Needs UI: an indent per list kind |
+| T6 | Bullets: marker 4 in, text 21 in; numbers: marker 4 in, text 28 in; `gray/500` markers; text 16 / 24 | Same, measured at 2x: a bullet's box about 4.5 in, its text 21.5; "1." about 4.5 in, its text 28; markers the theme's muted colour; 16 / 24 | Fixed (colour: token) |
 | T7 | Code block: no header, padding 14 / 12, radius 10 | The text view's fence with a copy button | Accepted (fences stay the text view's; isonomic-ui #375) |
-| T8 | Reply actions: copy, read aloud, votes, retry, time; 28 buttons with 16 `gray/500` icons, 2 apart | Copy and Try again, 28 buttons with 16 icons; mid grey until pointed at, then the text colour (the bar's quiet mode); the pager's numbers 14 | Fixed / Accepted (version 1: no read aloud, votes or times) / Needs UI: the pager at 12 |
+| T8 | Reply actions: copy, read aloud, votes, retry, time; 28 buttons with 16 `gray/500` icons, 2 apart | Copy and Try again, 28 buttons with 16 icons; mid grey until pointed at, then the text colour (the bar's quiet mode); the pager quiet, its arrows and numbers at 12 in the muted colour | Fixed / Accepted (version 1: no read aloud, votes or times) |
 | T9 | Pager before the actions, 8 apart | Same | Fixed |
 | T10 | Retry is called as the app says ("Try again") | Same ("Try again", "Copy") | Fixed |
 | T11 | Thinking row: orb, label, seconds, expands | Isonomic UI's thinking indicator; no seconds; not expandable | Accepted (no expandable row in Isonomic UI) |
