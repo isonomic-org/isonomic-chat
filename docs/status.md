@@ -2,8 +2,9 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
-## 2026-11-16 · Isonomic UI 2b8a583: a quiet composer
+## 2026-11-16 · SDK at a6276aa (UI_REF 2b8a583): a quiet composer
 
+- `SDK_REF` moves to `a6276aa`; harness unchanged. `Cargo.lock` needs no change.
 - Both composers (home and the thread) take Isonomic UI's quiet focus: no blue border, as design 0.2 draws them. Empty, each is 96 high (the comfortable size at `2b8a583`). The palette's chip reads "Esc" on macOS too.
 - The greeting and empty-state icon is `Beacon`, a four-point star: the closest drawing in the set to the design's sparkle with a plus (`Sparkles` draws a wand). Omar may choose another.
 - Thread spacing checked against `screens/thread.md`: 58 from a prompt bubble to its reply's first line (6, the prompt's 28 actions row that keeps its space when hidden, 24), 12 from the reply to its action row, 24 to the next prompt. All match.
