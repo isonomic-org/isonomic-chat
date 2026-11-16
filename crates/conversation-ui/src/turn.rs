@@ -75,7 +75,7 @@ pub(crate) fn render_turn(
         let focus = controls.prompt_focus.take();
         row = row.child(match editing {
             Some(editing) => edit_box(index, editing, copy, cx).into_any_element(),
-            None => prompt(index, turn, copy, on_edit, focus).into_any_element(),
+            None => prompt(index, turn, copy, on_edit, focus, cx).into_any_element(),
         });
     }
     let open = turn.state.is_open();
@@ -111,6 +111,7 @@ fn prompt(
     copy: &ConversationCopy,
     on_edit: Option<Handler>,
     focus: Option<FocusHandle>,
+    cx: &App,
 ) -> impl IntoElement {
     let group = SharedString::from(format!("prompt-{index}"));
     v_flex()
@@ -126,6 +127,10 @@ fn prompt(
                 MessageContent::new().bubble(
                     Bubble::new()
                         .with_variant(BubbleVariant::Muted)
+                        // Design 0.2's `gray/100`: the theme's accent neutral,
+                        // a step above muted, which nearly vanishes on white.
+                        .bg(cx.theme().accent)
+                        .rounded(metrics::bubble_radius())
                         .max_w(metrics::bubble_width())
                         .content(
                             BubbleContent::new()
@@ -265,27 +270,34 @@ fn reply(
     let copy_code = copy.copy_code.clone();
     if let Some(shown) = &shown {
         column = column.child(
-            div().w_full().min_w_0().child(
-                TextView::new(shown)
-                    // Design 0.2 has one heading level, 18 / 28 semibold; blocks
-                    // 12 apart (the text view's own paragraph gap).
-                    .style(
-                        TextViewStyle::default().heading_font_size(|_, _| metrics::heading_size()),
-                    )
-                    // Lists: text 28 in, the marker in that column.
-                    .list_indent(metrics::list_indent())
-                    .list_marker_gap(metrics::list_marker_gap())
-                    .code_block_actions(move |block, _, _| {
-                        let code = block.code();
-                        Clipboard::new(ElementId::Name(
-                            format!("code-copy-{}", fingerprint(&code)).into(),
-                        ))
-                        .tooltip(copy_code.clone())
-                        .accessibility_label(copy_code.clone())
-                        .value(code)
-                        .small()
-                    }),
-            ),
+            // Design 0.2: reply text is 16 / 24.
+            div()
+                .w_full()
+                .min_w_0()
+                .text_base()
+                .line_height(metrics::text_line())
+                .child(
+                    TextView::new(shown)
+                        // Design 0.2 has one heading level, 18 / 28 semibold; blocks
+                        // 12 apart (the text view's own paragraph gap).
+                        .style(
+                            TextViewStyle::default()
+                                .heading_font_size(|_, _| metrics::heading_size()),
+                        )
+                        // Lists: text 28 in, the marker in that column.
+                        .list_indent(metrics::list_indent())
+                        .list_marker_gap(metrics::list_marker_gap())
+                        .code_block_actions(move |block, _, _| {
+                            let code = block.code();
+                            Clipboard::new(ElementId::Name(
+                                format!("code-copy-{}", fingerprint(&code)).into(),
+                            ))
+                            .tooltip(copy_code.clone())
+                            .accessibility_label(copy_code.clone())
+                            .value(code)
+                            .small()
+                        }),
+                ),
         );
     }
     for notice in &turn.notices {
@@ -313,7 +325,9 @@ fn reply(
             "reply-actions".into(),
             index as u64,
         ))
-        .quiet(false)
+        // Mid grey until pointed at, then the text colour: design 0.2's
+        // grey icons that darken on hover.
+        .quiet(true)
         // Design 0.2: 28 buttons with 16 icons, the pager first, the app's
         // own words.
         .button_size(Size::Size(metrics::icon_button()))
