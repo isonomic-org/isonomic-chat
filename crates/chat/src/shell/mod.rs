@@ -53,6 +53,8 @@ pub struct ChatShell {
     sessions: Vec<SessionSummary>,
     next_id: usize,
     sidebar_collapsed: bool,
+    /// The window, when it hosts Chat with its shell header in the sidebar.
+    window_shell: Option<isonomic_app::AppContext>,
     search: Option<search::Search>,
     composer: Entity<Composer>,
     backend: Option<Backend>,
@@ -107,6 +109,7 @@ impl ChatShell {
             sessions,
             next_id: 1,
             sidebar_collapsed: false,
+            window_shell: None,
             search: None,
             composer,
             backend: backend.clone(),
@@ -171,6 +174,13 @@ impl ChatShell {
     }
 
     /// Expands the sidebar, or collapses it to the rail.
+    /// Place the window's shell header at the top of the sidebar, in place
+    /// of Chat's own wordmark, and tell the window when it folds or opens.
+    pub fn host_shell_header(&mut self, app: isonomic_app::AppContext, cx: &mut Context<Self>) {
+        self.window_shell = Some(app);
+        cx.notify();
+    }
+
     pub fn set_sidebar_open(&mut self, open: bool, cx: &mut Context<Self>) {
         self.sidebar_collapsed = !open;
         cx.notify();
