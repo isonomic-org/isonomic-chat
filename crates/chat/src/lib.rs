@@ -13,6 +13,7 @@
 extern crate ui as gpui;
 
 mod app;
+mod clock;
 mod composer;
 pub mod copy;
 pub mod demo;

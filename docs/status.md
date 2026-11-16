@@ -2,6 +2,11 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · How long ago, in search
+
+- Each chat keeps when it was last active: the newest change in any of its versions, from the host's list, or now for a chat started here. Search shows it on the right of the row in the design's short form ("now", "20m", "2h", "3d", "2w", "4mo", "1y").
+- The rest of `docs/design-diffs.md` is either fixed, decided, or with Isonomic UI (#385: a chat icon on palette rows, list indent, icon size apart from button size). The serif wordmark and greeting wait on whether the theme has a serif family.
+
 ## 2026-11-16 · SDK at 72aca92: Isonomic UI's new options in use
 
 - `SDK_REF` moves to `72aca92` (`UI_REF` `4f1207b`, isonomic-ui #381); harness unchanged. `Cargo.lock` needs no change.

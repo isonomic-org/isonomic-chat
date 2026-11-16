@@ -136,6 +136,23 @@ pub fn greeting(part: DayPart, name: Option<&str>) -> String {
     }
 }
 
+/// How long ago something happened, as the search palette shows it:
+/// "now", "5m", "2h", "3d", "2w", "4mo", "1y".
+pub fn short_age(elapsed_ms: u64) -> String {
+    let minutes = elapsed_ms / 60_000;
+    let hours = minutes / 60;
+    let days = hours / 24;
+    match () {
+        _ if minutes < 1 => "now".into(),
+        _ if hours < 1 => format!("{minutes}m"),
+        _ if days < 1 => format!("{hours}h"),
+        _ if days < 7 => format!("{days}d"),
+        _ if days < 30 => format!("{}w", days / 7),
+        _ if days < 365 => format!("{}mo", days / 30),
+        _ => format!("{}y", days / 365),
+    }
+}
+
 /// A chat title from the first message: its first line, cut at a word
 /// boundary to at most `max` characters with an ellipsis.
 pub fn title_from(text: &str, max: usize) -> String {
@@ -178,6 +195,19 @@ mod tests {
         );
         assert_eq!(greeting(DayPart::Evening, Some("  ")), "Good evening");
         assert_eq!(greeting(DayPart::Afternoon, None), "Good afternoon");
+    }
+
+    #[test]
+    fn ages_read_in_the_short_form() {
+        let minute = 60_000;
+        let day = 24 * 60 * minute;
+        assert_eq!(short_age(30_000), "now");
+        assert_eq!(short_age(5 * minute), "5m");
+        assert_eq!(short_age(2 * 60 * minute + 5 * minute), "2h");
+        assert_eq!(short_age(3 * day), "3d");
+        assert_eq!(short_age(15 * day), "2w");
+        assert_eq!(short_age(130 * day), "4mo");
+        assert_eq!(short_age(400 * day), "1y");
     }
 
     #[test]

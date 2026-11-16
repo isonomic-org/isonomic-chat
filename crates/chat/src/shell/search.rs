@@ -30,11 +30,18 @@ impl ChatShell {
 
     /// Open the search palette over the shell, focused.
     pub fn open_search(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let now = crate::clock::now_ms();
         let mut commands: Vec<PaletteCommand> = self
             .sessions()
             .iter()
             .map(|session| {
-                PaletteCommand::new(session.id.clone(), copy::RECENTS, session.title.clone())
+                let command =
+                    PaletteCommand::new(session.id.clone(), copy::RECENTS, session.title.clone());
+                // How long ago the chat was active, such as "2h".
+                match session.active_at {
+                    Some(at) => command.meta(copy::short_age(now.saturating_sub(at))),
+                    None => command,
+                }
             })
             .collect();
         commands.push(
