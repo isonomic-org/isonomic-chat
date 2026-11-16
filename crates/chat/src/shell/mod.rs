@@ -212,8 +212,10 @@ impl ChatShell {
         self.next_id += 1;
         let title = copy::title_from(text, metrics::TITLE_MAX_CHARS);
         let at = self.sessions.iter().take_while(|s| s.pinned).count();
-        self.sessions
-            .insert(at, SessionSummary::new(id.clone(), title, false));
+        self.sessions.insert(
+            at,
+            SessionSummary::new(id.clone(), title, false).active_at(crate::clock::now_ms()),
+        );
         let Some(backend) = self.backend.clone() else {
             self.open_session(id, window, cx);
             return;

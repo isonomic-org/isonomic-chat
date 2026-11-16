@@ -57,7 +57,7 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | D1 | 640 wide, centred | Same | Fixed |
 | D2 | Placeholder "Search or ask…" | Same | Fixed |
 | D3 | Esc key chip in the input; input 53 high, 16 / 24 | Same (large input) | Fixed |
-| D4 | Rows 36 high, 16 px icon, meta such as "2h" on the right | 36 high; New chat has its icon; chat rows have none and no meta | Fixed (height) / Needs UI: `PaletteCommand::icon` takes only the component icon set, which has no chat icon; Chat keeps no last-active time to show as meta |
+| D4 | Rows 36 high, 16 px icon, meta such as "2h" on the right | 36 high; each chat shows how long ago it was active ("20m", "2h", "3d"), from its newest version; New chat has its icon, chat rows none | Fixed (height, meta) / Needs UI: any catalog icon on palette rows (isonomic-ui #385) |
 | D5 | Chats under "Recents", then "Actions" | Same | Fixed |
 | D6 | New chat shows its shortcut | Same | Fixed |
 | D7 | Typed query: results grouped "Chats" | Groups kept while filtering ("Recents", "Actions") | Fixed |
@@ -128,12 +128,12 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | --- | --- | --- | --- |
 | T1 | Column min(720, width − 64); 32 above and below; 24 between turns | Same (the scroller's own insets removed) | Fixed |
 | T2 | Bubble 16 / 24, padding 16 / 10, wraps at 560 | Same | Fixed |
-| T3 | Hover row: 28 buttons, gap 2, hidden but keeping its space | 24 buttons (16 icons), gap 2; it also shows while one of its buttons has focus | Fixed / Needs UI: as T8 |
+| T3 | Hover row: 28 buttons, gap 2, hidden but keeping its space | 24 buttons (16 icons), gap 2; it also shows while one of its buttons has focus | Fixed / Needs UI (isonomic-ui #385): as T8 |
 | T4 | Hover row holds time, retry, edit, copy | Copy and Edit | Accepted (try again sits on the reply; turns carry no time) |
 | T5 | One heading level, 18 / 28 | Every level 18 | Fixed |
-| T6 | Lists: text 28 in, marker 4 in, `gray/500` markers | Indent and marker gap set; text measures about 20 in; markers the theme's muted colour | Fixed (partly) / Needs UI: `list_indent` reaching the full 28 |
+| T6 | Lists: text 28 in, marker 4 in, `gray/500` markers | Indent and marker gap set; text measures about 20 in; markers the theme's muted colour | Fixed (partly) / Needs UI (isonomic-ui #385): `list_indent` reaching the full 28 |
 | T7 | Code block: no header, padding 14 / 12, radius 10 | The text view's fence with a copy button | Accepted (fences stay the text view's; isonomic-ui #375) |
-| T8 | Reply actions: copy, read aloud, votes, retry, time; 28 buttons with 16 icons | Copy and Try again; 24 buttons with 16 icons | Accepted (version 1) / Needs UI: an icon size apart from the button size (an exact 28 scales the icon to 21) |
+| T8 | Reply actions: copy, read aloud, votes, retry, time; 28 buttons with 16 icons | Copy and Try again; 24 buttons with 16 icons | Accepted (version 1) / Needs UI (isonomic-ui #385): an icon size apart from the button size (an exact 28 scales the icon to 21) |
 | T9 | Pager before the actions, 8 apart | Same | Fixed |
 | T10 | Retry is called as the app says ("Try again") | Same ("Try again", "Copy") | Fixed |
 | T11 | Thinking row: orb, label, seconds, expands | Isonomic UI's thinking indicator; no seconds; not expandable | Accepted (no expandable row in Isonomic UI) |

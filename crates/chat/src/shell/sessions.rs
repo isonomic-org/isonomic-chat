@@ -46,7 +46,12 @@ impl ChatShell {
                                 let id = SharedString::from(entry.id.0.clone());
                                 let pinned = pins.contains(&entry.id.0);
                                 let title = entry.title.unwrap_or_else(|| copy::NEW_CHAT.into());
-                                SessionSummary::new(id, title, pinned)
+                                // The newest change in any of its versions.
+                                let active = order
+                                    .iter()
+                                    .find(|(root, _)| *root == entry.id)
+                                    .map_or(entry.updated_at, |(_, at)| *at);
+                                SessionSummary::new(id, title, pinned).active_at(active)
                             })
                             .collect();
                         // Pins keep their pin order; the rest stay newest first.

@@ -362,5 +362,8 @@ fn a_chat_is_listed_by_its_newest_version(cx: &mut TestAppContext) {
     shell.read_with(cx, |shell, _| {
         let ids: Vec<String> = shell.sessions().iter().map(|s| s.id.to_string()).collect();
         assert_eq!(ids, [older.0.clone(), newer.0.clone()]);
+        // Its active time is its newest version's, which search shows.
+        let active: Vec<_> = shell.sessions().iter().map(|s| s.active_at).collect();
+        assert!(active[0].is_some() && active[0] > active[1]);
     });
 }
