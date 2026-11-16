@@ -1,142 +1,49 @@
-//! One turn as a row of the conversation list.
+//! One turn as a row of the conversation list: the prompt's bubble on the
+//! trailing side, then the reply, unboxed, with its actions.
+//!
+//! How the last turn ended (stopped, cut short, failed) is said by the status
+//! bar above the composer, with its continue and try again; earlier turns say
+//! it in a quiet note under their reply.
 
 use conversation_model::{Turn, TurnState};
+use std::hash::{Hash as _, Hasher as _};
+use ui::assets::IconName;
 use ui::component::bubble::{Bubble, BubbleVariant};
-use ui::component::button::Button;
+use ui::component::clipboard::Clipboard;
 use ui::component::message::{Message, MessageAlignment, MessageContent};
 use ui::component::text::TextView;
-use ui::component::{ActiveTheme as _, Sizable as _, h_flex, v_flex};
+use ui::component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
+use ui::extra::message_action_bar::{MessageAction, MessageActionBar};
 use ui::extra::thinking_indicator::{OrbState, ThinkingIndicator};
 use ui::prelude::*;
-use ui::{AnyElement, App, ElementId, SharedString, Window, div};
+use ui::{AnyElement, App, ElementId, SharedString, div};
 
 use crate::ConversationCopy;
 
-/// Element id of the continue button under the last turn.
-pub(crate) const CONTINUE_ID: &str = "conversation-continue";
-
-/// Element id of the try-again button under a failed last turn.
-pub(crate) const RETRY_ID: &str = "conversation-retry";
-
-/// A row's click handler.
-pub(crate) type OnClick = Box<dyn Fn(&mut Window, &mut App) + 'static>;
-
-/// What the last row may offer.
-pub(crate) struct RowActions {
-    /// Called when continue is pressed, on the last turn only.
-    pub(crate) on_continue: Option<OnClick>,
-    /// Called when try again is pressed, on a failed last turn only.
-    pub(crate) on_retry: Option<OnClick>,
-}
-
-/// Render one turn: the prompt on the trailing side, the reply below it, and
-/// a status line for how it ended.
+/// Render one turn. `last` is whether it is the newest, whose ending the
+/// status bar shows instead of a note.
 pub(crate) fn render_turn(
     index: usize,
     turn: &Turn,
+    last: bool,
     copy: &ConversationCopy,
-    actions: RowActions,
     cx: &App,
 ) -> AnyElement {
     let mut row = v_flex()
         .id(ElementId::NamedInteger("turn".into(), index as u64))
         .w_full()
         .min_w_0()
-        .gap_3()
-        .pb_6();
-
+        .gap_6();
     if !turn.prompt.is_empty() {
-        let bubble = Bubble::new()
-            .with_variant(BubbleVariant::Muted)
-            .child(turn.prompt.clone());
-        row = row.child(
-            Message::new()
-                .alignment(MessageAlignment::End)
-                .content(MessageContent::new().bubble(bubble)),
-        );
+        row = row.child(prompt(index, turn, copy));
     }
-
-    let reply = turn.reply();
-    let waiting = turn.state.is_open() && reply.is_empty();
-    if waiting {
-        let label = if turn.thinking().is_empty() {
-            copy.thinking.clone()
-        } else {
-            SharedString::from(last_line(&turn.thinking()))
-        };
-        row = row.child(
-            div()
-                .id("thinking")
-                .child(ThinkingIndicator::new("thinking-orb", OrbState::Reasoning).label(label)),
-        );
-    }
-    if !reply.is_empty() {
-        row = row.child(
-            div()
-                .id(ElementId::NamedInteger("reply".into(), index as u64))
-                .w_full()
-                .min_w_0()
-                .child(TextView::markdown(
-                    ElementId::NamedInteger("reply-text".into(), index as u64),
-                    reply,
-                )),
-        );
-    }
-    for notice in &turn.notices {
-        row = row.child(
-            div()
-                .text_sm()
-                .text_color(cx.theme().muted_foreground)
-                .child(format!("{} ({})", copy.unknown, notice.kind)),
-        );
-    }
-
-    let note = match &turn.state {
-        _ if turn.refusal.is_some() => turn.refusal.clone().map(SharedString::from),
-        _ if turn.retrying.is_some() => Some(copy.retrying.clone()),
-        TurnState::Stopped => Some(copy.stopped.clone()),
-        TurnState::Truncated => Some(copy.truncated.clone()),
-        TurnState::Limited => Some(copy.limited.clone()),
-        TurnState::Failed(message) | TurnState::Rejected(message) => {
-            Some(or(message, &copy.failed))
-        }
-        TurnState::Refused(message) => Some(or(message, &copy.refused)),
-        _ => None,
-    };
-    let mut status = h_flex().gap_3().items_center();
-    let mut has_status = false;
-    if let Some(note) = note {
-        has_status = true;
-        status = status.child(
-            div()
-                .id("turn-note")
-                .text_sm()
-                .text_color(cx.theme().muted_foreground)
-                .child(note),
-        );
-    }
-    if let Some(on_continue) = actions.on_continue {
-        has_status = true;
-        status = status.child(
-            Button::new(CONTINUE_ID)
-                .outline()
-                .small()
-                .label(copy.continue_label.clone())
-                .on_click(move |_, window, cx| on_continue(window, cx)),
-        );
-    }
-    if let Some(on_retry) = actions.on_retry {
-        has_status = true;
-        status = status.child(
-            Button::new(RETRY_ID)
-                .outline()
-                .small()
-                .label(copy.try_again.clone())
-                .on_click(move |_, window, cx| on_retry(window, cx)),
-        );
-    }
-    if has_status {
-        row = row.child(status);
+    let open = turn.state.is_open();
+    let said = !turn.reply().is_empty() || !turn.notices.is_empty();
+    let noted = turn.refusal.is_some()
+        || matches!(turn.state, TurnState::Refused(_))
+        || (!last && ending(turn, copy).is_some());
+    if open || said || noted {
+        row = row.child(reply(index, turn, last, copy, cx));
     }
     if let Some(note) = &turn.divider_after {
         row = row.child(
@@ -154,12 +61,161 @@ pub(crate) fn render_turn(
     row.into_any_element()
 }
 
+/// The prompt: a muted bubble on the trailing side, and under it a copy
+/// button that shows while the prompt is pointed at.
+fn prompt(index: usize, turn: &Turn, copy: &ConversationCopy) -> impl IntoElement {
+    let group = SharedString::from(format!("prompt-{index}"));
+    v_flex()
+        .id(ElementId::NamedInteger("prompt".into(), index as u64))
+        .group(group.clone())
+        .w_full()
+        .items_end()
+        .gap_1p5()
+        .child(
+            Message::new().alignment(MessageAlignment::End).content(
+                MessageContent::new().bubble(
+                    Bubble::new()
+                        .with_variant(BubbleVariant::Muted)
+                        .child(turn.prompt.clone()),
+                ),
+            ),
+        )
+        .child(
+            h_flex()
+                .invisible()
+                .group_hover(group, |this| this.visible())
+                .child(
+                    Clipboard::new(ElementId::NamedInteger("prompt-copy".into(), index as u64))
+                        .value(turn.prompt.clone())
+                        .tooltip(copy.copy.clone())
+                        .accessibility_label(copy.copy.clone())
+                        .small(),
+                ),
+        )
+}
+
+/// The reply: thinking while nothing is written, the Markdown, notes, and
+/// the action row once it has ended.
+fn reply(
+    index: usize,
+    turn: &Turn,
+    last: bool,
+    copy: &ConversationCopy,
+    cx: &App,
+) -> impl IntoElement {
+    let muted = cx.theme().muted_foreground;
+    let mut column = v_flex()
+        .id(ElementId::NamedInteger("reply".into(), index as u64))
+        .w_full()
+        .min_w_0()
+        .gap_3();
+    let text = turn.reply();
+    if turn.state.is_open() && text.is_empty() {
+        let label = if turn.thinking().is_empty() {
+            copy.thinking.clone()
+        } else {
+            SharedString::from(last_line(&turn.thinking()))
+        };
+        column = column.child(
+            div()
+                .id("thinking")
+                .child(ThinkingIndicator::new("thinking-orb", OrbState::Reasoning).label(label)),
+        );
+    }
+    if !text.is_empty() {
+        column = column.child(
+            div().w_full().min_w_0().child(
+                TextView::markdown(
+                    ElementId::NamedInteger("reply-text".into(), index as u64),
+                    text.clone(),
+                )
+                .code_block_actions(|block, _, _| {
+                    let code = block.code();
+                    Clipboard::new(ElementId::Name(
+                        format!("code-copy-{}", fingerprint(&code)).into(),
+                    ))
+                    .value(code)
+                    .small()
+                }),
+            ),
+        );
+    }
+    for notice in &turn.notices {
+        column = column.child(
+            div()
+                .text_sm()
+                .text_color(muted)
+                .child(format!("{} ({})", copy.unknown, notice.kind)),
+        );
+    }
+    if let Some(refusal) = &turn.refusal {
+        column = column.child(note("turn-note", None, refusal.clone().into(), muted));
+    } else if let TurnState::Refused(message) = &turn.state {
+        column = column.child(note("turn-note", None, or(message, &copy.refused), muted));
+    } else if turn.state == TurnState::Stopped && !last {
+        let stopped = copy.stopped.clone();
+        column = column.child(note("turn-note", Some(IconName::Stop), stopped, muted));
+    } else if !last && let Some(ending) = ending(turn, copy) {
+        column = column.child(note("turn-note", None, ending, muted));
+    }
+    if !turn.state.is_open() && !text.is_empty() {
+        column = column.child(
+            MessageActionBar::new(ElementId::NamedInteger(
+                "reply-actions".into(),
+                index as u64,
+            ))
+            .actions([MessageAction::Copy])
+            .quiet(false)
+            .text(text),
+        );
+    }
+    column
+}
+
+/// How a turn ended, in words, when it did not simply finish. The status
+/// bar uses it for the last turn.
+pub(crate) fn ending(turn: &Turn, copy: &ConversationCopy) -> Option<SharedString> {
+    match &turn.state {
+        _ if turn.retrying.is_some() => Some(copy.retrying.clone()),
+        TurnState::Stopped => Some(copy.stopped.clone()),
+        TurnState::Truncated => Some(copy.truncated.clone()),
+        TurnState::Limited => Some(copy.limited.clone()),
+        TurnState::Failed(message) | TurnState::Rejected(message) => {
+            Some(or(message, &copy.failed))
+        }
+        _ => None,
+    }
+}
+
+fn note(
+    id: &'static str,
+    icon: Option<IconName>,
+    text: SharedString,
+    color: ui::Hsla,
+) -> impl IntoElement {
+    h_flex()
+        .id(id)
+        .gap_1p5()
+        .items_center()
+        .text_sm()
+        .text_color(color)
+        .children(icon.map(|icon| Icon::new(icon).small().text_color(color)))
+        .child(text)
+}
+
 fn or(message: &str, fallback: &SharedString) -> SharedString {
     if message.is_empty() {
         fallback.clone()
     } else {
         SharedString::from(message.to_owned())
     }
+}
+
+/// A short, stable key for a code block's copy button.
+fn fingerprint(text: &str) -> u64 {
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    text.hash(&mut hasher);
+    hasher.finish()
 }
 
 /// The last non-empty line of some text, for a compact status.

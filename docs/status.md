@@ -2,6 +2,14 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · Thread to design 0.2
+
+- The thread scrolls across the whole panel, with its turns in a centred 720 column: 32 above the first and below the last, 24 between them. The composer and the status bar sit in the same column, with the disclaimer under them.
+- A prompt is a muted bubble on the right, with Copy under it on hover. A reply is unboxed Markdown, with Copy under it once it ends. Each code fence has its own copy button.
+- The status bar above the composer is the one place for reconnecting, a closed conversation, and how the last reply ended: stopped or cut short (with Continue), failed (in the danger colours, with Try again). Earlier turns keep a quiet note. It is a placeholder until Isonomic UI has a run status bar.
+- Code block decision: the text view's own fences, because a fence renderer that keeps the streaming re-parse tail-only is not proven (request O9).
+- Differences: `docs/design-diffs.md`, T1 to T10. Requests to Isonomic UI: O9 to O12.
+
 ## 2026-11-16 · Home and composer to design 0.2
 
 - Home is the greeting (sparkles and the time of day), the 720 composer ("How can I help you today?") and a footer with Isonomic UI's model picker, lifted 140 px above centre. No suggestion chips.

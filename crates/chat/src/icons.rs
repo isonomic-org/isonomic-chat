@@ -42,4 +42,11 @@ pub const ALL: &[IconName] = &[
     IconName::Ellipsis,
     IconName::ChevronDown,
     IconName::Sparkles,
+    // Drawn by the conversation kit: copy and copied, the stopped note and
+    // the status bar's icons.
+    IconName::Copy,
+    IconName::Check,
+    IconName::Stop,
+    IconName::CircleAlert,
+    IconName::Info,
 ];

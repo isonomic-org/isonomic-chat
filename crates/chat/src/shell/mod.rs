@@ -324,17 +324,9 @@ impl ChatShell {
             .id("thread")
             .size_full()
             .items_center()
-            .px_6()
             .pb_3()
             .gap_2()
-            .child(
-                div()
-                    .flex_1()
-                    .min_h_0()
-                    .w_full()
-                    .max_w(metrics::content_max_width())
-                    .child(thread),
-            )
+            .child(div().flex_1().min_h_0().w_full().child(thread))
             .child(
                 div()
                     .text_xs()
