@@ -30,8 +30,10 @@ impl ChatShell {
             let _ = this.update(cx, |this, cx| {
                 match listed {
                     Ok(entries) => {
+                        // A fork is a version inside its chat, not a chat.
                         let mut sessions: Vec<SessionSummary> = entries
                             .into_iter()
+                            .filter(|entry| entry.forked_from.is_none())
                             .map(|entry| {
                                 let id = SharedString::from(entry.id.0.clone());
                                 let pinned = pins.contains(&entry.id.0);

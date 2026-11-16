@@ -52,7 +52,7 @@ Verified 15 Nov 2026 against the Figma file and isonomic-ui `main` at `4cf5571` 
 
 | Issue | For |
 | --- | --- |
-| requested (O12 in `docs/requests.md`) | Run status bar; the kit draws a plain placeholder in `conversation-ui/src/status.rs` |
+| isonomic-ui #378 | Run status bar; the kit draws a plain placeholder in `conversation-ui/src/status.rs` |
 | isonomic-ui #206 | Prompt composer |
 | isonomic-ui #207 | Thinking indicator (from proposal #14) |
 | isonomic-ui #208 | Stacked list item, for `ContextItem` |

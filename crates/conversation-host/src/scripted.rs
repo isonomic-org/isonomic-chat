@@ -8,18 +8,20 @@
 use events::{assistant, compacted, step_end, title_event, too_large, turn_end, words};
 
 mod events;
+mod fork;
 mod reply;
 
 pub use reply::ScriptedReply;
 
 use crate::{
-    ConversationHost, HostError, HostFuture, NewSession, SessionEntry, SessionQuery, UpdateStream,
+    ConversationHost, ForkAt, HostError, HostFuture, NewSession, SessionEntry, SessionQuery,
+    UpdateStream,
 };
 use conversation_model::schema::{
-    AppId, Attempt, AttemptOutcome, Block, Cause, DeltaKind, Event, LiveDelta, Params, PresetId,
-    PresetRef, Principal, PrincipalKind, Purpose, Reasoning, Seq, SessionClass, SessionEvent,
-    SessionId, SessionStart, StepId, StepOutcome, StepStart, StopReason, TitleSource, TurnId,
-    TurnStart, TurnStop, User,
+    AppId, Attempt, AttemptOutcome, Block, Cause, DeltaKind, Event, ForkReason, LiveDelta, Params,
+    PresetId, PresetRef, Principal, PrincipalKind, Purpose, Reasoning, Seq, SessionClass,
+    SessionEvent, SessionId, SessionStart, StepId, StepOutcome, StepStart, StopReason, TitleSource,
+    TurnId, TurnStart, TurnStop, User,
 };
 use conversation_model::{ModelCatalog, Update};
 use futures::channel::mpsc::{UnboundedSender, unbounded};
@@ -359,16 +361,15 @@ impl ConversationHost for ScriptedHost {
                 .filter(|(_, s)| s.archived == query.archived)
                 .map(|(id, s)| SessionEntry {
                     id: id.clone(),
-                    title: s.log.iter().rev().find_map(|e| match &e.event {
-                        Event::Title(title) => Some(title.title.clone()),
-                        _ => None,
-                    }),
+                    title: fork::title(inner, id),
+                    created_at: s.log.first().map(|e| e.at).unwrap_or_default(),
                     updated_at: s.log.last().map(|e| e.at).unwrap_or_default(),
                     archived: s.archived,
                     model: s.log.iter().find_map(|e| match &e.event {
                         Event::SessionStart(start) => start.model.clone(),
                         _ => None,
                     }),
+                    forked_from: fork::forked_from(&s.log),
                 })
                 .filter(|entry| match &query.text {
                     Some(text) => entry
@@ -384,6 +385,11 @@ impl ConversationHost for ScriptedHost {
             }
             Ok(entries)
         })
+    }
+
+    fn fork(&self, session: &SessionId, at: ForkAt, reason: ForkReason) -> HostFuture<SessionId> {
+        let session = session.clone();
+        self.call(move |inner| inner.fork(&session, at, reason))
     }
 
     fn archive(&self, session: &SessionId, archived: bool) -> HostFuture<()> {

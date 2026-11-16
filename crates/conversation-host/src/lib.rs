@@ -3,14 +3,14 @@
 //! Every binding reaches the platform through [`ConversationHost`] and
 //! nothing else: the kit never opens a socket. Its methods mirror the SDK's
 //! agents interface (`sessions.create`, `send`, `continue`, `cancel`,
-//! `rename`, `subscribe`), so the SDK adapter is a thin mapping. Until that
+//! `rename`, `fork`, `subscribe`), so the SDK adapter is a thin mapping. Until that
 //! adapter lands, [`ScriptedHost`] plays scripted replies with real events.
 
 mod scripted;
 
 pub use scripted::{ScriptedHost, ScriptedReply};
 
-use conversation_model::schema::{Block, Seq, SessionId};
+use conversation_model::schema::{Block, ForkReason, Seq, SessionId, TurnId};
 use conversation_model::{ModelCatalog, Update};
 use futures::future::LocalBoxFuture;
 use futures::stream::LocalBoxStream;
@@ -69,12 +69,26 @@ pub struct SessionEntry {
     pub id: SessionId,
     /// Its title, once it has one.
     pub title: Option<String>,
+    /// When it was created, in milliseconds since the epoch.
+    pub created_at: u64,
     /// When it last changed, in milliseconds since the epoch.
     pub updated_at: u64,
     /// Whether it is archived.
     pub archived: bool,
     /// The model picked when it was created; `None` when the preset's runs.
     pub model: Option<String>,
+    /// The session it was forked from and the last `seq` of that session it
+    /// shares; `None` for a session that is not a fork.
+    pub forked_from: Option<(SessionId, Seq)>,
+}
+
+/// Where a fork leaves its parent: at a turn boundary.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ForkAt {
+    /// Share everything before this turn, not the turn itself.
+    Before(TurnId),
+    /// Share everything up to and including this turn.
+    After(TurnId),
 }
 
 /// Which sessions to list.
@@ -110,6 +124,11 @@ pub trait ConversationHost {
 
     /// The caller's sessions, most recently changed first.
     fn list(&self, query: SessionQuery) -> HostFuture<Vec<SessionEntry>>;
+
+    /// A new session that shares this one's history up to `at`. Its own log
+    /// starts with `forked`, naming the parent and the last `seq` shared;
+    /// the shared turns stay in the parent's log.
+    fn fork(&self, session: &SessionId, at: ForkAt, reason: ForkReason) -> HostFuture<SessionId>;
 
     /// Archive a session, or bring it back.
     fn archive(&self, session: &SessionId, archived: bool) -> HostFuture<()>;

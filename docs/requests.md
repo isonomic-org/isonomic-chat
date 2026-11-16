@@ -6,19 +6,19 @@ What this repository needs from others, and what others asked of it. Newest firs
 
 ### O12 · Isonomic UI: a run status bar
 
-**To:** isonomic-ui (as a `request` issue; this session cannot file there, so the orchestrator files it). **Status:** open. Design 0.2 `RunStatusBar` (`thread-states-part-2.md`): a 720 x 44 bar above the composer with an icon, a message and buttons; statuses Running, Stopped, Error and Done. The kit draws a plain placeholder (`conversation-ui/src/status.rs`) on theme tokens until it lands.
+**To:** isonomic-ui. **Status:** filed as isonomic-ui #378, next for version 1. Design 0.2 `RunStatusBar` (`thread-states-part-2.md`): a 720 x 44 bar above the composer with an icon, a message and buttons; statuses Running, Stopped, Error and Done. The kit draws a plain placeholder (`conversation-ui/src/status.rs`) on theme tokens until it lands.
 
 ### O11 · Isonomic UI: hide the prompt composer's attach button
 
-**To:** isonomic-ui. **Status:** open. `PromptComposer` always shows its plus (attach) button; Chat has no attachments in version 1. Add a switch, like `set_dictation`, to leave it out.
+**To:** isonomic-ui. **Status:** filed as isonomic-ui #377, next for version 1. `PromptComposer` always shows its plus (attach) button; Chat has no attachments in version 1. Add a switch, like `set_dictation`, to leave it out.
 
 ### O10 · Isonomic UI: streamed answer with a Markdown body and no question
 
-**To:** isonomic-ui. **Status:** open, for after version 1. `StreamedAnswer` renders a subset of Markdown and draws the question above the answer. Chat needs the full Markdown text view as its body and a mode without the question, since the prompt is already shown as a bubble. Until then replies use the text view.
+**To:** isonomic-ui. **Status:** filed as isonomic-ui #376, after version 1. `StreamedAnswer` renders a subset of Markdown and draws the question above the answer. Chat needs the full Markdown text view as its body and a mode without the question, since the prompt is already shown as a bubble. Until then replies use the text view.
 
 ### O9 · Isonomic UI: host-rendered code fences that stay tail-only
 
-**To:** isonomic-ui. **Status:** open. To draw fences with `extra::code_block::CodeBlock`, the text view needs a fence renderer that keeps the streaming re-parse tail-only, with a test. Until then replies keep the text view's own fences, with a copy button in each fence's corner (`code_block_actions`).
+**To:** isonomic-ui. **Status:** filed as isonomic-ui #375, after version 1. To draw fences with `extra::code_block::CodeBlock`, the text view needs a fence renderer that keeps the streaming re-parse tail-only, with a test. Until then replies keep the text view's own fences, with a copy button in each fence's corner (`code_block_actions`).
 
 ### O8 · SDK: re-export the conversation components
 

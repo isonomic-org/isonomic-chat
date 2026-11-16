@@ -7,13 +7,14 @@
 //! pass through unchanged.
 
 use conversation_host::{
-    ConversationHost, HostError, HostFuture, NewSession, SessionEntry, SessionQuery, UpdateStream,
+    ConversationHost, ForkAt, HostError, HostFuture, NewSession, SessionEntry, SessionQuery,
+    UpdateStream,
 };
-use conversation_model::schema::{Block, Seq, SessionId};
+use conversation_model::schema::{Block, ForkReason, Seq, SessionId};
 use conversation_model::{Availability, ModelCatalog, ModelOption, Update};
 use futures::{FutureExt as _, StreamExt as _, stream};
 use isonomic_client::{Agents, ClientError, Models, SessionUpdate};
-use isonomic_proto::agents::{CreateSession, ListSessions, PresetId};
+use isonomic_proto::agents::{CreateSession, ForkPoint, ListSessions, PresetId};
 use isonomic_proto::models::ModelState;
 
 /// A conversation host on the SDK's agents interface.
@@ -138,11 +139,28 @@ impl ConversationHost for SdkHost {
                 .map(|summary| SessionEntry {
                     id: summary.id,
                     title: summary.title,
+                    created_at: summary.created_at,
                     updated_at: summary.updated_at,
                     archived: summary.archived,
                     model: summary.model,
+                    forked_from: summary.forked_from.map(|f| (f.session, f.seq)),
                 })
                 .collect())
+        }
+        .boxed_local()
+    }
+
+    fn fork(&self, session: &SessionId, at: ForkAt, reason: ForkReason) -> HostFuture<SessionId> {
+        let (agents, session) = (self.agents.clone(), session.clone());
+        let at = match at {
+            ForkAt::Before(turn) => ForkPoint::BeforeTurn(turn),
+            ForkAt::After(turn) => ForkPoint::AfterTurn(turn),
+        };
+        async move {
+            agents
+                .fork(&session, at, Some(reason))
+                .await
+                .map_err(host_error)
         }
         .boxed_local()
     }

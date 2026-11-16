@@ -7,6 +7,7 @@
 
 use conversation_model::{Turn, TurnState};
 use std::hash::{Hash as _, Hasher as _};
+use std::rc::Rc;
 use ui::assets::IconName;
 use ui::component::bubble::{Bubble, BubbleVariant};
 use ui::component::clipboard::Clipboard;
@@ -16,9 +17,25 @@ use ui::component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
 use ui::extra::message_action_bar::{MessageAction, MessageActionBar};
 use ui::extra::thinking_indicator::{OrbState, ThinkingIndicator};
 use ui::prelude::*;
-use ui::{AnyElement, App, ElementId, SharedString, div};
+use ui::{AnyElement, App, ElementId, SharedString, Window, div};
 
 use crate::ConversationCopy;
+
+/// A click handler.
+pub(crate) type Handler = Rc<dyn Fn(&mut Window, &mut App)>;
+
+/// A handler for picking a version, counted from zero.
+pub(crate) type VersionHandler = Rc<dyn Fn(usize, &mut Window, &mut App)>;
+
+/// What a reply offers besides copy: trying it again, and its versions.
+#[derive(Default)]
+pub(crate) struct ReplyControls {
+    /// Write the reply again, as a new version.
+    pub(crate) on_regenerate: Option<Handler>,
+    /// How many versions there are and which shows, with a handler to
+    /// pick another; only with more than one.
+    pub(crate) versions: Option<(usize, usize, VersionHandler)>,
+}
 
 /// Render one turn. `last` is whether it is the newest, whose ending the
 /// status bar shows instead of a note.
@@ -27,6 +44,7 @@ pub(crate) fn render_turn(
     turn: &Turn,
     last: bool,
     copy: &ConversationCopy,
+    controls: ReplyControls,
     cx: &App,
 ) -> AnyElement {
     let mut row = v_flex()
@@ -38,12 +56,12 @@ pub(crate) fn render_turn(
         row = row.child(prompt(index, turn, copy));
     }
     let open = turn.state.is_open();
-    let said = !turn.reply().is_empty() || !turn.notices.is_empty();
+    let said = !turn.reply().is_empty() || !turn.notices.is_empty() || controls.versions.is_some();
     let noted = turn.refusal.is_some()
         || matches!(turn.state, TurnState::Refused(_))
         || (!last && ending(turn, copy).is_some());
     if open || said || noted {
-        row = row.child(reply(index, turn, last, copy, cx));
+        row = row.child(reply(index, turn, last, copy, controls, cx));
     }
     if let Some(note) = &turn.divider_after {
         row = row.child(
@@ -101,6 +119,7 @@ fn reply(
     turn: &Turn,
     last: bool,
     copy: &ConversationCopy,
+    controls: ReplyControls,
     cx: &App,
 ) -> impl IntoElement {
     let muted = cx.theme().muted_foreground;
@@ -158,16 +177,28 @@ fn reply(
     } else if !last && let Some(ending) = ending(turn, copy) {
         column = column.child(note("turn-note", None, ending, muted));
     }
-    if !turn.state.is_open() && !text.is_empty() {
-        column = column.child(
-            MessageActionBar::new(ElementId::NamedInteger(
-                "reply-actions".into(),
-                index as u64,
-            ))
-            .actions([MessageAction::Copy])
-            .quiet(false)
-            .text(text),
-        );
+    let ended = !turn.state.is_open();
+    if ended && (!text.is_empty() || controls.versions.is_some()) {
+        let mut actions = vec![MessageAction::Copy];
+        let mut bar = MessageActionBar::new(ElementId::NamedInteger(
+            "reply-actions".into(),
+            index as u64,
+        ))
+        .quiet(false)
+        .text(text);
+        if controls.on_regenerate.is_some() || controls.versions.is_some() {
+            actions.push(MessageAction::Regenerate);
+        }
+        if let Some(on_regenerate) = controls.on_regenerate {
+            bar = bar.on_regenerate(move |window, cx| on_regenerate(window, cx));
+        }
+        if let Some((count, current, on_version)) = controls.versions {
+            bar = bar
+                .versions(count)
+                .version(current)
+                .on_version_change(move |version, window, cx| on_version(version, window, cx));
+        }
+        column = column.child(bar.actions(actions));
     }
     column
 }

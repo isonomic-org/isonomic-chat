@@ -9,6 +9,8 @@ use crate::schema::{
 use crate::turn::{Notice, ToolUse, Turn, TurnState};
 use std::collections::BTreeSet;
 
+mod branch;
+
 /// The error code of a turn that failed because the conversation no longer
 /// fits the model.
 pub const TOO_LARGE: &str = "context.too_large";
@@ -39,6 +41,9 @@ pub struct Thread {
     /// A refusal or error recorded by an attempt, for the turn's end.
     attempt_message: Option<String>,
     revision: u64,
+    /// How many turns at the start came from the sessions this one was
+    /// forked from; their `start_seq` is in those sessions' logs.
+    carried: usize,
 }
 
 impl Thread {
@@ -230,7 +235,7 @@ impl Thread {
                 self.awaiting_client = status.status == Status::AwaitingClient;
             }
             Event::Title(title) => self.title = Some(title.title.clone()),
-            Event::TurnStart(start) => self.start_turn(event.turn.clone(), &start.cause),
+            Event::TurnStart(start) => self.start_turn(event.turn.clone(), &start.cause, event.seq),
             Event::User(user) => {
                 if let Some(index) = event.turn.as_ref().and_then(|t| self.turn_index(t)) {
                     self.turns[index].prompt = text_of(&user.content);
@@ -351,7 +356,7 @@ impl Thread {
         }
     }
 
-    fn start_turn(&mut self, id: Option<TurnId>, cause: &Cause) {
+    fn start_turn(&mut self, id: Option<TurnId>, cause: &Cause, seq: Seq) {
         self.last_stop = None;
         self.attempt_message = None;
         match cause {
@@ -372,14 +377,16 @@ impl Thread {
                 {
                     turn.ids.extend(id);
                     turn.state = TurnState::Running;
+                    turn.start_seq = seq;
                     self.touch_last();
                     return;
                 }
             }
             _ => {}
         }
-        self.turns
-            .push(Turn::new(id, String::new(), TurnState::Running));
+        let mut turn = Turn::new(id, String::new(), TurnState::Running);
+        turn.start_seq = seq;
+        self.turns.push(turn);
         self.touch_last();
     }
 
