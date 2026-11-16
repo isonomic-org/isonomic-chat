@@ -14,6 +14,10 @@ use crate::ChatShell;
 /// Chat's app id. Settings and data are keyed by it.
 pub const APP_ID: &str = "com.isonomic.chat";
 
+/// Chat's icon on the window's rail: a name in Isonomic UI's icon catalog,
+/// which the window loads as `icons/<name>.svg`.
+pub const APP_ICON: &str = "chat";
+
 /// The prefix of Chat's deep links.
 pub const LINK_PREFIX: &str = "isonomic://chat/";
 
@@ -52,7 +56,7 @@ impl isonomic_app::App for Chat {
             id: APP_ID.into(),
             name: "Chat".into(),
             version: env!("CARGO_PKG_VERSION").into(),
-            icon: "message-circle".into(),
+            icon: APP_ICON.into(),
             // Chat's own sessions, presets and artifacts, and its own schema
             // for what only Chat stores (pins). Nothing else.
             capabilities: Capabilities {

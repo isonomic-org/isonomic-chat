@@ -219,3 +219,16 @@ fn a_model_that_is_not_installed_is_asked_of_the_window(cx: &mut TestAppContext)
         }
     );
 }
+
+#[test]
+fn the_manifest_icon_is_in_the_icon_catalog() {
+    use ui::AssetSource as _;
+    let icon = Chat::manifest().icon;
+    assert_eq!(icon, isonomic_chat::APP_ICON);
+    let path = format!("icons/{icon}.svg");
+    let svg = ui::assets::AllAssets
+        .load(&path)
+        .expect("the asset source answers")
+        .unwrap_or_else(|| panic!("{path} is not in the icon catalog"));
+    assert!(!svg.is_empty());
+}
