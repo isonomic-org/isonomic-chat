@@ -314,3 +314,53 @@ fn a_reply_tried_again_is_a_version_inside_its_chat(cx: &mut TestAppContext) {
         "the newer version shows, with the pager"
     );
 }
+
+#[ui::test]
+fn a_chat_is_listed_by_its_newest_version(cx: &mut TestAppContext) {
+    use conversation_host::ForkAt;
+    use conversation_model::schema::{Block, ForkReason};
+    use futures::StreamExt as _;
+
+    let host = TestHost::new();
+    host.engine().agents().with(|memory| {
+        memory.model.text("Apple.");
+        memory.model.text("Fruit");
+    });
+    let (app, _) = host.context::<Chat>();
+    let sdk = SdkHost::new(app.client().agents());
+    let new = |title: &str| NewSession {
+        preset: isonomic_chat::PRESET.into(),
+        title: Some(title.into()),
+        model: None,
+    };
+    let (older, newer) = host.runtime().block_on(async {
+        let older = sdk.create(new("Older")).await.expect("create");
+        let mut updates = sdk.subscribe(&older, 0).await.expect("subscribe");
+        let mut thread = conversation_model::Thread::for_session(older.clone());
+        sdk.send(&older, vec![Block::text("Name a fruit")])
+            .await
+            .expect("send");
+        while !thread
+            .turns()
+            .first()
+            .is_some_and(|t| t.state == TurnState::Done)
+        {
+            thread.apply(&updates.next().await.expect("an update"));
+        }
+        host.engine().agents().advance(1_000);
+        let newer = sdk.create(new("Newer")).await.expect("create");
+        host.engine().agents().advance(1_000);
+        // A version of the older chat, made after the newer chat.
+        let turn = thread.turns()[0].ids[0].clone();
+        sdk.fork(&older, ForkAt::Before(turn), ForkReason::Regenerate)
+            .await
+            .expect("fork");
+        (older, newer)
+    });
+
+    let (_open, shell) = mount(cx, &host);
+    shell.read_with(cx, |shell, _| {
+        let ids: Vec<String> = shell.sessions().iter().map(|s| s.id.to_string()).collect();
+        assert_eq!(ids, [older.0.clone(), newer.0.clone()]);
+    });
+}

@@ -2,8 +2,9 @@
 //! pins from Chat's store, and opening, renaming and deleting go through
 //! them. Without a backend the shell shows the static example chats.
 
-use conversation_host::{ConversationHost, SessionQuery};
+use conversation_host::{ConversationHost, SessionEntry, SessionQuery};
 use conversation_model::schema::SessionId;
+use conversation_model::{Branch, newest_first};
 use conversation_ui::{ConversationEvent, ConversationView};
 use std::rc::Rc;
 use ui::prelude::*;
@@ -30,10 +31,21 @@ impl ChatShell {
             let _ = this.update(cx, |this, cx| {
                 match listed {
                     Ok(entries) => {
-                        // A fork is a version inside its chat, not a chat.
-                        let mut sessions: Vec<SessionSummary> = entries
+                        // A fork is a version inside its chat, not a chat;
+                        // a chat is as new as its newest version.
+                        let order = newest_first(&branches(&entries));
+                        let mut entries: Vec<_> = entries
                             .into_iter()
                             .filter(|entry| entry.forked_from.is_none())
+                            .collect();
+                        entries.sort_by_key(|entry| {
+                            order
+                                .iter()
+                                .position(|(id, _)| *id == entry.id)
+                                .unwrap_or(usize::MAX)
+                        });
+                        let mut sessions: Vec<SessionSummary> = entries
+                            .into_iter()
                             .map(|entry| {
                                 let id = SharedString::from(entry.id.0.clone());
                                 let pinned = pins.contains(&entry.id.0);
@@ -330,4 +342,17 @@ impl ChatShell {
 pub(super) enum Change {
     Rename(String),
     Delete,
+}
+
+/// The host's list as the version planner reads it.
+fn branches(entries: &[SessionEntry]) -> Vec<Branch> {
+    entries
+        .iter()
+        .map(|entry| Branch {
+            id: entry.id.clone(),
+            forked_from: entry.forked_from.clone(),
+            created_at: entry.created_at,
+            updated_at: entry.updated_at,
+        })
+        .collect()
 }
