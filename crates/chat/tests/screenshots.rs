@@ -112,6 +112,22 @@ mod screenshots {
             self.cx.run_until_parked();
         }
 
+        /// Open the edit field on the prompt at `index`.
+        fn begin_edit(&mut self, index: usize) {
+            let shell = self.shell.clone();
+            self.cx
+                .update_window(self.handle, |_, window, cx| {
+                    let Route::Session(id) = shell.read(cx).route().clone() else {
+                        return;
+                    };
+                    if let Some(thread) = shell.read(cx).thread(&id).cloned() {
+                        thread.update(cx, |thread, cx| thread.begin_edit(index, window, cx));
+                    }
+                })
+                .unwrap();
+            self.cx.run_until_parked();
+        }
+
         fn host(&self) -> &ScriptedHost {
             self.host.as_ref().expect("a live state")
         }
@@ -204,6 +220,13 @@ mod screenshots {
             live: true,
             before: nothing,
             setup: versions,
+        },
+        State {
+            name: "thread-editing",
+            width: WIDE,
+            live: true,
+            before: nothing,
+            setup: editing,
         },
         State {
             name: "thread-narrow",
@@ -314,6 +337,17 @@ mod screenshots {
         scene.again(0);
         scene.host().finish();
         scene.settle();
+    }
+
+    /// A sent prompt open for editing, its reply below.
+    fn editing(scene: &mut Scene) {
+        scene.host().script(
+            ScriptedReply::text("Try a short walk after lunch.").with_title("Afternoon energy"),
+        );
+        scene.send("One tip for afternoon energy?");
+        scene.host().finish();
+        scene.settle();
+        scene.begin_edit(0);
     }
 
     /// A failed send with try again, and a conversation too large.

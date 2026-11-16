@@ -208,3 +208,49 @@ fn a_conversation_opened_again_shows_the_version_last_worked_on(cx: &mut TestApp
     assert_eq!(shown(cx, &opened)[1], turn("Name a colour", "Yellow."));
     assert_eq!(versions(cx, &opened, 1), Some((3, 2)));
 }
+
+#[ui::test]
+fn an_edited_prompt_is_a_new_version_and_cancel_keeps_the_old(cx: &mut TestAppContext) {
+    cx.update(ui::init);
+    let host = ScriptedHost::new();
+    let shared: Rc<dyn ConversationHost> = Rc::new(host.clone());
+    let (view, window) = cx.add_window_view(|window, cx| {
+        ConversationView::new(shared, "test", ConversationCopy::default(), window, cx)
+    });
+    let mut window = window.clone();
+    cx.run_until_parked();
+    say(cx, &host, &view, "Name a fruit", "Apple.");
+
+    // Cancel leaves the prompt and makes no version.
+    window.update(|window, cx| view.update(cx, |view, cx| view.begin_edit(0, window, cx)));
+    assert_eq!(cx.update(|cx| view.read(cx).editing()), Some(0));
+    window.update(|window, cx| view.update(cx, |view, cx| view.cancel_edit(window, cx)));
+    assert_eq!(cx.update(|cx| view.read(cx).editing()), None);
+    assert_eq!(versions(cx, &view, 0), None);
+
+    // Save sends the new prompt in a fork with reason edit.
+    window.update(|window, cx| view.update(cx, |view, cx| view.begin_edit(0, window, cx)));
+    window.update(|window, cx| {
+        let field = view.read(cx).edit_field().expect("an edit field");
+        field.update(cx, |field, cx| {
+            field.set_value("Name a red fruit", window, cx)
+        });
+    });
+    host.script(ScriptedReply::text("Cherry."));
+    window.update(|window, cx| view.update(cx, |view, cx| view.save_edit(window, cx)));
+    cx.run_until_parked();
+    host.finish();
+    cx.run_until_parked();
+    assert_eq!(shown(cx, &view), [turn("Name a red fruit", "Cherry.")]);
+    assert_eq!(versions(cx, &view, 0), Some((2, 1)));
+    let child = host.sessions()[1].clone();
+    let reason = host.events(&child).into_iter().find_map(|e| match e.event {
+        conversation_model::schema::Event::Forked(forked) => Some(forked.reason),
+        _ => None,
+    });
+    assert_eq!(reason, Some(conversation_model::schema::ForkReason::Edit));
+
+    // The pager brings back the first prompt with its reply.
+    pick(cx, &view, 0, 0);
+    assert_eq!(shown(cx, &view), [turn("Name a fruit", "Apple.")]);
+}

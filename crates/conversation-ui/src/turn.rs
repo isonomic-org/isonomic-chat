@@ -10,16 +10,18 @@ use std::hash::{Hash as _, Hasher as _};
 use std::rc::Rc;
 use ui::assets::IconName;
 use ui::component::bubble::{Bubble, BubbleVariant};
+use ui::component::button::{Button, ButtonVariants as _};
 use ui::component::clipboard::Clipboard;
+use ui::component::input::{Textarea, TextareaState};
 use ui::component::message::{Message, MessageAlignment, MessageContent};
 use ui::component::text::TextView;
 use ui::component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
 use ui::extra::message_action_bar::{MessageAction, MessageActionBar};
 use ui::extra::thinking_indicator::{OrbState, ThinkingIndicator};
 use ui::prelude::*;
-use ui::{AnyElement, App, ElementId, SharedString, Window, div};
+use ui::{AnyElement, App, ElementId, Entity, SharedString, Window, div};
 
-use crate::ConversationCopy;
+use crate::{ConversationCopy, metrics};
 
 /// A click handler.
 pub(crate) type Handler = Rc<dyn Fn(&mut Window, &mut App)>;
@@ -35,6 +37,17 @@ pub(crate) struct ReplyControls {
     /// How many versions there are and which shows, with a handler to
     /// pick another; only with more than one.
     pub(crate) versions: Option<(usize, usize, VersionHandler)>,
+    /// Open the edit field on the prompt.
+    pub(crate) on_edit: Option<Handler>,
+    /// The prompt's edit field, open, with save and cancel.
+    pub(crate) editing: Option<EditBox>,
+}
+
+/// An open edit field on a prompt.
+pub(crate) struct EditBox {
+    pub(crate) field: Entity<TextareaState>,
+    pub(crate) on_save: Handler,
+    pub(crate) on_cancel: Handler,
 }
 
 /// Render one turn. `last` is whether it is the newest, whose ending the
@@ -44,7 +57,7 @@ pub(crate) fn render_turn(
     turn: &Turn,
     last: bool,
     copy: &ConversationCopy,
-    controls: ReplyControls,
+    mut controls: ReplyControls,
     cx: &App,
 ) -> AnyElement {
     let mut row = v_flex()
@@ -53,7 +66,11 @@ pub(crate) fn render_turn(
         .min_w_0()
         .gap_6();
     if !turn.prompt.is_empty() {
-        row = row.child(prompt(index, turn, copy));
+        let (on_edit, editing) = (controls.on_edit.take(), controls.editing.take());
+        row = row.child(match editing {
+            Some(editing) => edit_box(index, editing, copy, cx).into_any_element(),
+            None => prompt(index, turn, copy, on_edit).into_any_element(),
+        });
     }
     let open = turn.state.is_open();
     let said = !turn.reply().is_empty() || !turn.notices.is_empty() || controls.versions.is_some();
@@ -81,7 +98,12 @@ pub(crate) fn render_turn(
 
 /// The prompt: a muted bubble on the trailing side, and under it a copy
 /// button that shows while the prompt is pointed at.
-fn prompt(index: usize, turn: &Turn, copy: &ConversationCopy) -> impl IntoElement {
+fn prompt(
+    index: usize,
+    turn: &Turn,
+    copy: &ConversationCopy,
+    on_edit: Option<Handler>,
+) -> impl IntoElement {
     let group = SharedString::from(format!("prompt-{index}"));
     v_flex()
         .id(ElementId::NamedInteger("prompt".into(), index as u64))
@@ -108,8 +130,61 @@ fn prompt(index: usize, turn: &Turn, copy: &ConversationCopy) -> impl IntoElemen
                         .tooltip(copy.copy.clone())
                         .accessibility_label(copy.copy.clone())
                         .small(),
-                ),
+                )
+                .children(on_edit.map(|on_edit| {
+                    Button::new(ElementId::NamedInteger("prompt-edit".into(), index as u64))
+                        .ghost()
+                        .small()
+                        .icon(IconName::Edit)
+                        .tooltip(copy.edit.clone())
+                        .on_click(move |_, window, cx| on_edit(window, cx))
+                })),
         )
+}
+
+/// The edit field in place of a prompt's bubble, with Cancel and Save.
+fn edit_box(index: usize, editing: EditBox, copy: &ConversationCopy, cx: &App) -> impl IntoElement {
+    let EditBox {
+        field,
+        on_save,
+        on_cancel,
+    } = editing;
+    h_flex().w_full().justify_end().child(
+        v_flex()
+            .id(ElementId::NamedInteger(
+                "prompt-editing".into(),
+                index as u64,
+            ))
+            .w_full()
+            .max_w(metrics::edit_width())
+            .gap_3()
+            .px_3p5()
+            .py_3()
+            .border_2()
+            .rounded_2xl()
+            .border_color(cx.theme().foreground)
+            .bg(cx.theme().background)
+            .child(Textarea::new(&field).appearance(false))
+            .child(
+                h_flex()
+                    .justify_end()
+                    .gap_2()
+                    .child(
+                        Button::new("prompt-edit-cancel")
+                            .outline()
+                            .small()
+                            .label(copy.cancel.clone())
+                            .on_click(move |_, window, cx| on_cancel(window, cx)),
+                    )
+                    .child(
+                        Button::new("prompt-edit-save")
+                            .primary()
+                            .small()
+                            .label(copy.save.clone())
+                            .on_click(move |_, window, cx| on_save(window, cx)),
+                    ),
+            ),
+    )
 }
 
 /// The reply: thinking while nothing is written, the Markdown, notes, and
