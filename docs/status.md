@@ -2,6 +2,14 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · SDK 99630cc: preset version 3, compaction, a conversation too large
+
+- `SDK_REF` moves to `99630cc`; every harness crate is at `ae4f1a7`, the SDK's string character for character.
+- Chat preset version 3 caps replies at 1,024 tokens. A reply cut at the limit is `Truncated` and offers Continue, which finishes it in the same turn. Tested with the scripted host's `cut_after`.
+- `compacted` with a summary is a quiet divider after the last turn (`Turn::divider_after`, or `Thread::divider` before any turn), showing the summary's note. It is never a message. Tested on the scripted host and on the `autonomous-run` fixture.
+- `turn.end` `failed` with `context.too_large` and no steps shows its `reason` as written; the composer stays usable, and Try again is not offered, since the same prompt would not fit either (`Turn::error_code`, `TOO_LARGE`).
+- `scripted.rs` stays under 20 KB: `ScriptedReply` moves to `scripted/reply.rs`.
+
 ## 2026-11-16 · SDK 12ddf2f: the picked model, stream ends, installing a model
 
 - `SDK_REF` moves to `12ddf2f`; every harness crate is at `9a3809f`, the SDK's URL and rev character for character. `Cargo.lock` regenerated.

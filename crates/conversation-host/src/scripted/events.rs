@@ -2,8 +2,8 @@
 
 use super::Open;
 use conversation_model::schema::{
-    Assistant, Block, Event, StepEnd, StepOutcome, StopReason, Title, TitleSource, TurnEnd,
-    TurnStop, Usage,
+    Assistant, Block, Compacted, ErrorInfo, Event, Seq, StepEnd, StepOutcome, StopReason, Summary,
+    Title, TitleSource, TurnEnd, TurnStop, Usage,
 };
 use std::collections::VecDeque;
 
@@ -54,4 +54,34 @@ pub(super) fn turn_end(stop: TurnStop, reason: Option<String>) -> Event {
 
 pub(super) fn title_event(title: String, source: TitleSource) -> Event {
     Event::Title(Title { title, source })
+}
+
+/// A turn that fails before any step: the conversation no longer fits.
+pub(super) fn too_large(reason: String) -> Event {
+    Event::TurnEnd(TurnEnd {
+        stop: TurnStop::Failed,
+        steps: 0,
+        duration_ms: 0,
+        usage: Usage::default(),
+        reason: Some(reason),
+        error: Some(ErrorInfo::new(
+            "context.too_large",
+            "The conversation is too large for the model.",
+        )),
+        budget: None,
+    })
+}
+
+/// Older messages summarized: `note` is the summary the model sees.
+pub(super) fn compacted(through_seq: Seq, note: &str) -> Event {
+    Event::Compacted(Compacted {
+        through_seq,
+        trimmed: Vec::new(),
+        summary: Some(Summary {
+            text: note.to_owned(),
+            turns: Vec::new(),
+        }),
+        tokens_before: 0,
+        tokens_after: 0,
+    })
 }

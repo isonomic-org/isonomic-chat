@@ -431,3 +431,68 @@ fn a_refused_continue_shows_why_on_the_turn(cx: &mut TestAppContext) {
     assert!(turn.refusal.is_none());
     assert_eq!(turn.reply(), "Welcome everyone, tonight.");
 }
+
+#[ui::test]
+fn a_reply_cut_at_the_limit_offers_continue(cx: &mut TestAppContext) {
+    let h = open(cx);
+    h.host
+        .script(ScriptedReply::text("One two three four five.").cut_after(2));
+    h.send(cx, "Count");
+    h.host.finish();
+    cx.run_until_parked();
+    assert_eq!(h.last(cx), ("One two ".into(), TurnState::Truncated));
+    assert_eq!(h.state(cx), InputState::Continuable);
+    h.frame(cx, |window, cx| window.click("conversation-continue", cx));
+    cx.run_until_parked();
+    h.host.finish();
+    cx.run_until_parked();
+    assert_eq!(
+        h.last(cx),
+        ("One two three four five.".into(), TurnState::Done)
+    );
+}
+
+#[ui::test]
+fn a_compaction_is_a_quiet_divider_not_a_message(cx: &mut TestAppContext) {
+    let h = open(cx);
+    h.host.script(ScriptedReply::text("Done."));
+    h.send(cx, "Hello");
+    h.host.finish();
+    cx.run_until_parked();
+    let session = h.host.sessions()[0].clone();
+    h.host
+        .compact(&session, "Earlier messages are not shown to the model.");
+    cx.run_until_parked();
+    cx.update(|cx| {
+        let view = h.view.read(cx);
+        let thread = view.thread();
+        assert_eq!(thread.turns().len(), 1, "no new message");
+        assert_eq!(
+            thread.turns()[0].divider_after.as_deref(),
+            Some("Earlier messages are not shown to the model.")
+        );
+        assert_eq!(thread.turns()[0].reply(), "Done.");
+    });
+}
+
+#[ui::test]
+fn a_conversation_too_large_shows_the_reason_and_keeps_the_composer(cx: &mut TestAppContext) {
+    let h = open(cx);
+    let reason = "This conversation is too long for the model. Start a new chat to keep going.";
+    h.host.script(ScriptedReply::too_large(reason));
+    h.send(cx, "One more question");
+    assert_eq!(h.last(cx).1, TurnState::Failed(reason.into()));
+    assert_eq!(h.state(cx), InputState::Ready, "the composer stays usable");
+    h.frame(cx, |window, _| {
+        assert!(window.try_find("send").is_some());
+        assert!(
+            window.try_find("conversation-retry").is_none(),
+            "the same prompt would not fit either"
+        );
+    });
+    let retry = cx.update(|cx| {
+        h.view
+            .update(cx, |view, _| view.thread().turns()[0].error_code.clone())
+    });
+    assert_eq!(retry.as_deref(), Some(conversation_model::TOO_LARGE));
+}

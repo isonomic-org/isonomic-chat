@@ -9,6 +9,10 @@ use crate::schema::{
 use crate::turn::{Notice, ToolUse, Turn, TurnState};
 use std::collections::BTreeSet;
 
+/// The error code of a turn that failed because the conversation no longer
+/// fits the model.
+pub const TOO_LARGE: &str = "context.too_large";
+
 /// One session as a list of turns.
 ///
 /// Feed it every [`Update`] the host reports, in order. Durable events are
@@ -23,6 +27,8 @@ pub struct Thread {
     notices: Vec<Notice>,
     last_seq: Seq,
     closed: bool,
+    /// A divider before the first turn (a compaction with no turn yet).
+    divider: Option<String>,
     awaiting_client: bool,
     committed: BTreeSet<StepId>,
     /// Steps that are not the reply (the title step, summaries): their text
@@ -108,6 +114,11 @@ impl Thread {
         self.touch_last();
     }
 
+    /// A divider before the first turn, if a compaction came before any.
+    pub fn divider(&self) -> Option<&str> {
+        self.divider.as_deref()
+    }
+
     /// Whether a client tool's app is gone and the session waits for it.
     pub fn awaiting_client(&self) -> bool {
         self.awaiting_client
@@ -118,7 +129,8 @@ impl Thread {
     /// dropped here; a failed turn stays in the log and in the thread.
     pub fn take_retry(&mut self) -> Option<String> {
         let turn = self.turns.last()?;
-        if turn.prompt.is_empty() {
+        // The same prompt cannot fit a conversation that is too large.
+        if turn.prompt.is_empty() || turn.error_code.as_deref() == Some(TOO_LARGE) {
             return None;
         }
         match turn.state {
@@ -296,6 +308,7 @@ impl Thread {
                         .or_else(|| end.error.as_ref().map(|e| e.message.clone()));
                     let state = self.end_state(&end.stop, message);
                     let turn = &mut self.turns[index];
+                    turn.error_code = end.error.as_ref().map(|e| e.code.clone());
                     turn.live.clear();
                     turn.live_reasoning.clear();
                     turn.retrying = None;
@@ -305,6 +318,17 @@ impl Thread {
                 }
                 self.last_stop = None;
                 self.attempt_message = None;
+            }
+            Event::Compacted(compacted) => {
+                if let Some(summary) = &compacted.summary {
+                    match self.turns.len().checked_sub(1) {
+                        Some(last) => {
+                            self.turns[last].divider_after = Some(summary.text.clone());
+                            self.touch(last);
+                        }
+                        None => self.divider = Some(summary.text.clone()),
+                    }
+                }
             }
             Event::Unknown(unknown) => {
                 let notice = Notice {
