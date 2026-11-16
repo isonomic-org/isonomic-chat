@@ -4,6 +4,21 @@ What this repository needs from others, and what others asked of it. Newest firs
 
 ## Out
 
+### O13 · Isonomic UI: asks from the design audit
+
+**To:** isonomic-ui (for the orchestrator to file). **Status:** open. Each is a row marked "Needs UI" in `docs/design-diffs.md`:
+- `Sidebar`: header, content and footer padding and content gap settable (A2, B1, B6). `SidebarMenuItem`: row height after its defaults, focusable with Enter, Space and arrows (B2, keyboard). `SidebarMenu`: gap settable. `SidebarGroup`: padding and a collapsible group (B5).
+- `Button`: label truncation that keeps the dropdown caret (C2). `PopupMenuItem::destructive()` (E3).
+- `CommandPalette`: width, placeholder, input suffix and size, row icon and meta and 36 height, groups kept while filtering, settable footer hints, no cursor on open, empty text, focus held inside (D1 to D10).
+- `PromptComposer`: comfortable size (padding 14 / 12 / 10 / 16, 14 gap, 32 toolbar) and a round 32 send or stop, stop filled (K1, K2).
+- `ModelPicker`: header without columns, `tile(false)` and `caret(false)`, a trailing check slot and a chosen-row fill, row padding and gap, `footer(false)`, list box roles and names on rows (M2 to M7).
+- `TextViewStyle`: list indent, marker gap and marker colour (T6).
+- `MessageActionBar`: button size, pager position, label overrides (T8 to T10).
+
+### O14 · Kit: a host that reports model changes
+
+**To:** this repository (conversation kit), with the SDK's models watch. **Status:** open. `ConversationHost::models` is one-shot, so after Install the catalog never shows the model as ready until Chat restarts. Add a models stream or watch to the host.
+
 ### O12 · Isonomic UI: a run status bar
 
 **To:** isonomic-ui. **Status:** done at isonomic-ui `b4c9670` (`extra::run_status_bar`), in use; its nine differences from the design went back to the UI worker. Design 0.2 `RunStatusBar` (`thread-states-part-2.md`): a 720 x 44 bar above the composer with an icon, a message and buttons; statuses Running, Stopped, Error and Done. The kit draws a plain placeholder (`conversation-ui/src/status.rs`) on theme tokens until it lands.

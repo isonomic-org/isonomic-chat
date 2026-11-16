@@ -5,9 +5,7 @@ use conversation_sdk::SdkHost;
 use isonomic_app::{AppContext, Capabilities, Manifest, ModelAccess, Schema, SearchHit, SqlAccess};
 use isonomic_proto::manifest::AgentsAccess;
 use std::rc::Rc;
-use ui::{
-    AnyView, App, AppContext as _, Context, Entity, Focusable, Global, IntoElement, Render, Window,
-};
+use ui::{AnyView, App, AppContext as _, Context, Entity, Global, IntoElement, Render, Window};
 
 use crate::ChatShell;
 
@@ -93,8 +91,8 @@ impl isonomic_app::App for Chat {
             }),
         };
         let shell = app.new(|shell| ChatShell::new(Some(backend), window, shell));
-        let focus = shell.read(app).focus_handle(app);
-        window.focus(&focus, app);
+        // Open on the composer, so the first key typed is the prompt.
+        shell.update(app, |shell, cx| shell.new_chat(window, cx));
         app.new(|_| Chat {
             app: cx,
             shell,

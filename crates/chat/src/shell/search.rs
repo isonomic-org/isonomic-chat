@@ -5,7 +5,7 @@
 use ui::component::ActiveTheme as _;
 use ui::extra::command_palette::{CommandPalette, PaletteCommand, PaletteEvent};
 use ui::prelude::*;
-use ui::{AnyElement, Entity, Focusable as _, Subscription, Window, div};
+use ui::{AnyElement, Entity, FocusHandle, Focusable as _, Subscription, Window, div};
 
 use super::ChatShell;
 use crate::{copy, metrics};
@@ -16,6 +16,8 @@ const NEW_CHAT: &str = "action:new-chat";
 /// The open palette.
 pub(super) struct Search {
     palette: Entity<CommandPalette>,
+    /// Where focus was before the palette opened; it goes back there.
+    return_focus: Option<FocusHandle>,
     _events: Subscription,
 }
 
@@ -31,10 +33,13 @@ impl ChatShell {
             .sessions()
             .iter()
             .map(|session| {
-                PaletteCommand::new(session.id.clone(), copy::CHATS, session.title.clone())
+                PaletteCommand::new(session.id.clone(), copy::RECENTS, session.title.clone())
             })
             .collect();
-        commands.push(PaletteCommand::new(NEW_CHAT, copy::ACTIONS, copy::NEW_CHAT));
+        commands.push(
+            PaletteCommand::new(NEW_CHAT, copy::ACTIONS, copy::NEW_CHAT).keys(crate::NEW_CHAT_KEY),
+        );
+        let return_focus = window.focused(cx);
         let palette = cx.new(|cx| CommandPalette::new(commands, window, cx));
         let events = cx.subscribe_in(&palette, window, |this, _, event, window, cx| match event {
             PaletteEvent::Run(id) if id.as_ref() == NEW_CHAT => {
@@ -51,15 +56,19 @@ impl ChatShell {
         window.focus(&focus, cx);
         self.search = Some(Search {
             palette,
+            return_focus,
             _events: events,
         });
         cx.notify();
     }
 
-    /// Close the search palette and give focus back to the shell.
+    /// Close the search palette and give focus back to where it was.
     pub fn close_search(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if self.search.take().is_some() {
-            window.focus(&self.focus_handle, cx);
+        if let Some(search) = self.search.take() {
+            let back = search
+                .return_focus
+                .unwrap_or_else(|| self.focus_handle.clone());
+            window.focus(&back, cx);
             cx.notify();
         }
     }
@@ -82,6 +91,10 @@ impl ChatShell {
                         .id("search-palette")
                         .w(metrics::palette_width())
                         .max_w_full()
+                        // The palette caps its own width; centre it.
+                        .flex()
+                        .justify_center()
+                        .items_start()
                         .on_click(|_, _, cx| cx.stop_propagation())
                         .child(search.palette.clone()),
                 )

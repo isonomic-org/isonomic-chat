@@ -9,6 +9,37 @@ pub(crate) fn column_width() -> Pixels {
     px(720.)
 }
 
+/// Widest a prompt's bubble grows before its text wraps.
+pub(crate) fn bubble_width() -> Pixels {
+    px(560.)
+}
+
+/// A bubble's padding at the sides and top and bottom, less its 1 px
+/// border (design 16 and 10).
+pub(crate) fn bubble_pad_x() -> Pixels {
+    px(15.)
+}
+
+/// See [`bubble_pad_x`].
+pub(crate) fn bubble_pad_y() -> Pixels {
+    px(9.)
+}
+
+/// Line height of body text (16 / 24).
+pub(crate) fn text_line() -> Pixels {
+    px(24.)
+}
+
+/// Every heading in a reply (design 0.2 has one level, 18 / 28).
+pub(crate) fn heading_size() -> Pixels {
+    px(18.)
+}
+
+/// An icon button under a prompt (28 x 28).
+pub(crate) fn icon_button() -> Pixels {
+    px(28.)
+}
+
 /// Width of the field that edits a sent prompt.
 pub(crate) fn edit_width() -> Pixels {
     px(560.)

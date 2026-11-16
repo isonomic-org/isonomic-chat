@@ -28,8 +28,14 @@ pub struct ConversationCopy {
     pub try_again: SharedString,
     /// The copy button's name, under a prompt and a reply.
     pub copy: SharedString,
+    /// The copy button under a prompt.
+    pub copy_prompt: SharedString,
+    /// The copy button in a code block.
+    pub copy_code: SharedString,
     /// The edit button under a prompt.
     pub edit: SharedString,
+    /// The name of the field that edits a prompt.
+    pub edit_field: SharedString,
     /// Keep the edited prompt and send it as a new version.
     pub save: SharedString,
     /// Close the edit field and keep the prompt.
@@ -64,7 +70,10 @@ impl Default for ConversationCopy {
             unknown: "Content this version can't show".into(),
             try_again: "Try again".into(),
             copy: "Copy".into(),
+            copy_prompt: "Copy prompt".into(),
+            copy_code: "Copy code".into(),
             edit: "Edit".into(),
+            edit_field: "Edit message".into(),
             save: "Save".into(),
             cancel: "Cancel".into(),
             retrying: "Having trouble reaching the model. Trying again…".into(),

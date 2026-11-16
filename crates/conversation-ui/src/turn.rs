@@ -9,17 +9,19 @@ use conversation_model::{Turn, TurnState};
 use std::hash::{Hash as _, Hasher as _};
 use std::rc::Rc;
 use ui::assets::IconName;
-use ui::component::bubble::{Bubble, BubbleVariant};
+use ui::component::bubble::{Bubble, BubbleContent, BubbleVariant};
 use ui::component::button::{Button, ButtonVariants as _};
 use ui::component::clipboard::Clipboard;
 use ui::component::input::{Textarea, TextareaState};
 use ui::component::message::{Message, MessageAlignment, MessageContent};
-use ui::component::text::TextView;
-use ui::component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
+use ui::component::text::{TextView, TextViewStyle};
+use ui::component::{ActiveTheme as _, Icon, Sizable as _, Size, h_flex, v_flex};
 use ui::extra::message_action_bar::{MessageAction, MessageActionBar};
 use ui::extra::thinking_indicator::{OrbState, ThinkingIndicator};
 use ui::prelude::*;
-use ui::{AnyElement, App, ElementId, Entity, SharedString, Window, div};
+use ui::{
+    AnyElement, App, ElementId, Entity, FocusHandle, KeyDownEvent, SharedString, Window, div,
+};
 
 use crate::{ConversationCopy, metrics};
 
@@ -41,6 +43,8 @@ pub(crate) struct ReplyControls {
     pub(crate) on_edit: Option<Handler>,
     /// The prompt's edit field, open, with save and cancel.
     pub(crate) editing: Option<EditBox>,
+    /// Shows the prompt's actions while one of them has focus.
+    pub(crate) prompt_focus: Option<FocusHandle>,
 }
 
 /// An open edit field on a prompt.
@@ -67,9 +71,10 @@ pub(crate) fn render_turn(
         .gap_6();
     if !turn.prompt.is_empty() {
         let (on_edit, editing) = (controls.on_edit.take(), controls.editing.take());
+        let focus = controls.prompt_focus.take();
         row = row.child(match editing {
             Some(editing) => edit_box(index, editing, copy, cx).into_any_element(),
-            None => prompt(index, turn, copy, on_edit).into_any_element(),
+            None => prompt(index, turn, copy, on_edit, focus).into_any_element(),
         });
     }
     let open = turn.state.is_open();
@@ -103,6 +108,7 @@ fn prompt(
     turn: &Turn,
     copy: &ConversationCopy,
     on_edit: Option<Handler>,
+    focus: Option<FocusHandle>,
 ) -> impl IntoElement {
     let group = SharedString::from(format!("prompt-{index}"));
     v_flex()
@@ -113,28 +119,48 @@ fn prompt(
         .gap_1p5()
         .child(
             Message::new().alignment(MessageAlignment::End).content(
+                // Design 0.2 UserMessage: 16 / 24 text, 16 / 10 padding
+                // (less the bubble's 1 px border), wraps at 560.
                 MessageContent::new().bubble(
                     Bubble::new()
                         .with_variant(BubbleVariant::Muted)
-                        .child(turn.prompt.clone()),
+                        .max_w(metrics::bubble_width())
+                        .content(
+                            BubbleContent::new()
+                                .text_base()
+                                .line_height(metrics::text_line())
+                                .px(metrics::bubble_pad_x())
+                                .py(metrics::bubble_pad_y())
+                                .child(turn.prompt.clone()),
+                        ),
                 ),
             ),
         )
         .child(
+            // Hidden until pointed at or focused, but still laid out and
+            // painted, so its buttons are Tab stops.
             h_flex()
-                .invisible()
-                .group_hover(group, |this| this.visible())
+                .id(ElementId::NamedInteger(
+                    "prompt-actions".into(),
+                    index as u64,
+                ))
+                .gap_0p5()
+                .opacity(0.)
+                .group_hover(group, |this| this.opacity(1.))
+                .when_some(focus, |this, focus| {
+                    this.track_focus(&focus).in_focus(|this| this.opacity(1.))
+                })
                 .child(
                     Clipboard::new(ElementId::NamedInteger("prompt-copy".into(), index as u64))
                         .value(turn.prompt.clone())
-                        .tooltip(copy.copy.clone())
-                        .accessibility_label(copy.copy.clone())
-                        .small(),
+                        .tooltip(copy.copy_prompt.clone())
+                        .accessibility_label(copy.copy_prompt.clone())
+                        .with_size(Size::Size(metrics::icon_button())),
                 )
                 .children(on_edit.map(|on_edit| {
                     Button::new(ElementId::NamedInteger("prompt-edit".into(), index as u64))
                         .ghost()
-                        .small()
+                        .with_size(Size::Size(metrics::icon_button()))
                         .icon(IconName::Edit)
                         .tooltip(copy.edit.clone())
                         .on_click(move |_, window, cx| on_edit(window, cx))
@@ -164,7 +190,24 @@ fn edit_box(index: usize, editing: EditBox, copy: &ConversationCopy, cx: &App) -
             .rounded_2xl()
             .border_color(cx.theme().foreground)
             .bg(cx.theme().background)
-            .child(Textarea::new(&field).appearance(false))
+            .shadow_xs()
+            // Escape cancels, as the Cancel button does.
+            .on_key_down({
+                let on_cancel = on_cancel.clone();
+                move |event: &KeyDownEvent, window, cx| {
+                    if event.keystroke.key == "escape" {
+                        cx.stop_propagation();
+                        on_cancel(window, cx);
+                    }
+                }
+            })
+            .child(
+                Textarea::new(&field)
+                    .appearance(false)
+                    .large()
+                    .p_0()
+                    .aria_label(copy.edit_field.clone()),
+            )
             .child(
                 h_flex()
                     .justify_end()
@@ -172,14 +215,12 @@ fn edit_box(index: usize, editing: EditBox, copy: &ConversationCopy, cx: &App) -
                     .child(
                         Button::new("prompt-edit-cancel")
                             .outline()
-                            .small()
                             .label(copy.cancel.clone())
                             .on_click(move |_, window, cx| on_cancel(window, cx)),
                     )
                     .child(
                         Button::new("prompt-edit-save")
                             .primary()
-                            .small()
                             .label(copy.save.clone())
                             .on_click(move |_, window, cx| on_save(window, cx)),
                     ),
@@ -216,6 +257,7 @@ fn reply(
                 .child(ThinkingIndicator::new("thinking-orb", OrbState::Reasoning).label(label)),
         );
     }
+    let copy_code = copy.copy_code.clone();
     if !text.is_empty() {
         column = column.child(
             div().w_full().min_w_0().child(
@@ -223,11 +265,16 @@ fn reply(
                     ElementId::NamedInteger("reply-text".into(), index as u64),
                     text.clone(),
                 )
-                .code_block_actions(|block, _, _| {
+                // Design 0.2 has one heading level, 18 / 28 semibold; blocks
+                // 12 apart (the text view's own paragraph gap).
+                .style(TextViewStyle::default().heading_font_size(|_, _| metrics::heading_size()))
+                .code_block_actions(move |block, _, _| {
                     let code = block.code();
                     Clipboard::new(ElementId::Name(
                         format!("code-copy-{}", fingerprint(&code)).into(),
                     ))
+                    .tooltip(copy_code.clone())
+                    .accessibility_label(copy_code.clone())
                     .value(code)
                     .small()
                 }),

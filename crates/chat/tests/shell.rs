@@ -139,12 +139,12 @@ fn the_sidebar_collapses_to_its_rail_and_back_from_the_keyboard(cx: &mut TestApp
     with_window(cx, window, |window, cx| {
         window.render_frame(cx);
         assert!(shell.read(cx).sidebar_open());
-        window.press(&format!("{MOD}-\\"), cx);
+        window.press(&format!("{MOD}-."), cx);
         window.render_frame(cx);
         assert!(!shell.read(cx).sidebar_open());
         // The rail keeps the toggle.
         assert!(window.try_find("sidebar-toggle").is_some());
-        window.press(&format!("{MOD}-\\"), cx);
+        window.press(&format!("{MOD}-."), cx);
         window.render_frame(cx);
         assert!(shell.read(cx).sidebar_open());
     });
@@ -526,4 +526,24 @@ fn choosing_a_model_that_is_not_installed_asks_the_window(cx: &mut TestAppContex
         cx.update(|cx| shell.read(cx).model().map(str::to_owned)),
         None
     );
+}
+
+#[ui::test]
+fn alt_up_and_down_step_through_the_chats_in_sidebar_order(cx: &mut TestAppContext) {
+    let (window, shell) = open(cx);
+    let order: Vec<SharedString> = cx.update(|cx| {
+        let sessions = shell.read(cx).sessions();
+        let pinned = sessions.iter().filter(|s| s.pinned);
+        let rest = sessions.iter().filter(|s| !s.pinned);
+        pinned.chain(rest).map(|s| s.id.clone()).collect()
+    });
+    let route = |cx: &mut TestAppContext| cx.update(|cx| shell.read(cx).route().clone());
+    for key in ["alt-down", "alt-down", "alt-up"] {
+        with_window(cx, window, |window, cx| {
+            window.render_frame(cx);
+            window.press(key, cx);
+        });
+        cx.run_until_parked();
+    }
+    assert_eq!(route(cx), Route::Session(order[0].clone()));
 }

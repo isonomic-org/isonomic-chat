@@ -12,7 +12,7 @@ use ui::component::{
     ActiveTheme as _, Collapsible as _, Sizable as _, StyledExt as _, h_flex, v_flex,
 };
 use ui::prelude::*;
-use ui::{Entity, SharedString, Window, div};
+use ui::{Entity, FontWeight, SharedString, StyleRefinement, Window, div};
 
 use super::{ChatShell, Route};
 use crate::demo::SessionSummary;
@@ -24,45 +24,68 @@ pub(super) fn render(
     cx: &mut Context<ChatShell>,
 ) -> impl IntoElement {
     let collapsed = shell.sidebar_collapsed;
+    let toggle_name = if collapsed {
+        copy::EXPAND_SIDEBAR
+    } else {
+        copy::COLLAPSE_SIDEBAR
+    };
     let toggle = Button::new("sidebar-toggle")
         .ghost()
         .small()
+        .size(metrics::icon_button())
         .icon(icons::toggle_sidebar())
-        .tooltip(copy::TOGGLE_SIDEBAR)
+        .tooltip(toggle_name)
         .on_click(|_, window, cx| window.dispatch_action(Box::new(ToggleSidebar), cx));
     let top = h_flex()
         .w_full()
         .gap_2()
+        .when(collapsed, |this| this.justify_center())
         .child(toggle)
         .when(!collapsed, |this| {
             this.child(
                 div()
                     .id("wordmark")
-                    .text_lg()
+                    .text_xl()
                     .font_semibold()
                     .text_color(cx.theme().foreground)
                     .child(copy::WORDMARK),
             )
         });
 
-    let home = shell.route() == &Route::Home && !shell.is_searching();
+    // New chat stays selected on home, under the palette too; the rail
+    // shows no selection.
+    let home = shell.route() == &Route::Home && !collapsed;
+    let nav_item = |label: &'static str| {
+        let item = SidebarMenuItem::new(label);
+        if collapsed {
+            item.p_1p5()
+        } else {
+            row_padding(item)
+        }
+    };
     let nav = SidebarMenu::new()
         .child(
-            SidebarMenuItem::new(copy::NEW_CHAT)
+            nav_item(copy::NEW_CHAT)
                 .icon(icons::new_chat())
                 .active(home)
                 .on_click(|_, window, cx| window.dispatch_action(Box::new(NewChat), cx)),
         )
         .child(
-            SidebarMenuItem::new(copy::SEARCH)
+            nav_item(copy::SEARCH)
                 .icon(icons::search())
-                .active(shell.is_searching())
                 .on_click(|_, window, cx| window.dispatch_action(Box::new(SearchChats), cx)),
         )
         .collapsed(collapsed);
+    let nav = if collapsed { nav.gap_1() } else { nav };
     let header = v_flex()
         .w_full()
-        .gap_2()
+        .map(|this| {
+            if collapsed {
+                this.gap_4()
+            } else {
+                this.gap_2()
+            }
+        })
         .child(top)
         .child(nav.render("chat-nav", window, cx));
 
@@ -103,22 +126,38 @@ fn group(
         let id = session.id.clone();
         let running = shell.is_running(&session.id, cx);
         let (view, row, pinned) = (cx.entity(), session.id.clone(), session.pinned);
-        SidebarMenuItem::new(session.title.clone())
+        let title = session.title.clone();
+        let name = if running {
+            SharedString::from(copy::running(&title))
+        } else {
+            title.clone()
+        };
+        row_padding(SidebarMenuItem::new(session.title.clone()))
             .icon(icons::chat())
+            .accessibility_label(name)
+            // A selected chat keeps its regular weight; only nav rows go medium.
+            .label_style(StyleRefinement::default().font_weight(FontWeight::NORMAL))
             .active(selected.as_ref() == Some(&session.id))
             .suffix(move |_, cx| {
                 h_flex()
-                    .gap_1()
+                    .gap_2p5()
                     .when(running, |this| {
                         this.child(
                             div()
-                                .id("running")
-                                .size(metrics::status_dot())
-                                .rounded_full()
-                                .bg(cx.theme().muted_foreground),
+                                .size(metrics::status_box())
+                                .flex()
+                                .items_center()
+                                .justify_center()
+                                .child(
+                                    div()
+                                        .id("running")
+                                        .size(metrics::status_dot())
+                                        .rounded_full()
+                                        .bg(cx.theme().muted_foreground),
+                                ),
                         )
                     })
-                    .child(row_menu(view.clone(), row.clone(), pinned))
+                    .child(row_menu(view.clone(), row.clone(), title.clone(), pinned))
             })
             .on_click(
                 cx.listener(move |shell, _, window, cx| shell.open_session(id.clone(), window, cx)),
@@ -127,34 +166,70 @@ fn group(
     SidebarGroup::new(label).child(SidebarMenu::new().children(rows))
 }
 
-/// A row's menu: pin or unpin, rename, delete.
-fn row_menu(view: Entity<ChatShell>, id: SharedString, pinned: bool) -> impl IntoElement {
+/// A row's padding: 10 on the left, 6 on the right, 10 between icon and
+/// label (design 0.2 `SidebarNavItem`, `SidebarSessionRow`).
+fn row_padding(item: SidebarMenuItem) -> SidebarMenuItem {
+    item.pl_2p5().pr_1p5().gap_x_2p5()
+}
+
+/// A row's menu: open, pin or unpin, rename, delete.
+fn row_menu(
+    view: Entity<ChatShell>,
+    id: SharedString,
+    title: SharedString,
+    pinned: bool,
+) -> impl IntoElement {
     Button::new(SharedString::from(format!("more-{id}")))
         .ghost()
         .xsmall()
         .icon(icons::more())
         .tooltip(copy::MORE)
+        .accessibility_label(copy::more_for(&title))
         .dropdown_menu(move |menu, _, _| {
-            let (pin, rename, delete) = (view.clone(), view.clone(), view.clone());
-            let (pin_id, rename_id, delete_id) = (id.clone(), id.clone(), id.clone());
-            let pin_label = if pinned { copy::UNPIN } else { copy::PIN };
-            menu.item(PopupMenuItem::new(pin_label).on_click(move |_, _, cx| {
-                pin.update(cx, |shell, cx| shell.set_pinned(&pin_id, !pinned, cx))
-            }))
-            .item(
-                PopupMenuItem::new(copy::RENAME).on_click(move |_, window, cx| {
-                    rename.update(cx, |shell, cx| {
-                        shell.open_session(rename_id.clone(), window, cx);
-                        shell.begin_rename(window, cx);
-                    })
-                }),
-            )
-            .separator()
-            .item(
-                PopupMenuItem::new(copy::DELETE).on_click(move |_, window, cx| {
-                    delete.update(cx, |shell, cx| shell.delete_session(&delete_id, window, cx))
-                }),
-            )
+            let (open, pin, rename, delete) =
+                (view.clone(), view.clone(), view.clone(), view.clone());
+            let (open_id, pin_id, rename_id, delete_id) =
+                (id.clone(), id.clone(), id.clone(), id.clone());
+            let (pin_label, pin_icon) = if pinned {
+                (copy::UNPIN, icons::unpin())
+            } else {
+                (copy::PIN, icons::pin())
+            };
+            menu.min_w(metrics::menu_width())
+                .item(PopupMenuItem::new(copy::OPEN).icon(icons::open()).on_click(
+                    move |_, window, cx| {
+                        open.update(cx, |shell, cx| {
+                            shell.open_session(open_id.clone(), window, cx)
+                        })
+                    },
+                ))
+                .item(
+                    PopupMenuItem::new(pin_label)
+                        .icon(pin_icon)
+                        .on_click(move |_, _, cx| {
+                            pin.update(cx, |shell, cx| shell.set_pinned(&pin_id, !pinned, cx))
+                        }),
+                )
+                .item(
+                    PopupMenuItem::new(copy::RENAME)
+                        .icon(icons::rename())
+                        .on_click(move |_, window, cx| {
+                            rename.update(cx, |shell, cx| {
+                                shell.open_session(rename_id.clone(), window, cx);
+                                shell.begin_rename(window, cx);
+                            })
+                        }),
+                )
+                .separator()
+                .item(
+                    PopupMenuItem::new(copy::DELETE)
+                        .icon(icons::delete())
+                        .on_click(move |_, window, cx| {
+                            delete.update(cx, |shell, cx| {
+                                shell.delete_session(&delete_id, window, cx)
+                            })
+                        }),
+                )
         })
 }
 
@@ -180,11 +255,12 @@ fn status(shell: &ChatShell, cx: &mut Context<ChatShell>) -> impl IntoElement {
                     format!("{} {error}", copy::LIST_FAILED).into(),
                 ))
                 .child(
-                    div().px_2().child(
+                    h_flex().px_2().child(
                         Button::new("chats-retry")
                             .outline()
                             .small()
                             .label(copy::TRY_AGAIN)
+                            .accessibility_label(copy::RETRY_CHATS)
                             .on_click(cx.listener(|shell, _, _, cx| shell.reload(cx))),
                     ),
                 )
