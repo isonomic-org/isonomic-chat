@@ -1,8 +1,10 @@
-//! Listing sessions, and a test hook for a stream that stalls.
+//! Listing sessions, and test hooks for a stream that stalls and a list
+//! answer that arrives late.
 
 use super::{Inner, ScriptedHost, fork};
-use crate::{HostError, SessionEntry, SessionQuery};
+use crate::{HostError, HostFuture, SessionEntry, SessionQuery};
 use conversation_model::schema::{Event, SessionId};
+use futures::FutureExt as _;
 
 impl ScriptedHost {
     /// From now on, following `session` gives a stream that never sends
@@ -14,6 +16,37 @@ impl ScriptedHost {
     /// Let `session`'s stream send again.
     pub fn unstall(&self, session: &SessionId) {
         self.inner.borrow_mut().stalled.remove(session);
+    }
+
+    /// From now on, a list is answered as the sessions stand when it is
+    /// asked for, but the answer arrives only at [`Self::release_lists`],
+    /// as a slow host's would.
+    pub fn hold_lists(&self) {
+        self.inner.borrow_mut().hold_lists = true;
+    }
+
+    /// Deliver every held list answer, and answer later ones at once.
+    pub fn release_lists(&self) {
+        let mut inner = self.inner.borrow_mut();
+        inner.hold_lists = false;
+        for gate in inner.held_lists.drain(..) {
+            let _ = gate.send(());
+        }
+    }
+
+    pub(super) fn held_list(&self, query: SessionQuery) -> HostFuture<Vec<SessionEntry>> {
+        let mut inner = self.inner.borrow_mut();
+        let answer = inner.list(query);
+        if !inner.hold_lists {
+            return futures::future::ready(answer).boxed_local();
+        }
+        let (gate, released) = futures::channel::oneshot::channel();
+        inner.held_lists.push(gate);
+        async move {
+            let _ = released.await;
+            answer
+        }
+        .boxed_local()
     }
 }
 

@@ -2,6 +2,14 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · Earlier replies stay whole; reloads keep deletes; the Mac comparison
+
+- **Thread:** the conversation view owns the text view state behind each reply, kept in step after every update, instead of the one the text view finds by element id each frame. A reply that has ended is drawn from one parse of its whole text. On the Mac, a finished reply was drawn as its first streamed token ("Here") once a later turn started; that was not reproduced here (scripted host and SDK test engine, frames drawn while parses were pending), so this removes every path through which a finished reply could show a partial parse. Tested in `conversation-ui/tests/stream.rs`; screenshot state `thread-earlier-reply`.
+- An opening emphasis or code marker at the very end of a reply (a reply stopped at `**`) is not drawn, and a reply with nothing to draw shows no Copy or Try again.
+- **Chat list:** a reload answered after a delete no longer brings the chat back; `is_reloading()` and `loads_finished()` tell the window when a reload has finished (requests I2, I3).
+- **Mac comparison:** New chat and Search sit 8 from the edge, the same width as the chat rows; a chat's header has its 1 px rule. The composer's blue focus border, its height (about 107, not 96), the four-point sparkle and the "Esc" chip on macOS need Isonomic UI (O15). The palette is centred on the window, as the reference draws it.
+- The screenshot harness's scenes moved to `tests/screenshots/scenes.rs` (file size).
+
 ## 2026-11-16 · SDK at 8f21cb6: the window's QA ids
 
 - `SDK_REF` moves to `8f21cb6` (`UI_REF` `527d955`, stable ids); harness unchanged. `Cargo.lock` needs no change.

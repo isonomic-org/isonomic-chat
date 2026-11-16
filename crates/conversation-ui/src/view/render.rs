@@ -144,6 +144,7 @@ impl ConversationView {
 impl Render for ConversationView {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let status = self.status(cx);
+        let replies = Rc::new(self.replies.sync(&self.thread.borrow(), cx));
         let thread = self.thread.clone();
         let copy = self.copy.clone();
         let view = cx.weak_entity();
@@ -179,7 +180,15 @@ impl Render for ConversationView {
                         div()
                             .w_full()
                             .max_w(metrics::column_width())
-                            .child(render_turn(index, turn, last, &copy, controls, cx)),
+                            .child(render_turn(
+                                index,
+                                turn,
+                                last,
+                                &copy,
+                                controls,
+                                replies.get(index).cloned().flatten(),
+                                cx,
+                            )),
                     )
                     .into_any_element()
             },

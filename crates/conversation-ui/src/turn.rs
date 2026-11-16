@@ -14,7 +14,7 @@ use ui::component::button::{Button, ButtonVariants as _};
 use ui::component::clipboard::Clipboard;
 use ui::component::input::{Textarea, TextareaState};
 use ui::component::message::{Message, MessageAlignment, MessageContent};
-use ui::component::text::{TextView, TextViewStyle};
+use ui::component::text::{TextView, TextViewState, TextViewStyle};
 use ui::component::{ActiveTheme as _, Icon, Sizable as _, Size, h_flex, v_flex};
 use ui::extra::message_action_bar::{MessageAction, MessageActionBar, MessageActionLabel};
 use ui::extra::thinking_indicator::{OrbState, ThinkingIndicator};
@@ -62,6 +62,7 @@ pub(crate) fn render_turn(
     last: bool,
     copy: &ConversationCopy,
     mut controls: ReplyControls,
+    text: Option<Entity<TextViewState>>,
     cx: &App,
 ) -> AnyElement {
     let mut row = v_flex()
@@ -78,12 +79,13 @@ pub(crate) fn render_turn(
         });
     }
     let open = turn.state.is_open();
-    let said = !turn.reply().is_empty() || !turn.notices.is_empty() || controls.versions.is_some();
+    let said =
+        !shown(&turn.reply()).is_empty() || !turn.notices.is_empty() || controls.versions.is_some();
     let noted = turn.refusal.is_some()
         || matches!(turn.state, TurnState::Refused(_))
         || (!last && ending(turn, copy).is_some());
     if open || said || noted {
-        row = row.child(reply(index, turn, last, copy, controls, cx));
+        row = row.child(reply(index, turn, last, copy, controls, text, cx));
     }
     if let Some(note) = &turn.divider_after {
         row = row.child(
@@ -238,6 +240,7 @@ fn reply(
     last: bool,
     copy: &ConversationCopy,
     controls: ReplyControls,
+    shown: Option<Entity<TextViewState>>,
     cx: &App,
 ) -> impl IntoElement {
     let muted = cx.theme().muted_foreground;
@@ -247,7 +250,7 @@ fn reply(
         .min_w_0()
         .gap_3();
     let text = turn.reply();
-    if turn.state.is_open() && text.is_empty() {
+    if turn.state.is_open() && shown.is_none() {
         let label = if turn.thinking().is_empty() {
             copy.thinking.clone()
         } else {
@@ -260,29 +263,28 @@ fn reply(
         );
     }
     let copy_code = copy.copy_code.clone();
-    if !text.is_empty() {
+    if let Some(shown) = &shown {
         column = column.child(
             div().w_full().min_w_0().child(
-                TextView::markdown(
-                    ElementId::NamedInteger("reply-text".into(), index as u64),
-                    text.clone(),
-                )
-                // Design 0.2 has one heading level, 18 / 28 semibold; blocks
-                // 12 apart (the text view's own paragraph gap).
-                .style(TextViewStyle::default().heading_font_size(|_, _| metrics::heading_size()))
-                // Lists: text 28 in, the marker in that column.
-                .list_indent(metrics::list_indent())
-                .list_marker_gap(metrics::list_marker_gap())
-                .code_block_actions(move |block, _, _| {
-                    let code = block.code();
-                    Clipboard::new(ElementId::Name(
-                        format!("code-copy-{}", fingerprint(&code)).into(),
-                    ))
-                    .tooltip(copy_code.clone())
-                    .accessibility_label(copy_code.clone())
-                    .value(code)
-                    .small()
-                }),
+                TextView::new(shown)
+                    // Design 0.2 has one heading level, 18 / 28 semibold; blocks
+                    // 12 apart (the text view's own paragraph gap).
+                    .style(
+                        TextViewStyle::default().heading_font_size(|_, _| metrics::heading_size()),
+                    )
+                    // Lists: text 28 in, the marker in that column.
+                    .list_indent(metrics::list_indent())
+                    .list_marker_gap(metrics::list_marker_gap())
+                    .code_block_actions(move |block, _, _| {
+                        let code = block.code();
+                        Clipboard::new(ElementId::Name(
+                            format!("code-copy-{}", fingerprint(&code)).into(),
+                        ))
+                        .tooltip(copy_code.clone())
+                        .accessibility_label(copy_code.clone())
+                        .value(code)
+                        .small()
+                    }),
             ),
         );
     }
@@ -305,7 +307,7 @@ fn reply(
         column = column.child(note("turn-note", None, ending, muted));
     }
     let ended = !turn.state.is_open();
-    if ended && (!text.is_empty() || controls.versions.is_some()) {
+    if ended && (shown.is_some() || controls.versions.is_some()) {
         let mut actions = vec![MessageAction::Copy];
         let mut bar = MessageActionBar::new(ElementId::NamedInteger(
             "reply-actions".into(),
@@ -391,4 +393,48 @@ fn last_line(text: &str) -> String {
         .unwrap_or_default()
         .trim()
         .to_owned()
+}
+
+/// The reply as drawn: without an emphasis or code marker at its very end
+/// that can only open a span, such as a reply stopped at `**`, which would
+/// otherwise show as raw markup.
+pub(crate) fn shown(text: &str) -> &str {
+    let text = text.trim_end();
+    let markers = text
+        .bytes()
+        .rev()
+        .take_while(|byte| matches!(byte, b'*' | b'_' | b'~' | b'`'))
+        .count();
+    if markers == 0 {
+        return text;
+    }
+    let rest = &text[..text.len() - markers];
+    // A marker after a word can close a span; one at the start or after a
+    // space can only open one.
+    if rest.chars().next_back().is_none_or(char::is_whitespace) {
+        rest.trim_end()
+    } else {
+        text
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::shown;
+
+    #[test]
+    fn an_opening_marker_at_the_end_is_not_drawn() {
+        assert_eq!(shown("**"), "");
+        assert_eq!(shown("Here is **"), "Here is");
+        assert_eq!(shown("Run `"), "Run");
+        assert_eq!(shown("a list\n\n*"), "a list");
+        assert_eq!(shown("** "), "");
+    }
+
+    #[test]
+    fn a_closing_marker_and_plain_text_are_kept() {
+        assert_eq!(shown("**bold**"), "**bold**");
+        assert_eq!(shown("Plain text."), "Plain text.");
+        assert_eq!(shown(""), "");
+    }
 }

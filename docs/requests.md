@@ -4,6 +4,13 @@ What this repository needs from others, and what others asked of it. Newest firs
 
 ## Out
 
+### O15 · Isonomic UI: from the Mac comparison of 16 Nov
+
+**To:** isonomic-ui (for the orchestrator to file; this session reaches only isonomic-chat). **Status:** open. Each is a row marked "Needs UI" in `docs/design-diffs.md`:
+- `PromptComposer`: a focus look without the ring colour (design 0.2 keeps the 1 px light border, focused or not; a slightly darker border for keyboard focus at most) (K4). In the comfortable size, a one-line text area, so the empty composer is 96 high; it is about 107 now (K1).
+- Icons: the design's four-point sparkle with a small plus. The catalog's `Sparkles` draws a magic wand, and no icon is a four-point sparkle (H1).
+- `CommandPalette::set_escape_hint`: the chip reads "Esc" on every platform; on macOS it draws a glyph (D3).
+
 ### O13 · Isonomic UI: asks from the design audit
 
 **To:** isonomic-ui (for the orchestrator to file). **Status:** open. Each is a row marked "Needs UI" in `docs/design-diffs.md`:
@@ -75,6 +82,14 @@ isonomic-ui #206. For the kit's `PromptComposer` (home and thread).
 **Status:** done in #2. The master session's branch `ci/shared-workflow` (issue #1) was merged into the Step 0 branch, and two inputs were added to its call of the shared workflow through the web editor: `ui: true` (Isonomic UI as a sibling checkout at `UI_REF`, which needs the `UI_DEPLOY_KEY` secret) and `features: --all-features --locked`. When `xtask` gains the product-term lint and the boundary check, `xtask: lint boundary` follows the same way.
 
 ## In
+
+### I3 · Window: know when a chat list reload has finished
+
+**From:** the window worker's scripted pass on the Mac. **Status:** done. `ChatShell::is_reloading()` is true while a load of the list is on its way (the first or a reload), and `ChatShell::loads_finished()` counts the loads that finished, failed ones included: a reload has finished once it passes the count read when it began. `is_loaded()` still says only that the first load finished.
+
+### I2 · Window: a reload must not bring back a deleted chat
+
+**From:** the window worker's scripted pass on the Mac. **Status:** done. A list answer that arrived after a delete put the deleted chat back until the next reload. The shell now remembers the chats deleted in it and leaves them out of every list answer; a newer load still replaces an older one (its task is dropped). Chat has no archive of its own, so a delete covers it. Tested with a held list answer on the scripted host (`ScriptedHost::hold_lists`, `release_lists`) in `crates/chat/tests/reload.rs`.
 
 ### I1 · Desktop: a Chat app crate the window can mount
 

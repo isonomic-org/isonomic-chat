@@ -17,7 +17,7 @@ use ui::{
 };
 
 use conversation_ui::ConversationView;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::composer::{Composer, ComposerEvent};
 use crate::copy::{self, DayPart};
@@ -57,6 +57,12 @@ pub struct ChatShell {
     load_error: Option<SharedString>,
     fit: Option<layout::Fit>,
     loaded: bool,
+    /// Whether a load of the list is on its way.
+    reloading: bool,
+    /// How many loads of the list have finished.
+    loads: u64,
+    /// Chats deleted here: a list answer never brings one back.
+    deleted: HashSet<SharedString>,
     saving: usize,
     model: Option<String>,
     catalog: Option<conversation_model::ModelCatalog>,
@@ -105,6 +111,9 @@ impl ChatShell {
             load_error: None,
             fit: None,
             loaded: backend.is_none(),
+            reloading: false,
+            loads: 0,
+            deleted: HashSet::new(),
             saving: 0,
             model: None,
             catalog: None,
@@ -293,6 +302,7 @@ impl ChatShell {
         cx: &mut Context<Self>,
     ) {
         self.sessions.retain(|session| &session.id != id);
+        self.deleted.insert(id.clone());
         self.threads.remove(id);
         self.sync(id, sessions::Change::Delete, cx);
         if self.route == Route::Session(id.clone()) {

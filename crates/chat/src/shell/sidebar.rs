@@ -89,7 +89,11 @@ pub(super) fn render(
             }
         })
         .child(top)
-        .child(nav.render("chat-nav", window, cx));
+        .child(
+            div()
+                .when(!collapsed, |this| this.mx(metrics::nav_outset()))
+                .child(nav.render("chat-nav", window, cx)),
+        );
 
     let mut sidebar = Sidebar::new("chat_sidebar")
         .collapsible(SidebarCollapsible::Icon)
@@ -177,7 +181,7 @@ fn group(
             )
     });
     let group = SidebarGroup::new(label)
-        .padding(metrics::group_label_padding())
+        .padding(metrics::group_padding())
         .child(SidebarMenu::new().gap(metrics::row_gap()).children(rows));
     // Pinned folds away with its caret, as the design draws it.
     if label == copy::PINNED {
