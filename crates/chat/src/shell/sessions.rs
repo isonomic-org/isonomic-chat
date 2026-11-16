@@ -104,6 +104,7 @@ impl ChatShell {
             let catalog = request.await.unwrap_or_default();
             let _ = this.update(cx, |this, cx| {
                 this.catalog = Some(catalog);
+                this.show_models(cx);
                 cx.notify();
             });
         });
@@ -113,12 +114,42 @@ impl ChatShell {
     /// Pick the model new chats run on.
     pub fn pick_model(&mut self, model: String, cx: &mut Context<Self>) {
         self.model = Some(model);
+        self.show_models(cx);
         cx.notify();
+    }
+
+    /// Offer the catalog's models in home's composer, with the one new chats
+    /// run on selected.
+    pub(super) fn show_models(&mut self, cx: &mut Context<Self>) {
+        let Some(catalog) = &self.catalog else {
+            return;
+        };
+        let models = catalog
+            .options()
+            .iter()
+            .map(|o| (o.id.clone(), o.name.clone()))
+            .collect();
+        let selected = self
+            .model
+            .clone()
+            .filter(|id| catalog.get(id).is_some())
+            .or_else(|| catalog.choose(None).map(|o| o.id.clone()));
+        self.composer
+            .update(cx, |composer, cx| composer.set_models(models, selected, cx));
     }
 
     /// The model new chats run on, once one has been picked.
     pub fn model(&self) -> Option<&str> {
         self.model.as_deref()
+    }
+
+    /// Load the chat list again, after it failed.
+    pub fn reload(&mut self, cx: &mut Context<Self>) {
+        if let Some(backend) = self.backend.clone() {
+            self.load_error = None;
+            self.load(backend, cx);
+            cx.notify();
+        }
     }
 
     /// Whether the first load of the list has finished.
@@ -164,7 +195,7 @@ impl ChatShell {
         let thread = cx.new(|cx| {
             let mut view =
                 ConversationView::new(host, crate::PRESET, copy::conversation(), window, cx);
-            // The model picked in an earlier chat runs this one.
+            // The model picked on home, or in an earlier chat, runs this one.
             if let Some(model) = model {
                 view.select_model(model, cx);
             }
@@ -204,7 +235,10 @@ impl ChatShell {
                     }
                     *local.borrow_mut() = named;
                 }
-                ConversationEvent::ModelSelected(model) => this.model = Some(model.to_string()),
+                ConversationEvent::ModelSelected(model) => {
+                    this.model = Some(model.to_string());
+                    this.show_models(cx);
+                }
                 // Downloads belong to the window: ask it to offer this one.
                 ConversationEvent::ModelUnavailable(model) => {
                     this.install_model(model);

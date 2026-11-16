@@ -81,6 +81,3 @@ pub fn connections() -> Vec<Connection> {
 
 /// The person's first name, for the greeting.
 pub const FIRST_NAME: &str = "Omar";
-
-/// The model label in the composer.
-pub const MODEL: &str = "Local model";

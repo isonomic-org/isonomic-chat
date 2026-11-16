@@ -87,7 +87,7 @@ fn home_is_the_first_route_and_send_waits_for_text(cx: &mut TestAppContext) {
         assert_eq!(shell.read(cx).route(), &Route::Home);
         assert!(window.try_find("greeting").is_some());
         // Send has nothing to send: clicking it changes nothing.
-        window.click("composer-send", cx);
+        window.click("send", cx);
         assert_eq!(shell.read(cx).route(), &Route::Home);
     });
 }
@@ -396,7 +396,39 @@ fn with_no_model_installed_home_asks_the_window_to_install_the_recommended_one(
 }
 
 #[ui::test]
-fn a_picked_model_runs_the_next_chat(cx: &mut TestAppContext) {
+fn a_narrow_window_gives_the_panels_width_to_the_conversation(cx: &mut TestAppContext) {
+    let (window, shell) = open(cx);
+    with_window(cx, window, |window, cx| {
+        window.render_frame(cx);
+        assert!(shell.read(cx).sidebar_open());
+        assert!(shell.read(cx).context_panel_open());
+    });
+    cx.simulate_window_resize(window.into(), size(px(700.), px(900.)));
+    with_window(cx, window, |window, cx| {
+        window.render_frame(cx);
+        assert!(!shell.read(cx).sidebar_open());
+        assert!(!shell.read(cx).context_panel_open());
+        assert!(shell.read(cx).is_narrow());
+        // The header's toggle still opens the sidebar while narrow.
+        window.render_frame(cx);
+        window.click("header-sidebar-toggle", cx);
+    });
+    cx.run_until_parked();
+    with_window(cx, window, |window, cx| {
+        window.render_frame(cx);
+        assert!(shell.read(cx).sidebar_open());
+    });
+    cx.simulate_window_resize(window.into(), size(px(1400.), px(900.)));
+    with_window(cx, window, |window, cx| {
+        // Wide again: both come back.
+        window.render_frame(cx);
+        assert!(shell.read(cx).sidebar_open());
+        assert!(shell.read(cx).context_panel_open());
+    });
+}
+
+#[ui::test]
+fn a_model_picked_on_home_runs_the_next_chat(cx: &mut TestAppContext) {
     use conversation_model::{Availability, ModelCatalog, ModelOption};
     let host = ScriptedHost::new();
     let option = |id: &str| ModelOption {
@@ -412,6 +444,12 @@ fn a_picked_model_runs_the_next_chat(cx: &mut TestAppContext) {
     host.script(ScriptedReply::text("Hi."));
     let (window, shell) = open_with(cx, host.clone());
     cx.run_until_parked();
+    with_window(cx, window, |window, cx| {
+        window.render_frame(cx);
+        window.click("model", cx);
+        window.render_frame(cx);
+    });
+    // Pick through the shell, as the menu's item does.
     cx.update(|cx| shell.update(cx, |shell, cx| shell.pick_model("small".into(), cx)));
     with_window(cx, window, |window, cx| {
         shell.update(cx, |shell, cx| shell.set_draft("Hello", window, cx));

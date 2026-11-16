@@ -6,6 +6,7 @@
 
 mod context_panel;
 mod header;
+mod layout;
 mod sessions;
 mod sidebar;
 
@@ -61,6 +62,7 @@ pub struct ChatShell {
     backend: Option<Backend>,
     threads: HashMap<SharedString, Entity<ConversationView>>,
     load_error: Option<SharedString>,
+    fit: Option<layout::Fit>,
     loaded: bool,
     saving: usize,
     model: Option<String>,
@@ -80,10 +82,18 @@ impl ChatShell {
     /// example chats and a new chat opens empty.
     pub fn new(backend: Option<Backend>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let composer = cx.new(|cx| Composer::new(window, cx));
-        let subscription = cx.subscribe_in(&composer, window, |this, _, event, window, cx| {
-            let ComposerEvent::Submit(text) = event;
-            this.start_session(text, window, cx);
-        });
+        let subscription =
+            cx.subscribe_in(
+                &composer,
+                window,
+                |this, _, event, window, cx| match event {
+                    ComposerEvent::Submit(text) => this.start_session(text, window, cx),
+                    ComposerEvent::SelectModel(model) => {
+                        this.model = Some(model.clone());
+                        this.show_models(cx);
+                    }
+                },
+            );
         let sessions = match backend {
             Some(_) => Vec::new(),
             None => demo::sessions(),
@@ -100,6 +110,7 @@ impl ChatShell {
             backend: backend.clone(),
             threads: HashMap::new(),
             load_error: None,
+            fit: None,
             loaded: backend.is_none(),
             saving: 0,
             model: None,
@@ -301,7 +312,7 @@ impl ChatShell {
         match self.route {
             Route::Home => match self.missing_model().cloned() {
                 Some(model) => home::render_install(&model, cx),
-                None => home::render(self.day_part, &self.composer, window, cx),
+                None => home::render(self.day_part, !self.is_live(), &self.composer, window, cx),
             },
             Route::Session(ref id) => match self.threads.get(id) {
                 Some(thread) => self.render_conversation(thread.clone(), cx),
@@ -390,6 +401,7 @@ impl Focusable for ChatShell {
 
 impl Render for ChatShell {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        self.fit_to(window);
         let body = self.render_body(window, cx);
         let theme = cx.theme();
         h_flex()

@@ -8,10 +8,6 @@ pub const CHATS: &str = "Chats";
 pub const COMPOSER_HOME: &str = "How can I help you today?";
 /// The composer's placeholder under a conversation.
 pub const COMPOSER_THREAD: &str = "Reply…";
-/// The composer's send button.
-pub const SEND: &str = "Send";
-/// The composer's attach button.
-pub const ADD_FILES: &str = "Add files";
 /// Shown under the docked composer.
 pub const DISCLAIMER: &str = "Isonomic Chat can make mistakes. Please double-check responses.";
 /// The header's share button.
@@ -35,6 +31,12 @@ pub const NO_FILES: &str = "Files you add to this chat appear here.";
 /// The Tools tab with nothing in it.
 pub const NO_TOOLS: &str = "Tools this chat can use appear here.";
 /// Shown where the conversation view will be.
+pub const NO_CHATS: &str = "Chats you start appear here.";
+pub const LIST_FAILED: &str = "Chats couldn't load.";
+pub const TRY_AGAIN: &str = "Try again";
+pub const SAVE_FAILED: &str = "A change couldn't be saved.";
+pub const NO_CONNECTIONS: &str = "Connections this chat can use appear here.";
+
 pub const NO_MODEL: &str = "Chat needs a model on this computer before it can reply.";
 
 /// The button that asks the window to install a model.

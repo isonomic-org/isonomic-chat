@@ -12,7 +12,7 @@ use crate::copy::{self, DayPart};
 use crate::{demo, icons, metrics};
 
 /// The greeting row: the mark and a time-of-day greeting.
-pub(crate) fn greeting(part: DayPart, cx: &App) -> impl IntoElement {
+pub(crate) fn greeting(part: DayPart, examples: bool, cx: &App) -> impl IntoElement {
     h_flex()
         .id("greeting")
         .test_support()
@@ -23,7 +23,7 @@ pub(crate) fn greeting(part: DayPart, cx: &App) -> impl IntoElement {
             div()
                 .text_3xl()
                 .text_color(cx.theme().foreground)
-                .child(copy::greeting(part, Some(demo::FIRST_NAME))),
+                .child(copy::greeting(part, examples.then_some(demo::FIRST_NAME))),
         )
 }
 
@@ -61,6 +61,7 @@ pub(crate) fn starters(composer: &Entity<Composer>) -> impl IntoElement {
 /// Home, centred in the panel below the header.
 pub(crate) fn render(
     part: DayPart,
+    examples: bool,
     composer: &Entity<Composer>,
     _: &mut Window,
     cx: &mut Context<impl Sized>,
@@ -73,7 +74,7 @@ pub(crate) fn render(
         .gap_7()
         .px_6()
         .pb_24()
-        .child(greeting(part, cx))
+        .child(greeting(part, examples, cx))
         .child(
             div()
                 .w_full()
