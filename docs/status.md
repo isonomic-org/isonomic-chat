@@ -2,6 +2,11 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · The window's header in Chat's sidebar
+
+- Chat hosts the window's shell header (`hosts_shell_header`), so the window draws no rail beside it. Expanded, the toggle and then the header (the product wordmark) top the sidebar; collapsed, the header (the app's icon) and then the toggle. Chat tells the window on every fold and open (`set_sidebar`) and leaves the window's inset above the row. Chat draws its own wordmark only with no window around it (tests, the demo, the screenshot harness), the same one the window places. Tested with the SDK's test host.
+- Lists: bullets 4 in with their text 21 in; numbers 4 in with their text 28 in (`bullet_list_indent`, `ordered_list_indent`), measured in `thread-markdown` and `thread-mac`. The reply pager is quiet: arrows and numbers at 12 in the muted colour.
+
 ## 2026-11-16 · The thread against the 0.2 frame
 
 - The chat header has no rule under it: design 0.2 has none (`app-shell.md`); the rule came from an older frame. The title stays 14 / 20 medium, the bundled Medium face.

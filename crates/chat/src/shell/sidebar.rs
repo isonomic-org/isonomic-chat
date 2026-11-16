@@ -1,8 +1,10 @@
 //! The app sidebar (design 0.2 `AppSidebar`, `AppSidebarRail`): the toggle
-//! and the wordmark, the nav (New chat, Search), then the Pinned and Recents
-//! groups of chats. Collapsed, it is a rail of icons: the toggle and the nav
-//! stay, the chats and the wordmark go.
+//! and the window's shell header (the wordmark), the nav (New chat,
+//! Search), then the Pinned and Recents groups of chats. Collapsed, it is a
+//! rail of icons: the header (the app's icon), the toggle and the nav stay,
+//! the chats go.
 
+use isonomic_app::Sidebar as WindowSidebar;
 use ui::component::button::{Button, ButtonVariants as _};
 use ui::component::menu::{DropdownMenu as _, PopupMenuItem};
 use ui::component::sidebar::{
@@ -35,20 +37,41 @@ pub(super) fn render(
         .icon(icons::toggle_sidebar())
         .tooltip(toggle_name)
         .on_click(|_, window, cx| window.dispatch_action(Box::new(ToggleSidebar), cx));
-    let top = h_flex()
-        .w_full()
-        .gap_2()
-        .when(collapsed, |this| this.justify_center())
-        .child(toggle)
-        .when(!collapsed, |this| {
-            // The brand's wordmark: "Isonomic" in the sans, regular, then
-            // the product's name in light, at the design's 20.
-            this.child(
-                div()
-                    .id("wordmark")
-                    .child(Wordmark::product(copy::PRODUCT).size(metrics::wordmark_size())),
-            )
-        });
+    let top = match &shell.window_shell {
+        // The window's header: its wordmark or app switcher beside the
+        // toggle; collapsed, the app's icon above it.
+        Some(app) => {
+            app.set_sidebar(if collapsed {
+                WindowSidebar::Collapsed
+            } else {
+                WindowSidebar::Expanded
+            });
+            let header = app.shell_header(window, cx);
+            let row = div().w_full().pt(app.shell_inset()).flex().gap_2();
+            if collapsed {
+                row.flex_col().items_center().child(header).child(toggle)
+            } else {
+                row.flex_row().items_center().child(toggle).child(header)
+            }
+        }
+        // No window around Chat (the demo, tests, screenshots): the same
+        // product wordmark the window would place.
+        None => div()
+            .w_full()
+            .flex()
+            .flex_row()
+            .items_center()
+            .gap_2()
+            .when(collapsed, |this| this.justify_center())
+            .child(toggle)
+            .when(!collapsed, |this| {
+                this.child(
+                    div()
+                        .id("wordmark")
+                        .child(Wordmark::product(copy::PRODUCT).size(metrics::wordmark_size())),
+                )
+            }),
+    };
 
     // New chat stays selected on home, under the palette too; the rail
     // shows no selection.

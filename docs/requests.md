@@ -6,7 +6,7 @@ What this repository needs from others, and what others asked of it. Newest firs
 
 ### O16 · Isonomic UI: lists and the reply pager
 
-**To:** isonomic-ui (for the orchestrator to file). **Status:** open.
+**To:** isonomic-ui (filed by the orchestrator). **Status:** done at isonomic-ui `fa70c9b`, in use: `bullet_list_indent`, `bullet_list_marker_gap`, `ordered_list_indent`, `ordered_list_marker_gap`, `MessageActionBar::pager_quiet`.
 - `TextView`: an indent per list kind. Design 0.2 sets bullet text 21 in and numbered text 28 in, both markers 4 in; one right-aligned marker column cannot give both (T6).
 - `MessageActionBar`: the pager's "2 / 2" at 12 in the muted colour (T8).
 

@@ -19,7 +19,7 @@ Bound on Chat's root, so they work from any control inside it (`crates/chat/src/
 ## Path through each screen
 
 - **Opening Chat:** focus starts in home's composer, so the first key typed is the prompt.
-- **Sidebar:** Tab reaches the toggle, New chat, Search, then each chat row and its More button. Rows show a focus ring; Enter or Space opens one; Up and Down move between rows. Pinned folds with its caret. More's menu holds Open, Pin or Unpin, Rename and Delete.
+- **Sidebar:** Tab reaches the toggle and the window's shell header beside it (with more than one app, its switcher button; collapsed, the header sits above the toggle), then New chat, Search, then each chat row and its More button. Rows show a focus ring; Enter or Space opens one; Up and Down move between rows. Pinned folds with its caret. More's menu holds Open, Pin or Unpin, Rename and Delete.
 - **Header:** Tab reaches the title button; its menu holds Pin or Unpin, Rename and Delete. Rename opens a field: Enter keeps the new title, Escape leaves it as it was.
 - **Search palette:** opens on its field with nothing selected; typing or an arrow selects; Enter opens, Escape closes; Tab stays inside while it is open. Focus returns to where it was.
 - **Home:** composer, then Send once there is text, then the model picker. The picker opens with Enter or Space onto the chosen model; Up, Down, Home and End move; Enter picks. When models could not be listed, Try again sits where the picker would be. With no model installed, Tab reaches Install, which then reads Downloading and is disabled.
@@ -31,6 +31,7 @@ Bound on Chat's root, so they work from any control inside it (`crates/chat/src/
 | Control | Where | Name |
 | --- | --- | --- |
 | Sidebar toggle | `shell/sidebar.rs` | "Collapse sidebar" or "Expand sidebar", by state |
+| Shell header | The window, placed by `shell/sidebar.rs` | The window's: its wordmark, or its app switcher |
 | New chat, Search | `shell/sidebar.rs` | Their labels |
 | Chat row | `shell/sidebar.rs` | The title; "{title}, writing a reply" while one runs |
 | Row More | `shell/sidebar.rs` | "More actions for {title}"; id `chat-row-menu-<session id>` |
