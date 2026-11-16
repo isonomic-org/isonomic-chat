@@ -45,8 +45,12 @@ pub(super) fn render(
             this.child(
                 div()
                     .id("wordmark")
-                    .text_xl()
-                    .font_semibold()
+                    // Design 0.2: display serif, 20 / 28; medium is the
+                    // heaviest weight of the bundled serif.
+                    .font_family(cx.theme().serif_font_family.clone())
+                    .text_size(metrics::wordmark_size())
+                    .line_height(metrics::wordmark_line())
+                    .font_medium()
                     .text_color(cx.theme().foreground)
                     .child(copy::WORDMARK),
             )

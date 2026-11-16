@@ -1,6 +1,6 @@
 # Design differences
 
-Every visible difference between the version 0.2 design (`docs/design/v0.2/`) and what this repository draws, from the audit of 16 Nov 2026, updated for Isonomic UI `ecd21d1` (isonomic-ui #381, #385). Each row has one verdict:
+Every visible difference between the version 0.2 design (`docs/design/v0.2/`) and what this repository draws, from the audit of 16 Nov 2026, updated for Isonomic UI `0a8f39d` (isonomic-ui #381, #385 and the bundled serif). Each row has one verdict:
 
 - **Fixed**: matched, with existing components or the options isonomic-ui #381 added.
 - **Needs UI**: Isonomic UI's component cannot do it; the ask is in the row.
@@ -17,7 +17,7 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | A3 | Rail items centred; toggle, 16, then 28 × 28 nav buttons 4 apart | Same | Fixed |
 | A4 | Rail shows no selected item | Same | Fixed |
 | A5 | Toggle is a 28 × 28 icon button | Same | Fixed |
-| A6 | Wordmark serif semibold 20 / 28 | Theme sans semibold 20 | Accepted until Omar chooses a typeface: the theme has no serif and none is bundled |
+| A6 | Wordmark serif semibold 20 / 28 | The bundled serif, medium, 20 / 28 | Fixed (weight: medium is the heaviest bundled; no semibold) |
 | A7 | Account row and rail avatar; Projects, Artifacts, Scheduled, Customize | Left out | Accepted (version 1; no account ID yet) |
 | A8 | Scrim `gray/900` at 25 % | Theme `overlay` | Accepted (token) |
 | A9 | Narrow windows not shown | Below 1,040 the sidebar collapses to its rail | Accepted (collapse rule) |
@@ -80,7 +80,7 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 
 | # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| H1 | Greeting: brand mark, display serif | Sparkles icon at 32, theme sans 3xl | Accepted until Omar chooses a typeface (as A6); no brand mark in Isonomic UI |
+| H1 | Greeting: brand mark, display serif | The bundled serif, 34 / 42, regular; Sparkles icon at 32 | Fixed (font) / Accepted (no brand mark in Isonomic UI) |
 | H2 | Greeting names the person | No name on a live backend | Accepted (the window does not hand over the name) |
 | H3 | Column: greeting, 20, composer, 20, a 28 footer; bottom padding 140 | Same; the footer keeps its 28 when empty | Fixed |
 | H4 | 16 at each side on narrow windows | Same | Fixed |
@@ -128,12 +128,12 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | --- | --- | --- | --- |
 | T1 | Column min(720, width − 64); 32 above and below; 24 between turns | Same (the scroller's own insets removed) | Fixed |
 | T2 | Bubble 16 / 24, padding 16 / 10, wraps at 560 | Same | Fixed |
-| T3 | Hover row: 28 buttons, gap 2, hidden but keeping its space | 24 buttons (16 icons), gap 2; it also shows while one of its buttons has focus | Fixed / Needs UI: `Clipboard::icon_size`, so Copy can be 28 with a 16 icon (`Button::icon_size` exists; Edit stays 24 to match Copy) |
+| T3 | Hover row: 28 buttons, gap 2, hidden but keeping its space | Same: 28 buttons with 16 icons; it also shows while one of its buttons has focus | Fixed |
 | T4 | Hover row holds time, retry, edit, copy | Copy and Edit | Accepted (try again sits on the reply; turns carry no time) |
 | T5 | One heading level, 18 / 28 | Every level 18 | Fixed |
 | T6 | Lists: text 28 in, marker 4 in, `gray/500` markers | Text 28 in; the marker in its column; markers the theme's muted colour | Fixed (colour: token) |
 | T7 | Code block: no header, padding 14 / 12, radius 10 | The text view's fence with a copy button | Accepted (fences stay the text view's; isonomic-ui #375) |
-| T8 | Reply actions: copy, read aloud, votes, retry, time; 28 buttons with 16 icons | Copy and Try again; 24 buttons with 16 icons | Accepted (version 1) / Needs UI: `MessageActionBar::icon_size`, passed to its buttons |
+| T8 | Reply actions: copy, read aloud, votes, retry, time; 28 buttons with 16 icons | Copy and Try again, 28 buttons with 16 icons | Fixed (size) / Accepted (version 1: no read aloud, votes or times) |
 | T9 | Pager before the actions, 8 apart | Same | Fixed |
 | T10 | Retry is called as the app says ("Try again") | Same ("Try again", "Copy") | Fixed |
 | T11 | Thinking row: orb, label, seconds, expands | Isonomic UI's thinking indicator; no seconds; not expandable | Accepted (no expandable row in Isonomic UI) |

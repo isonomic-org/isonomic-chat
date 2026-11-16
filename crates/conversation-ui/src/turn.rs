@@ -155,12 +155,14 @@ fn prompt(
                         .value(turn.prompt.clone())
                         .tooltip(copy.copy_prompt.clone())
                         .accessibility_label(copy.copy_prompt.clone())
-                        .with_size(Size::Small),
+                        .with_size(Size::Size(metrics::icon_button()))
+                        .icon_size(Size::Size(metrics::icon_size())),
                 )
                 .children(on_edit.map(|on_edit| {
                     Button::new(ElementId::NamedInteger("prompt-edit".into(), index as u64))
                         .ghost()
-                        .with_size(Size::Small)
+                        .with_size(Size::Size(metrics::icon_button()))
+                        .icon_size(Size::Size(metrics::icon_size()))
                         .icon(IconName::Edit)
                         .tooltip(copy.edit.clone())
                         .on_click(move |_, window, cx| on_edit(window, cx))
@@ -310,9 +312,10 @@ fn reply(
             index as u64,
         ))
         .quiet(false)
-        // Design 0.2: the pager first, the app's own words; small buttons
-        // keep the 16 px icon (an exact 28 would scale it to 21).
-        .button_size(Size::Small)
+        // Design 0.2: 28 buttons with 16 icons, the pager first, the app's
+        // own words.
+        .button_size(Size::Size(metrics::icon_button()))
+        .icon_size(Size::Size(metrics::icon_size()))
         .pager_first(true)
         .label(MessageActionLabel::Regenerate, copy.try_again.clone())
         .label(MessageActionLabel::Copy, copy.copy.clone())

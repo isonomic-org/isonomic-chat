@@ -56,6 +56,16 @@ pub(crate) fn list_marker_gap() -> Pixels {
     px(8.)
 }
 
+/// An icon button under a prompt or a reply (28 x 28).
+pub(crate) fn icon_button() -> Pixels {
+    px(28.)
+}
+
+/// The icon in such a button.
+pub(crate) fn icon_size() -> Pixels {
+    px(16.)
+}
+
 /// Width of the field that edits a sent prompt.
 pub(crate) fn edit_width() -> Pixels {
     px(560.)
