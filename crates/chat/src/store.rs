@@ -37,6 +37,20 @@ pub trait Store {
 #[derive(Default)]
 pub struct MemoryStore {
     pins: RefCell<Vec<String>>,
+    /// Why writes fail, while they do.
+    refusing: RefCell<Option<String>>,
+}
+
+impl MemoryStore {
+    /// Make every write fail with `reason` until [`Self::accept_writes`].
+    pub fn refuse_writes(&self, reason: &str) {
+        *self.refusing.borrow_mut() = Some(reason.to_owned());
+    }
+
+    /// Let writes through again.
+    pub fn accept_writes(&self) {
+        *self.refusing.borrow_mut() = None;
+    }
 }
 
 impl Store for MemoryStore {
@@ -45,6 +59,9 @@ impl Store for MemoryStore {
     }
 
     fn set_pinned(&self, session: &str, pinned: bool) -> StoreFuture<()> {
+        if let Some(reason) = self.refusing.borrow().clone() {
+            return futures::future::ready(Err(reason)).boxed_local();
+        }
         let mut pins = self.pins.borrow_mut();
         pins.retain(|pin| pin != session);
         if pinned {
