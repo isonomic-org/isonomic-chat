@@ -145,6 +145,7 @@ fn group(
             title.clone()
         };
         row_padding(SidebarMenuItem::new(session.title.clone()))
+            .id(SharedString::from(format!("chat-row-{}", session.id)))
             .icon(icons::chat())
             .accessibility_label(name)
             // A selected chat keeps its regular weight; only nav rows go medium.
@@ -220,15 +221,19 @@ fn row_menu(
                 (copy::PIN, icons::pin())
             };
             menu.min_w(metrics::menu_width())
-                .item(PopupMenuItem::new(copy::OPEN).icon(icons::open()).on_click(
-                    move |_, window, cx| {
-                        open.update(cx, |shell, cx| {
-                            shell.open_session(open_id.clone(), window, cx)
-                        })
-                    },
-                ))
+                .item(
+                    PopupMenuItem::new(copy::OPEN)
+                        .id(SharedString::from(format!("chat-row-menu-{id}-open")))
+                        .icon(icons::open())
+                        .on_click(move |_, window, cx| {
+                            open.update(cx, |shell, cx| {
+                                shell.open_session(open_id.clone(), window, cx)
+                            })
+                        }),
+                )
                 .item(
                     PopupMenuItem::new(pin_label)
+                        .id(SharedString::from(format!("chat-row-menu-{id}-pin")))
                         .icon(pin_icon)
                         .on_click(move |_, _, cx| {
                             pin.update(cx, |shell, cx| shell.set_pinned(&pin_id, !pinned, cx))
@@ -236,6 +241,7 @@ fn row_menu(
                 )
                 .item(
                     PopupMenuItem::new(copy::RENAME)
+                        .id(SharedString::from(format!("chat-row-menu-{id}-rename")))
                         .icon(icons::rename())
                         .on_click(move |_, window, cx| {
                             rename.update(cx, |shell, cx| {
@@ -247,6 +253,7 @@ fn row_menu(
                 .separator()
                 .item(
                     PopupMenuItem::new(copy::DELETE)
+                        .id(SharedString::from(format!("chat-row-menu-{id}-delete")))
                         .destructive()
                         .icon(icons::delete())
                         .on_click(move |_, window, cx| {

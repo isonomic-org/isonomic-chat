@@ -55,13 +55,16 @@ The four asks from the audit (focusable sidebar rows, focus held in the palette,
 
 ## Test ids
 
-For the window's scripted QA. Found with the test window's `try_find`.
+For the window's scripted QA. Found with the test window's `try_find`; all are tested in `crates/chat/tests/ids.rs`.
 
-| Id | Control | Status |
+| Id | Control | Set by |
 | --- | --- | --- |
-| `chat-row-menu-<session id>` | A chat row's More button | In place (tested in `crates/chat/tests/ids.rs`) |
-| `chat-row-<session id>` | A chat row | Waits on `SidebarMenuItem::id` in Isonomic UI |
-| `chat-row-menu-<session id>-pin`, `-rename`, `-delete` | The row menu's items | Waits on `PopupMenuItem::id` |
-| `palette-row-<id>`, `palette-row-<id>-active` | A search row and its last-active time | Waits on ids in `CommandPalette` |
-| `model-picker-list`, `model-picker-row-<model id>` | The model picker's list and rows (rows carry their selected state) | Waits on ids in `ModelPicker` |
-
+| `chat-row-<session id>` | A chat row in the sidebar | Chat (`SidebarMenuItem::id`) |
+| `chat-row-menu-<session id>` | A chat row's More button | Chat |
+| `chat-row-menu-<session id>-open`, `-pin`, `-rename`, `-delete` | The row menu's items (`-pin` is Pin or Unpin) | Chat (`PopupMenuItem::id`) |
+| `command-<session id>` | A chat's row in the search palette | Isonomic UI, from the command id |
+| `command-<session id>-meta` | That row's last-active time | Isonomic UI |
+| `command-action:new-chat` | The palette's New chat row | Isonomic UI |
+| `model_picker::list_id("model-picker")` | The model picker's list (`("model-picker", "models")`) | Isonomic UI |
+| `model_picker::row_id("model-picker", <model id>)` | A model's row (`("model-picker", "model-<id>")`); `selected` is true on the chosen one | Isonomic UI |
+| `("model-picker", "trigger")` | The model picker's trigger | Isonomic UI |
