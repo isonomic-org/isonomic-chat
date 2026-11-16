@@ -26,6 +26,8 @@ pub struct ConversationCopy {
     pub unknown: SharedString,
     /// The button that sends a failed prompt again.
     pub try_again: SharedString,
+    /// The copy button's name, under a prompt and a reply.
+    pub copy: SharedString,
     /// The note while the host retries after a transient error.
     pub retrying: SharedString,
     /// The note while the connection to the host is being restored.
@@ -48,13 +50,14 @@ impl Default for ConversationCopy {
             placeholder: "Reply…".into(),
             thinking: "Thinking".into(),
             continue_label: "Continue".into(),
-            stopped: "Stopped".into(),
+            stopped: "You stopped this response".into(),
             truncated: "The reply reached its length limit.".into(),
             failed: "Something went wrong. Try again.".into(),
             refused: "The model declined to answer this.".into(),
             limited: "Stopped at this conversation's limit.".into(),
             unknown: "Content this version can't show".into(),
             try_again: "Try again".into(),
+            copy: "Copy".into(),
             retrying: "Having trouble reaching the model. Trying again…".into(),
             reconnecting: "Reconnecting…".into(),
             awaiting_client: "Waiting for an app this chat needs to come back.".into(),

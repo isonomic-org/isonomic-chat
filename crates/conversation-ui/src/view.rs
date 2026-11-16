@@ -13,7 +13,9 @@ use ui::prelude::*;
 use ui::{App, Entity, EventEmitter, FocusHandle, Focusable, SharedString, Task, Window, div};
 
 use crate::ConversationCopy;
-use crate::turn::{OnClick, RowActions, render_turn};
+use crate::metrics;
+use crate::status::{OnClick, Status};
+use crate::turn::{ending, render_turn};
 
 /// What a conversation view reports to the app that mounts it.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -412,26 +414,58 @@ impl ConversationView {
         cx.notify();
     }
 
-    /// The line above the composer: reconnecting, an app away, or closed.
-    fn banner(&self) -> Option<SharedString> {
+    /// The status bar: closed, reconnecting or an app away; else how the
+    /// last turn ended, with continue or try again where they apply.
+    fn status(&self, cx: &mut Context<Self>) -> Option<Status> {
         let thread = self.thread.borrow();
+        let plain = |message: &SharedString| Status {
+            message: message.clone(),
+            error: false,
+            stopped: false,
+            on_continue: None,
+            on_retry: None,
+        };
         if thread.input_state() == InputState::Closed {
-            Some(self.copy.closed.clone())
+            return Some(plain(&self.copy.closed));
         } else if self.reconnecting {
-            Some(self.copy.reconnecting.clone())
+            return Some(plain(&self.copy.reconnecting));
         } else if thread.awaiting_client() {
-            Some(self.copy.awaiting_client.clone())
-        } else {
-            None
+            return Some(plain(&self.copy.awaiting_client));
         }
+        let turn = thread.turns().last()?;
+        let message = ending(turn, &self.copy)?;
+        let view = cx.weak_entity();
+        let on_continue = thread.input_state().can_continue().then(|| {
+            let view = view.clone();
+            let click = Box::new(move |_: &mut Window, cx: &mut App| {
+                let _ = view.update(cx, |view, cx| view.resume(cx));
+            }) as OnClick;
+            (self.copy.continue_label.clone(), click)
+        });
+        let retry = turn.state.can_retry()
+            && !turn.prompt.is_empty()
+            && turn.error_code.as_deref() != Some(conversation_model::TOO_LARGE);
+        let on_retry = retry.then(|| {
+            let click = Box::new(move |_: &mut Window, cx: &mut App| {
+                let _ = view.update(cx, |view, cx| view.retry(cx));
+            }) as OnClick;
+            (self.copy.try_again.clone(), click)
+        });
+        Some(Status {
+            message,
+            error: turn.state.can_retry(),
+            stopped: turn.state == conversation_model::TurnState::Stopped,
+            on_continue,
+            on_retry,
+        })
     }
 }
 
 impl Render for ConversationView {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let status = self.status(cx);
         let thread = self.thread.clone();
         let copy = self.copy.clone();
-        let view = cx.weak_entity();
         let list = MessageScroller::new(
             "conversation-turns",
             self.scroller.clone(),
@@ -440,27 +474,24 @@ impl Render for ConversationView {
                 let Some(turn) = thread.turns().get(index) else {
                     return div().into_any_element();
                 };
-                let last = index + 1 == thread.turns().len();
-                let on_continue = (last && thread.input_state().can_continue()).then(|| {
-                    let view = view.clone();
-                    Box::new(move |_: &mut Window, cx: &mut App| {
-                        let _ = view.update(cx, |view, cx| view.resume(cx));
-                    }) as OnClick
-                });
-                let retry = turn.state.can_retry()
-                    && !turn.prompt.is_empty()
-                    && turn.error_code.as_deref() != Some(conversation_model::TOO_LARGE);
-                let on_retry = (last && retry).then(|| {
-                    let view = view.clone();
-                    Box::new(move |_: &mut Window, cx: &mut App| {
-                        let _ = view.update(cx, |view, cx| view.retry(cx));
-                    }) as OnClick
-                });
-                let actions = RowActions {
-                    on_continue,
-                    on_retry,
-                };
-                render_turn(index, turn, &copy, actions, cx)
+                let count = thread.turns().len();
+                let last = index + 1 == count;
+                // The column: centred, at most 720 wide, 32 above the first
+                // turn and below the last, 24 between turns.
+                div()
+                    .w_full()
+                    .flex()
+                    .justify_center()
+                    .px_8()
+                    .when(index == 0, |this| this.pt_8())
+                    .map(|this| if last { this.pb_8() } else { this.pb_6() })
+                    .child(
+                        div()
+                            .w_full()
+                            .max_w(metrics::column_width())
+                            .child(render_turn(index, turn, last, &copy, cx)),
+                    )
+                    .into_any_element()
             },
         )
         .with_bottom_fade(cx.theme().background);
@@ -471,16 +502,20 @@ impl Render for ConversationView {
             .size_full()
             .min_h_0()
             .child(div().flex_1().min_h_0().w_full().child(list))
-            .when_some(self.banner(), |this, banner| {
-                this.child(
-                    div()
-                        .id("conversation-banner")
-                        .w_full()
-                        .text_sm()
-                        .text_color(cx.theme().muted_foreground)
-                        .child(banner),
-                )
-            })
-            .child(div().w_full().child(self.composer.clone()))
+            .child(
+                v_flex()
+                    .id("conversation-dock")
+                    .w_full()
+                    .items_center()
+                    .gap_2()
+                    .px_8()
+                    .children(status.map(|status| crate::status::render(status, cx)))
+                    .child(
+                        div()
+                            .w_full()
+                            .max_w(metrics::column_width())
+                            .child(self.composer.clone()),
+                    ),
+            )
     }
 }

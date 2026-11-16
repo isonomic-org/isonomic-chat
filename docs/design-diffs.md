@@ -29,6 +29,21 @@ Every visible difference between the design and what this repository draws. The 
 | H6 | No-model state not shown | Isonomic UI's empty state: icon, "Install a model to start", one line, one primary button | `first-run-and-system-states.md` uses the empty state |
 | H7 | Greeting names the person | No name on a live backend; the example name on example data | The window does not hand Chat the person's name yet |
 
+## Version 0.2: thread
+
+| # | Design 0.2 | Built | Why |
+| --- | --- | --- | --- |
+| T1 | Prompt bubble wraps at 560 | Isonomic UI's message bubble, which wraps at 80 % of the column (576 at 720) | The component's own limit |
+| T2 | Prompt hover actions: time, retry, edit, copy | Copy only, shown on hover; the row keeps its space | Retry and edit need `fork` and versions (next kit PR); turns carry no time |
+| T3 | Reply actions: copy, read aloud, thumbs up and down, retry, time | Isonomic UI's message action bar with Copy only, always shown | Try again and the version pager come with `fork`; votes and read aloud have no service; no time |
+| T4 | Stream cursor block under the text | None; the thinking indicator shows until text arrives | The text view streams with its own fade |
+| T5 | Thinking row: orb, label, seconds, caret; expands to a summary or log | Isonomic UI's thinking indicator: orb and the last line of thinking, not expandable, no seconds | No expandable thinking row in Isonomic UI |
+| T6 | Stopped note "You stopped this response" in the reply | On the last turn, said by the status bar with Continue; on earlier turns, the note under the reply | The status bar is the one stop and error bar |
+| T7 | Run status bar: 44 high, radius 10, Steer, Stop, Dismiss, Resume, Retry | A plain placeholder on theme tokens: icon, words, Try again and Continue; no Dismiss, no Steer; stop stays on the composer | No run status bar in Isonomic UI yet (O12); steering is outside version 1 |
+| T8 | Errors: only the status bar's Error variant | Every failure of the last turn in the bar, in the danger colours, with Try again where a resend can work; reconnecting and closed there too | Version 1 keeps errors |
+| T9 | Code blocks: `CodeBlock` | The text view's fences with a copy button | Tail-only re-parse with a fence renderer is unproven (O9) |
+| T10 | Page not found | Not built | No route in version 1 reaches a missing page; a deleted chat returns home |
+
 ## Version 0.1 (superseded by 0.2)
 
 The tables below compare the older version 0.1 reference ("Start a Basic Chat / Flow v1", `19:992`) and are kept until the home and thread layouts move to 0.2.

@@ -2,6 +2,14 @@
 
 Every decision about where a type, helper, binding or screen lives: the kit (`crates/conversation-*`), Chat (`crates/chat`), or neither (a request to the host). The test: could Agents, an in-app assistant or the Activity tab use it? Newest first.
 
+## 2026-11-16 · Thread to design 0.2
+
+| Piece | Where | Verdict | Why |
+| --- | --- | --- | --- |
+| The status bar above the composer (reconnecting, closed, how the last reply ended, continue and try again) | `crates/conversation-ui` `status` | Kit | Any conversation surface shows the same states with the same actions |
+| Copy under a prompt and a reply, copy in code fences | `crates/conversation-ui` `turn` | Kit | Generic; the label comes from `ConversationCopy::copy` |
+| The centred 720 column and its dock | `crates/conversation-ui` `view`, `metrics::column_width` | Kit | Every conversation surface reads the same way; the app keeps only the disclaimer under it |
+
 ## Inventory of existing Chat code in isonomic-desktop
 
 Read at `main` `c3c745b` (15 Nov 2026), plus the open pull requests #4 (xtask, draft) and #5 (CI).

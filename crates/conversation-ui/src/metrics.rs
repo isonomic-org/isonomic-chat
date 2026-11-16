@@ -1,6 +1,13 @@
-//! The kit's few timings. Sizes and colours come from the theme.
+//! The kit's few timings and layout sizes. Colours, type and spacing come
+//! from the theme.
 
 use std::time::Duration;
+use ui::{Pixels, px};
+
+/// Widest the column of turns, the status bar and the composer grow.
+pub(crate) fn column_width() -> Pixels {
+    px(720.)
+}
 
 /// How long to wait before following a session again after its stream
 /// ended: a quarter second, doubling with each try, at most eight seconds.
