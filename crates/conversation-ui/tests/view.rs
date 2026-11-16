@@ -352,3 +352,82 @@ fn a_dropped_stream_reconnects_and_misses_nothing(cx: &mut TestAppContext) {
     );
     assert_eq!(h.state(cx), InputState::Ready);
 }
+
+#[ui::test]
+fn stop_at_the_first_delta_then_continue_finishes_in_the_same_turn(cx: &mut TestAppContext) {
+    let h = open(cx);
+    h.host.script(ScriptedReply::text("First."));
+    h.host.script(ScriptedReply::text(
+        "Welcome everyone, tonight we pick a book.",
+    ));
+    h.send(cx, "Hi");
+    h.host.finish();
+    cx.run_until_parked();
+
+    h.send(cx, "Write a welcome");
+    h.pump(cx, 1);
+    assert_eq!(h.last(cx), ("Welcome ".into(), TurnState::Running));
+    h.frame(cx, |window, cx| window.click("stop", cx));
+    cx.run_until_parked();
+    assert_eq!(h.last(cx), ("Welcome ".into(), TurnState::Stopped));
+
+    h.frame(cx, |window, cx| window.click("conversation-continue", cx));
+    cx.run_until_parked();
+    assert_eq!(
+        h.state(cx),
+        InputState::Busy,
+        "continue opens the turn again"
+    );
+    h.host.finish();
+    cx.run_until_parked();
+    assert_eq!(
+        h.last(cx),
+        (
+            "Welcome everyone, tonight we pick a book.".into(),
+            TurnState::Done
+        )
+    );
+    let turns = cx.update(|cx| h.view.read(cx).thread().turns().len());
+    assert_eq!(turns, 2);
+    // Exactly one cancel and one continue went out for that turn.
+    let log = h.host.events(&h.host.sessions()[0]);
+    let ends: Vec<_> = log
+        .iter()
+        .filter_map(|e| match &e.event {
+            conversation_model::schema::Event::TurnEnd(end) => Some(end.stop.clone()),
+            _ => None,
+        })
+        .collect();
+    use conversation_model::schema::TurnStop;
+    assert_eq!(ends, [TurnStop::Done, TurnStop::Cancelled, TurnStop::Done]);
+}
+
+#[ui::test]
+fn a_refused_continue_shows_why_on_the_turn(cx: &mut TestAppContext) {
+    let h = open(cx);
+    h.host
+        .script(ScriptedReply::text("Welcome everyone, tonight."));
+    h.send(cx, "Write a welcome");
+    h.pump(cx, 1);
+    h.frame(cx, |window, cx| window.click("stop", cx));
+    cx.run_until_parked();
+    h.host.refuse_resume(conversation_host::HostError::new(
+        "continue_refused",
+        "The reply is complete.",
+    ));
+    h.frame(cx, |window, cx| window.click("conversation-continue", cx));
+    cx.run_until_parked();
+    let refusal = cx.update(|cx| h.view.read(cx).thread().turns()[0].refusal.clone());
+    assert_eq!(refusal.as_deref(), Some("The reply is complete."));
+    assert!(h.events.borrow().contains(&ConversationEvent::HostError(
+        "The reply is complete.".into()
+    )));
+    // Continuing again clears it once the host opens the turn.
+    h.frame(cx, |window, cx| window.click("conversation-continue", cx));
+    cx.run_until_parked();
+    h.host.finish();
+    cx.run_until_parked();
+    let turn = cx.update(|cx| h.view.read(cx).thread().turns()[0].clone());
+    assert!(turn.refusal.is_none());
+    assert_eq!(turn.reply(), "Welcome everyone, tonight.");
+}

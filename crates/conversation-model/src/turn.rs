@@ -79,6 +79,8 @@ pub struct Turn {
     pub tools: Vec<ToolUse>,
     /// Things this build cannot show.
     pub notices: Vec<Notice>,
+    /// Why the host refused a request about this turn, such as continue.
+    pub refusal: Option<String>,
     /// The host is retrying after a transient error; the readable reason.
     pub retrying: Option<String>,
     /// Where it is.
@@ -99,6 +101,7 @@ impl Turn {
             continuing: false,
             tools: Vec::new(),
             notices: Vec::new(),
+            refusal: None,
             retrying: None,
             state,
             revision: 0,

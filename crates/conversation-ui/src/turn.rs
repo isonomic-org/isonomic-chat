@@ -92,6 +92,7 @@ pub(crate) fn render_turn(
     }
 
     let note = match &turn.state {
+        _ if turn.refusal.is_some() => turn.refusal.clone().map(SharedString::from),
         _ if turn.retrying.is_some() => Some(copy.retrying.clone()),
         TurnState::Stopped => Some(copy.stopped.clone()),
         TurnState::Truncated => Some(copy.truncated.clone()),

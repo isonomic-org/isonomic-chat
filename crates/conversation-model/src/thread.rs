@@ -132,6 +132,15 @@ impl Thread {
         }
     }
 
+    /// The host refused to continue the last turn; it stays as it was, with
+    /// the reason shown.
+    pub fn fail_continue(&mut self, message: impl Into<String>) {
+        if let Some(turn) = self.turns.last_mut() {
+            turn.refusal = Some(message.into());
+            self.touch_last();
+        }
+    }
+
     /// The host refused an optimistic send before opening a turn.
     pub fn fail_send(&mut self, message: impl Into<String>) {
         if let Some(turn) = self.turns.last_mut()
@@ -317,6 +326,7 @@ impl Thread {
         match cause {
             Cause::Continue => {
                 if let Some(turn) = self.turns.last_mut() {
+                    turn.refusal = None;
                     turn.ids.extend(id);
                     turn.state = TurnState::Running;
                     turn.continuing = true;

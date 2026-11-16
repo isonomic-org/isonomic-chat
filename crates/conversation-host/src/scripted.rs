@@ -109,6 +109,7 @@ struct Inner {
     models: ModelCatalog,
     created: Vec<NewSession>,
     refuse_create: Option<HostError>,
+    refuse_resume: Option<HostError>,
     script: VecDeque<ScriptedReply>,
     sessions: BTreeMap<SessionId, Session>,
     next_session: u32,
@@ -146,6 +147,11 @@ impl ScriptedHost {
     /// Every create request so far, oldest first.
     pub fn created(&self) -> Vec<NewSession> {
         self.inner.borrow().created.clone()
+    }
+
+    /// Refuse the next continue with this error.
+    pub fn refuse_resume(&self, error: HostError) {
+        self.inner.borrow_mut().refuse_resume = Some(error);
     }
 
     /// Refuse the next create with this error.
@@ -281,6 +287,9 @@ impl ConversationHost for ScriptedHost {
     fn resume(&self, session: &SessionId) -> HostFuture<()> {
         let session = session.clone();
         self.call(move |inner| {
+            if let Some(error) = inner.refuse_resume.take() {
+                return Err(error);
+            }
             let state = inner.session(&session)?;
             let Some(leftover) = state.leftover.take().filter(|_| state.open.is_none()) else {
                 return Err(HostError::new("continue_refused", "Nothing to continue."));

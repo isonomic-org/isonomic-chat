@@ -202,3 +202,53 @@ fn a_first_reply_cut_short_continues_after_its_title_step() {
         assert_eq!(thread.title(), Some("Packing tips"));
     });
 }
+
+#[test]
+fn a_late_cancel_does_not_stop_the_continue_that_follows() {
+    let host = TestHost::new();
+    let (app, _) = host.context::<Probe>();
+    let sdk = SdkHost::new(app.client().agents());
+    host.engine().agents().with(|memory| {
+        memory.model.text("Hello.");
+        memory.model.text("Greeting");
+        memory.model.push(vec![
+            Ok(ModelChunk::Text("W".into())),
+            Ok(done(ModelStop::MaxTokens)),
+        ]);
+        memory.model.text("elcome, everyone.");
+    });
+    host.runtime().block_on(async {
+        let new = NewSession {
+            preset: "chat".into(),
+            title: None,
+            model: None,
+        };
+        let session = sdk.create(new).await.expect("create");
+        let mut updates = sdk.subscribe(&session, 0).await.expect("subscribe");
+        let mut thread = Thread::for_session(session.clone());
+        sdk.send(&session, text("Hi")).await.expect("send");
+        until(&mut thread, &mut updates, |t| t.title().is_some()).await;
+        sdk.send(&session, text("Welcome?")).await.expect("send");
+        until(&mut thread, &mut updates, |t| {
+            t.turns().len() == 2 && t.input_state() == InputState::Continuable
+        })
+        .await;
+        assert_eq!(thread.turns()[1].reply(), "W");
+
+        // The stop arrives after the turn has ended (twice, as a double
+        // press would send it), then the person continues.
+        sdk.cancel(&session).await.expect("cancel");
+        sdk.cancel(&session).await.expect("cancel again");
+        sdk.resume(&session).await.expect("continue");
+        until(&mut thread, &mut updates, |t| {
+            !t.turns()[1].state.is_open() && t.turns()[1].reply().len() > 1
+                || t.turns()[1].state == TurnState::Stopped
+                    && t.revision() > 0
+                    && t.turns()[1].ids.len() == 2
+                    && !t.turns()[1].state.is_open()
+        })
+        .await;
+        assert_eq!(thread.turns()[1].reply(), "Welcome, everyone.");
+        assert_eq!(thread.turns()[1].state, TurnState::Done);
+    });
+}
