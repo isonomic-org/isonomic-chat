@@ -26,7 +26,7 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 
 | # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| B1 | Rows 8 from the edge, 271 wide | Same | Fixed |
+| B1 | Rows 8 from the edge, 271 wide | Same: New chat and Search too, the same width as the chat rows (they sat at 12 and 18) | Fixed |
 | B2 | Nav and chat rows 32 high, 1 apart | Same; rows are Tab stops with a focus ring (Enter, Space, Up, Down) | Fixed |
 | B3 | Row padding 10 left (chats 6 right), icon to label 10 | Same | Fixed |
 | B4 | A selected chat row keeps regular weight | Same | Fixed |
@@ -43,7 +43,7 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 
 | # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| C1 | Title button 28 high, 14 / 20 medium | Same | Fixed |
+| C1 | Title button 28 high, 14 / 20 medium; a 1 px rule under the header | Same | Fixed |
 | C2 | Long titles: no rule | The title truncates with an ellipsis and keeps its caret | Fixed |
 | C3 | Inline rename field 300 × 32 | Same, named "Chat title"; Escape cancels | Fixed |
 | C4 | Title menu (page undecided) | Pin or Unpin, Rename, separator, Delete, with icons, 220 wide; the same order as a row's menu | Fixed (order, icons, width) |
@@ -54,9 +54,9 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 
 | # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| D1 | 640 wide, centred | Same | Fixed |
+| D1 | 640 wide, centred | Same, on the window; at 1,100 wide it overlaps the 288 sidebar by 58 | Fixed (the reference centres on the window) |
 | D2 | Placeholder "Search or ask…" | Same | Fixed |
-| D3 | Esc key chip in the input; input 53 high, 16 / 24 | Same (large input) | Fixed |
+| D3 | Esc key chip in the input; input 53 high, 16 / 24 | Same (large input); on macOS the chip draws a glyph, not "Esc" | Fixed / Needs UI: "Esc" on every platform |
 | D4 | Rows 36 high, 16 px icon, meta such as "2h" on the right | Same: chat icon, and how long ago each chat was active, from its newest version | Fixed |
 | D5 | Chats under "Recents", then "Actions" | Same | Fixed |
 | D6 | New chat shows its shortcut | Same | Fixed |
@@ -80,7 +80,7 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 
 | # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| H1 | Greeting: brand mark, display serif | The theme's sans, 34 / 42, regular; Sparkles icon at 32 | Follows Omar's brand rule, not the reference: the serif is for long-form reading only / Accepted (no brand mark in Isonomic UI) |
+| H1 | Greeting: four-point sparkle with a plus, display serif | The theme's sans, 34 / 42, regular; the catalog's `Sparkles` at 32, which draws a magic wand | Follows Omar's brand rule, not the reference: the serif is for long-form reading only / Needs UI: a four-point sparkle |
 | H2 | Greeting names the person | No name on a live backend | Accepted (the window does not hand over the name) |
 | H3 | Column: greeting, 20, composer, 20, a 28 footer; bottom padding 140 | Same; the footer keeps its 28 when empty | Fixed |
 | H4 | 16 at each side on narrow windows | Same | Fixed |
@@ -92,10 +92,10 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 
 | # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| K1 | 720 × 96; padding 14 / 12 / 10 / 16; 14 above a 32 toolbar | Same (comfortable composer) | Fixed |
+| K1 | 720 × 96; padding 14 / 12 / 10 / 16; 14 above a 32 toolbar | Same padding; about 107 high empty, its text area two lines | Needs UI: a one-line text area |
 | K2 | Send and stop: round 32, filled `gray/900` | Same | Fixed |
 | K3 | Empty shows voice; plus; context ring | No voice, no plus (attaching off), no ring | Accepted (version 1) |
-| K4 | Focus look not drawn | Ring colour border | Accepted (token) |
+| K4 | The composer never turns blue: light 1 px border, focused or not | Ring colour border when focused (always, on open) | Needs UI: a focus look without the ring |
 | K5 | Placeholders and disclaimer | Match exactly | — |
 
 ## Model picker (`model-picker.md`, design B)

@@ -77,6 +77,9 @@ struct Inner {
     refuse_list: Option<HostError>,
     /// Sessions whose stream never sends anything.
     stalled: std::collections::BTreeSet<SessionId>,
+    /// Whether list answers wait for `release_lists`, and those waiting.
+    hold_lists: bool,
+    held_lists: Vec<futures::channel::oneshot::Sender<()>>,
     script: VecDeque<ScriptedReply>,
     sessions: BTreeMap<SessionId, Session>,
     next_session: u32,
@@ -354,7 +357,7 @@ impl ConversationHost for ScriptedHost {
     }
 
     fn list(&self, query: SessionQuery) -> HostFuture<Vec<SessionEntry>> {
-        self.call(move |inner| inner.list(query))
+        self.held_list(query)
     }
 
     fn fork(&self, session: &SessionId, at: ForkAt, reason: ForkReason) -> HostFuture<SessionId> {

@@ -17,7 +17,11 @@ use crate::{copy, metrics};
 
 impl ChatShell {
     /// Load the chats and the pins, newest activity first, pinned on top.
+    ///
+    /// A load replaces the one before it (its task is dropped), and a chat
+    /// deleted while it was on its way stays deleted.
     pub(super) fn load(&mut self, backend: Backend, cx: &mut Context<Self>) {
+        self.reloading = true;
         let task = cx.spawn(async move |this, cx| {
             // Every session: a chat's versions count in the list, so a limit
             // could push chats out.
@@ -54,6 +58,8 @@ impl ChatShell {
                                 SessionSummary::new(id, title, pinned).active_at(active)
                             })
                             .collect();
+                        // Deleted here after the list was asked for.
+                        sessions.retain(|s| !this.deleted.contains(&s.id));
                         // Pins keep their pin order; the rest stay newest first.
                         sessions.sort_by_key(|s| {
                             pins.iter()
@@ -78,6 +84,8 @@ impl ChatShell {
                     Err(error) => this.load_error = Some(error.message.into()),
                 }
                 this.loaded = true;
+                this.reloading = false;
+                this.loads += 1;
                 cx.notify();
             });
         });
@@ -271,6 +279,17 @@ impl ChatShell {
     /// Whether the first load of the list has finished.
     pub fn is_loaded(&self) -> bool {
         self.loaded
+    }
+
+    /// Whether a load of the list is on its way: the first, or a reload.
+    pub fn is_reloading(&self) -> bool {
+        self.reloading
+    }
+
+    /// How many loads of the list have finished, failed ones included. A
+    /// reload has finished once this passes the count read when it began.
+    pub fn loads_finished(&self) -> u64 {
+        self.loads
     }
 
     /// Why the list could not load, if it could not.

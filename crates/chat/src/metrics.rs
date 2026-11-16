@@ -148,9 +148,16 @@ pub(crate) fn content_padding() -> Edges<Pixels> {
     edges(0., 8., 0., 8.)
 }
 
-/// A sidebar group label: 10 top, 4 bottom, 10 sides.
-pub(crate) fn group_label_padding() -> Edges<Pixels> {
-    edges(10., 10., 4., 10.)
+/// A sidebar group: 10 above its label. Its rows keep the content's 8
+/// from the edge, as the nav rows do; the label's own inset is Isonomic UI's.
+pub(crate) fn group_padding() -> Edges<Pixels> {
+    edges(10., 0., 0., 0.)
+}
+
+/// How far the nav rows reach past the header's padding, so they sit 8
+/// from the edge like the chat rows (design 0.2: rows 8 from the edge).
+pub(crate) fn nav_outset() -> Pixels {
+    content_padding().left - header_padding().left
 }
 
 /// A search palette row's height.

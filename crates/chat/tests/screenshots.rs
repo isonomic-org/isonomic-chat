@@ -16,6 +16,10 @@ fn main() {
 }
 
 #[cfg(any(target_os = "macos", target_os = "linux"))]
+#[path = "screenshots/scenes.rs"]
+mod scenes;
+
+#[cfg(any(target_os = "macos", target_os = "linux"))]
 mod screenshots {
     use std::path::PathBuf;
     use std::sync::Arc;
@@ -23,8 +27,8 @@ mod screenshots {
 
     use std::rc::Rc;
 
-    use conversation_host::{ScriptedHost, ScriptedReply};
-    use conversation_model::{Availability, ModelCatalog, ModelOption};
+    use crate::scenes::*;
+    use conversation_host::ScriptedHost;
     use isonomic_chat::copy::DayPart;
     use isonomic_chat::{ChatShell, Route};
     use ui::assets::AllAssets;
@@ -44,7 +48,7 @@ mod screenshots {
     const MAC: f32 = 1100.;
 
     /// What a state needs: the window, the shell and, when live, its host.
-    struct Scene<'a> {
+    pub(crate) struct Scene<'a> {
         cx: &'a mut HeadlessAppContext,
         handle: AnyWindowHandle,
         shell: Entity<ChatShell>,
@@ -52,7 +56,7 @@ mod screenshots {
     }
 
     impl Scene<'_> {
-        fn shell(
+        pub(crate) fn shell(
             &mut self,
             f: impl FnOnce(&mut ChatShell, &mut ui::Window, &mut ui::Context<ChatShell>),
         ) {
@@ -66,7 +70,7 @@ mod screenshots {
         }
 
         /// Type a prompt on home and send it.
-        fn send(&mut self, text: &str) {
+        pub(crate) fn send(&mut self, text: &str) {
             let shell = self.shell.clone();
             let text = text.to_owned();
             self.cx
@@ -80,7 +84,7 @@ mod screenshots {
         }
 
         /// Type into the open conversation's composer and send it.
-        fn reply(&mut self, text: &str) {
+        pub(crate) fn reply(&mut self, text: &str) {
             let shell = self.shell.clone();
             let text = text.to_owned();
             self.cx
@@ -99,7 +103,7 @@ mod screenshots {
         }
 
         /// Write the open conversation's reply at `index` again.
-        fn again(&mut self, index: usize) {
+        pub(crate) fn again(&mut self, index: usize) {
             let shell = self.shell.clone();
             self.cx
                 .update_window(self.handle, |_, _, cx| {
@@ -115,7 +119,7 @@ mod screenshots {
         }
 
         /// Open the edit field on the prompt at `index`.
-        fn begin_edit(&mut self, index: usize) {
+        pub(crate) fn begin_edit(&mut self, index: usize) {
             let shell = self.shell.clone();
             self.cx
                 .update_window(self.handle, |_, window, cx| {
@@ -130,12 +134,19 @@ mod screenshots {
             self.cx.run_until_parked();
         }
 
-        fn host(&self) -> &ScriptedHost {
+        pub(crate) fn host(&self) -> &ScriptedHost {
             self.host.as_ref().expect("a live state")
         }
 
-        fn settle(&mut self) {
+        pub(crate) fn settle(&mut self) {
             self.cx.run_until_parked();
+        }
+
+        /// Draw one frame, as the window does between streamed pieces.
+        pub(crate) fn frame(&mut self) {
+            self.cx
+                .update_window(self.handle, |_, window, cx| window.render_frame(cx))
+                .unwrap();
         }
     }
 
@@ -306,6 +317,13 @@ mod screenshots {
             setup: thread,
         },
         State {
+            name: "thread-earlier-reply",
+            width: MAC,
+            live: true,
+            before: nothing,
+            setup: earlier_reply,
+        },
+        State {
             name: "home-models",
             width: WIDE,
             live: true,
@@ -320,154 +338,6 @@ mod screenshots {
             setup: |_| {},
         },
     ];
-
-    const ANSWER: &str = "Public-key cryptography uses **two keys**: one you share and one you keep.\n\n1. Anyone can lock a message with your public key.\n2. Only your private key unlocks it.\n\nThat is how a browser and a server agree on a secret without ever sending it.";
-
-    /// A finished exchange, a second reply stopped part way (continue shows),
-    /// and the quiet divider of a compaction between them.
-    fn thread(scene: &mut Scene) {
-        scene
-            .host()
-            .script(ScriptedReply::text(ANSWER).with_title("Public-key cryptography"));
-        scene.host().script(ScriptedReply::text("A digital signature is the reverse: you lock with your private key, and anyone can check it with your public key."));
-        scene.send("Explain how public-key cryptography works, in plain terms.");
-        scene.host().finish();
-        scene.settle();
-        let session = scene.host().sessions()[0].clone();
-        scene
-            .host()
-            .compact(&session, "Earlier messages are not shown to the model.");
-        scene.reply("And signatures?");
-        scene.host().pump(9);
-        scene.settle();
-        scene.shell(|shell, _, cx| {
-            if let Route::Session(id) = shell.route().clone()
-                && let Some(thread) = shell.thread(&id).cloned()
-            {
-                thread.update(cx, |thread, cx| thread.stop(cx));
-            }
-        });
-        scene.settle();
-    }
-
-    /// A reply part way through streaming, with reasoning done.
-    fn streaming(scene: &mut Scene) {
-        scene
-            .host()
-            .script(ScriptedReply::text(ANSWER).with_reasoning("Plain terms, one analogy, short."));
-        scene.send("Explain how public-key cryptography works, in plain terms.");
-        scene.host().pump(20);
-        scene.settle();
-    }
-
-    /// A reply written twice: the second shows, with the pager.
-    fn versions(scene: &mut Scene) {
-        scene.host().script(
-            ScriptedReply::text("Try a short walk after lunch.").with_title("Afternoon energy"),
-        );
-        scene.send("One tip for afternoon energy?");
-        scene.host().finish();
-        scene.settle();
-        scene.host().script(ScriptedReply::text(
-            "Drink a glass of water before you reach for coffee.",
-        ));
-        scene.again(0);
-        scene.host().finish();
-        scene.settle();
-    }
-
-    /// A sent prompt open for editing, its reply below.
-    fn editing(scene: &mut Scene) {
-        scene.host().script(
-            ScriptedReply::text("Try a short walk after lunch.").with_title("Afternoon energy"),
-        );
-        scene.send("One tip for afternoon energy?");
-        scene.host().finish();
-        scene.settle();
-        scene.begin_edit(0);
-    }
-
-    /// A failed send with try again, and a conversation too large.
-    fn errors(scene: &mut Scene) {
-        scene.host().script(ScriptedReply::text("Sure."));
-        scene.host().script(ScriptedReply::too_large(
-            "This conversation is too long for the model. Start a new chat to keep going.",
-        ));
-        scene.send("Hello");
-        scene.host().finish();
-        scene.settle();
-        scene.reply("One more question");
-        scene.settle();
-    }
-
-    /// Thinking before any words of the reply.
-    fn thinking(scene: &mut Scene) {
-        scene.host().script(
-            ScriptedReply::text("Here is a plan.")
-                .with_reasoning("Picking an analogy that holds up"),
-        );
-        scene.send("Explain public-key cryptography with one analogy.");
-        scene.host().pump(5);
-        scene.settle();
-    }
-
-    /// A reply with a heading, a list and a code block.
-    fn markdown(scene: &mut Scene) {
-        scene.host().script(
-            ScriptedReply::text(
-                "Signing takes three steps.\n\n## The two jobs it does\n\n- Encryption: anyone can lock a message with your public key.\n- Signatures: you sign with your private key.\n\n```rust\nfn sign(message: &[u8], key: &PrivateKey) -> Signature {\n    key.sign(message)\n}\n```",
-            )
-            .with_title("Signing"),
-        );
-        scene.send("How do I sign a message?");
-        scene.host().finish();
-        scene.settle();
-    }
-
-    /// A send the host refused: the bar says so and offers Try again.
-    fn failed(scene: &mut Scene) {
-        scene
-            .host()
-            .script(ScriptedReply::text("Sure.").with_title("Hello"));
-        scene.send("Hello");
-        scene.host().finish();
-        scene.settle();
-        // Nothing is scripted, so the host refuses this one.
-        scene.reply("One more question");
-        scene.settle();
-    }
-
-    /// Two installed models and one to download; the recommended one first.
-    fn models(host: &ScriptedHost) {
-        let option = |id: &str, name: &str, availability| ModelOption {
-            id: id.into(),
-            name: name.into(),
-            remote: false,
-            availability,
-        };
-        host.set_models(ModelCatalog::new(
-            vec![
-                option("small", "Small", Availability::Installed),
-                option("medium", "Medium", Availability::Installed),
-                option("large", "Large", Availability::NotInstalled),
-            ],
-            Some("medium".into()),
-        ));
-    }
-
-    /// No chat model installed: home asks to install the recommended one.
-    fn install(host: &ScriptedHost) {
-        let option = |id: &str, name: &str| ModelOption {
-            id: id.into(),
-            name: name.into(),
-            remote: false,
-            availability: Availability::NotInstalled,
-        };
-        host.set_models(ModelCatalog::new(
-            vec![option("small", "Small"), option("medium", "Medium")],
-            Some("medium".into()),
-        ));
-    }
 
     pub fn run() {
         let out = PathBuf::from(

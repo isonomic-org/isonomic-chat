@@ -6,7 +6,7 @@
 use ui::component::button::{Button, ButtonVariants as _};
 use ui::component::input::Input;
 use ui::component::menu::{DropdownMenu as _, PopupMenuItem};
-use ui::component::{Sizable as _, StyledExt as _, h_flex};
+use ui::component::{ActiveTheme as _, Sizable as _, StyledExt as _, h_flex};
 use ui::prelude::*;
 use ui::{AnyElement, div};
 
@@ -21,6 +21,11 @@ pub(super) fn render(shell: &ChatShell, cx: &mut Context<ChatShell>) -> impl Int
         .flex_shrink_0()
         .px_4()
         .gap_2()
+        // Design 0.2: a chat's header has a 1 px rule under it, so a
+        // thread scrolled under its edge reads as clipped by the header.
+        .when(matches!(shell.route(), super::Route::Session(_)), |this| {
+            this.border_b_1().border_color(cx.theme().border)
+        })
         .child(
             h_flex()
                 .flex_1()

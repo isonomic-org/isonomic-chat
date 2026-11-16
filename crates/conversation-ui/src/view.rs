@@ -15,9 +15,11 @@ use crate::ConversationCopy;
 
 mod edit;
 mod render;
+mod replies;
 mod versions;
 
 use edit::Editing;
+use replies::Replies;
 use versions::{SlotAt, Start};
 
 /// What a conversation view reports to the app that mounts it.
@@ -42,6 +44,8 @@ pub struct ConversationView {
     copy: Rc<ConversationCopy>,
     thread: Rc<RefCell<Thread>>,
     scroller: Entity<MessageScrollerState>,
+    /// The text view state behind each reply.
+    replies: Replies,
     composer: Entity<PromptComposer>,
     focus: FocusHandle,
     title: Option<String>,
@@ -106,6 +110,7 @@ impl ConversationView {
             copy: Rc::new(copy),
             thread: Rc::new(RefCell::new(Thread::new())),
             scroller: cx.new(|cx| MessageScrollerState::new(0, cx)),
+            replies: Replies::default(),
             composer,
             focus: cx.focus_handle(),
             title: None,
