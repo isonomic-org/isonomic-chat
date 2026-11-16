@@ -476,13 +476,8 @@ fn a_model_picked_on_home_runs_the_next_chat(cx: &mut TestAppContext) {
     host.script(ScriptedReply::text("Hi."));
     let (window, shell) = open_with(cx, host.clone());
     cx.run_until_parked();
-    with_window(cx, window, |window, cx| {
-        window.render_frame(cx);
-        window.click("model", cx);
-        window.render_frame(cx);
-    });
-    // Pick through the shell, as the menu's item does.
-    cx.update(|cx| shell.update(cx, |shell, cx| shell.pick_model("small".into(), cx)));
+    // Choose through the shell, as the footer's model picker does.
+    cx.update(|cx| shell.update(cx, |shell, cx| shell.choose_model("small".into(), cx)));
     with_window(cx, window, |window, cx| {
         shell.update(cx, |shell, cx| shell.set_draft("Hello", window, cx));
         window.render_frame(cx);
@@ -490,4 +485,42 @@ fn a_model_picked_on_home_runs_the_next_chat(cx: &mut TestAppContext) {
     });
     cx.run_until_parked();
     assert_eq!(host.created()[0].model.as_deref(), Some("small"));
+}
+
+#[ui::test]
+fn choosing_a_model_that_is_not_installed_asks_the_window(cx: &mut TestAppContext) {
+    use conversation_model::{Availability, ModelCatalog, ModelOption};
+    let host = ScriptedHost::new();
+    let option = |id: &str, availability| ModelOption {
+        id: id.into(),
+        name: id.into(),
+        remote: false,
+        availability,
+    };
+    host.set_models(ModelCatalog::new(
+        vec![
+            option("small", Availability::Installed),
+            option("large", Availability::NotInstalled),
+        ],
+        None,
+    ));
+    let asked = Rc::new(std::cell::RefCell::new(Vec::<String>::new()));
+    let log = asked.clone();
+    let backend = isonomic_chat::Backend {
+        host: Rc::new(host),
+        store: Rc::new(isonomic_chat::store::MemoryStore::default()),
+        install_model: Some(Rc::new(move |model: &str| {
+            log.borrow_mut().push(model.to_owned());
+            true
+        })),
+    };
+    let (_window, shell) = open_on(cx, Some(backend));
+    cx.run_until_parked();
+    cx.update(|cx| shell.update(cx, |shell, cx| shell.choose_model("large".into(), cx)));
+    assert_eq!(*asked.borrow(), ["large"]);
+    // The pick stays on the model that can answer.
+    assert_eq!(
+        cx.update(|cx| shell.read(cx).model().map(str::to_owned)),
+        None
+    );
 }

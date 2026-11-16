@@ -1,8 +1,8 @@
-//! Home's composer: Isonomic UI's prompt composer, the same one the thread
-//! uses, with the models Chat can run on. Chat keeps only what home needs:
-//! the placeholder, a draft the starters can fill, and what was sent.
+//! Home's composer (design 0.2 `Composer`): Isonomic UI's prompt composer,
+//! the same one the thread uses. The model is picked in the footer under
+//! it, not in the composer.
 
-use ui::extra::prompt_composer::{ComposerChoice, PromptComposer, PromptComposerEvent};
+use ui::extra::prompt_composer::{PromptComposer, PromptComposerEvent};
 use ui::prelude::*;
 use ui::{App, Entity, EventEmitter, SharedString, Subscription, Window, div};
 
@@ -13,8 +13,6 @@ use crate::{copy, metrics};
 pub enum ComposerEvent {
     /// The person sent this text (trimmed, never empty).
     Submit(String),
-    /// The person picked a model for new chats.
-    SelectModel(String),
 }
 
 /// Home's composer.
@@ -36,9 +34,6 @@ impl Composer {
         let subscription = cx.subscribe(&field, |_, _, event, cx| match event {
             PromptComposerEvent::Submit { text, .. } if !text.trim().is_empty() => {
                 cx.emit(ComposerEvent::Submit(text.trim().to_owned()));
-            }
-            PromptComposerEvent::SelectModel(id) => {
-                cx.emit(ComposerEvent::SelectModel(id.to_string()));
             }
             PromptComposerEvent::Changed(_) => cx.notify(),
             _ => {}
@@ -72,22 +67,6 @@ impl Composer {
     ) {
         self.field
             .update(cx, |field, cx| field.set_placeholder(text, window, cx));
-    }
-
-    /// Offers these models, `(id, name)`, with `selected` on the model button.
-    pub fn set_models(
-        &mut self,
-        models: Vec<(String, String)>,
-        selected: Option<String>,
-        cx: &mut Context<Self>,
-    ) {
-        let choices = models
-            .into_iter()
-            .map(|(id, name)| ComposerChoice::new(id, name))
-            .collect();
-        let selected = selected.map(SharedString::from);
-        self.field
-            .update(cx, |field, cx| field.set_models(choices, selected, cx));
     }
 
     /// Moves focus to the field.

@@ -42,6 +42,7 @@ pub struct ConversationView {
     title: Option<String>,
     catalog: ModelCatalog,
     catalog_loaded: bool,
+    model_menu: bool,
     wanted: Option<String>,
     _models: Option<Task<()>>,
     reconnecting: bool,
@@ -91,6 +92,7 @@ impl ConversationView {
             title: None,
             catalog: ModelCatalog::default(),
             catalog_loaded: false,
+            model_menu: true,
             wanted: None,
             _models: None,
             reconnecting: false,
@@ -139,7 +141,20 @@ impl ConversationView {
         }));
     }
 
+    /// Show or leave out the model menu in the composer. With it out, the
+    /// app picks the model elsewhere and hands it over with `select_model`.
+    pub fn set_model_menu(&mut self, shown: bool, cx: &mut Context<Self>) {
+        self.model_menu = shown;
+        self.show_models(cx);
+    }
+
     fn show_models(&mut self, cx: &mut Context<Self>) {
+        if !self.model_menu {
+            self.composer
+                .update(cx, |composer, cx| composer.set_models(Vec::new(), None, cx));
+            cx.notify();
+            return;
+        }
         let choices = self
             .catalog
             .options()

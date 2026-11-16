@@ -78,10 +78,6 @@ impl ChatShell {
                 window,
                 |this, _, event, window, cx| match event {
                     ComposerEvent::Submit(text) => this.start_session(text, window, cx),
-                    ComposerEvent::SelectModel(model) => {
-                        this.model = Some(model.clone());
-                        this.show_models(cx);
-                    }
                 },
             );
         let sessions = match backend {
@@ -308,7 +304,7 @@ impl ChatShell {
         match self.route {
             Route::Home => match self.missing_model().cloned() {
                 Some(model) => home::render_install(&model, cx),
-                None => home::render(self.day_part, !self.is_live(), &self.composer, window, cx),
+                None => home::render(self, self.day_part, &self.composer.clone(), window, cx),
             },
             Route::Session(ref id) => match self.threads.get(id) {
                 Some(thread) => self.render_conversation(thread.clone(), cx),

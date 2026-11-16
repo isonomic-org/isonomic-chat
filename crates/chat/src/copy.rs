@@ -23,9 +23,9 @@ pub const CHATS: &str = "Chats";
 /// The composer's placeholder on home.
 pub const COMPOSER_HOME: &str = "How can I help you today?";
 /// The composer's placeholder under a conversation.
-pub const COMPOSER_THREAD: &str = "Reply…";
+pub const COMPOSER_THREAD: &str = "Reply to Isonomic…";
 /// Shown under the docked composer.
-pub const DISCLAIMER: &str = "Isonomic Chat can make mistakes. Please double-check responses.";
+pub const DISCLAIMER: &str = "Isonomic is AI and can make mistakes. Please double-check responses.";
 /// The header title menu.
 pub const RENAME: &str = "Rename";
 /// The header title menu.
@@ -37,6 +37,16 @@ pub const TRY_AGAIN: &str = "Try again";
 pub const SAVE_FAILED: &str = "A change couldn't be saved.";
 
 pub const NO_MODEL: &str = "Chat needs a model on this computer before it can reply.";
+/// The title of home's empty state when no chat model is installed.
+pub const NO_MODEL_TITLE: &str = "Install a model to start";
+/// A model's note in the picker: the engine recommends it.
+pub const MODEL_RECOMMENDED: &str = "Recommended";
+/// A model's note in the picker: its file is not on this computer.
+pub const MODEL_NOT_INSTALLED: &str = "Not installed";
+/// A model's note in the picker: its file is being fetched.
+pub const MODEL_DOWNLOADING: &str = "Downloading";
+/// A model's note in the picker: the engine stopped trying it.
+pub const MODEL_UNAVAILABLE: &str = "Unavailable";
 
 /// The button that asks the window to install a model.
 pub fn install_model(name: &str) -> String {
@@ -90,58 +100,6 @@ pub fn greeting(part: DayPart, name: Option<&str>) -> String {
         None => salutation.to_string(),
     }
 }
-
-/// A starter category under the home composer and the prompts it offers.
-pub struct Starter {
-    /// The chip's label.
-    pub label: &'static str,
-    /// Example prompts; picking one fills the composer.
-    pub prompts: &'static [&'static str],
-}
-
-/// The starter categories, in order.
-pub const STARTERS: &[Starter] = &[
-    Starter {
-        label: "Write",
-        prompts: &[
-            "Draft a short, friendly reply declining a meeting",
-            "Turn these notes into a clear project update",
-            "Write a product description from a list of features",
-        ],
-    },
-    Starter {
-        label: "Learn",
-        prompts: &[
-            "Explain public-key cryptography in plain terms",
-            "Teach me the basics of statistics with examples",
-            "What should I know before reading about compilers?",
-        ],
-    },
-    Starter {
-        label: "Code",
-        prompts: &[
-            "Review this function for bugs and edge cases",
-            "Write a SQL migration that adds an index safely",
-            "Explain what this error message means",
-        ],
-    },
-    Starter {
-        label: "Life stuff",
-        prompts: &[
-            "Plan a relaxed weekend away within a small budget",
-            "Help me prepare questions for a doctor's visit",
-            "Suggest a weekly routine for learning a language",
-        ],
-    },
-    Starter {
-        label: "Brainstorm",
-        prompts: &[
-            "Give me ten names for a neighbourhood book club",
-            "Ideas for a small team offsite that isn't awkward",
-            "Ways to make a long report easier to read",
-        ],
-    },
-];
 
 /// A chat title from the first message: its first line, cut at a word
 /// boundary to at most `max` characters with an ellipsis.
@@ -199,11 +157,5 @@ mod tests {
             "Explain how public-key…"
         );
         assert!(title_from(&"x".repeat(100), 10).chars().count() <= 10);
-    }
-
-    #[test]
-    fn every_starter_offers_prompts() {
-        assert_eq!(STARTERS.len(), 5);
-        assert!(STARTERS.iter().all(|starter| !starter.prompts.is_empty()));
     }
 }

@@ -28,20 +28,9 @@ pub fn more() -> IconName {
     IconName::Ellipsis
 }
 
-/// The mark beside the greeting.
-pub fn mark() -> IconName {
-    IconName::Isonomic
-}
-
-/// The icon of a starter chip, by its position in `copy::STARTERS`.
-pub fn starter(index: usize) -> IconName {
-    match index {
-        0 => IconName::TextCreation,
-        1 => IconName::Education,
-        2 => IconName::Code,
-        3 => IconName::Cafe,
-        _ => IconName::Idea,
-    }
+/// The sparkle beside the greeting and in empty states.
+pub fn greeting() -> IconName {
+    IconName::Sparkles
 }
 
 /// Every icon Chat draws, for a host that registers only the icons in use.
@@ -52,10 +41,5 @@ pub const ALL: &[IconName] = &[
     IconName::Chat,
     IconName::Ellipsis,
     IconName::ChevronDown,
-    IconName::Isonomic,
-    IconName::TextCreation,
-    IconName::Education,
-    IconName::Code,
-    IconName::Cafe,
-    IconName::Idea,
+    IconName::Sparkles,
 ];
