@@ -6,7 +6,7 @@ What this repository needs from others, and what others asked of it. Newest firs
 
 ### O15 · Isonomic UI: from the Mac comparison of 16 Nov
 
-**To:** isonomic-ui (for the orchestrator to file; this session reaches only isonomic-chat). **Status:** open. Each is a row marked "Needs UI" in `docs/design-diffs.md`:
+**To:** isonomic-ui (filed by the orchestrator). **Status:** done at isonomic-ui `2b8a583`, in use: quiet focus, the 96 high comfortable composer, "Esc" on every platform. The set has no sparkle with a plus; Chat uses `Beacon`, a four-point star, until Omar decides. Each is a row marked "Needs UI" in `docs/design-diffs.md`:
 - `PromptComposer`: a focus look without the ring colour (design 0.2 keeps the 1 px light border, focused or not; a slightly darker border for keyboard focus at most) (K4). In the comfortable size, a one-line text area, so the empty composer is 96 high; it is about 107 now (K1).
 - Icons: the design's four-point sparkle with a small plus. The catalog's `Sparkles` draws a magic wand, and no icon is a four-point sparkle (H1).
 - `CommandPalette::set_escape_hint`: the chip reads "Esc" on every platform; on macOS it draws a glyph (D3).

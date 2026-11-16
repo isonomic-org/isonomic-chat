@@ -28,9 +28,11 @@ pub fn more() -> IconName {
     IconName::Ellipsis
 }
 
-/// The sparkle beside the greeting and in empty states.
+/// The four-point star beside the greeting and in empty states: the
+/// closest drawing in the set to the design's sparkle (`Sparkles` draws a
+/// wand).
 pub fn greeting() -> IconName {
-    IconName::Sparkles
+    IconName::Beacon
 }
 
 /// Open a chat, in a row's menu.
@@ -71,7 +73,7 @@ pub const ALL: &[IconName] = &[
     IconName::Chat,
     IconName::Ellipsis,
     IconName::ChevronDown,
-    IconName::Sparkles,
+    IconName::Beacon,
     IconName::Download,
     IconName::ArrowUpRight,
     IconName::Pin,

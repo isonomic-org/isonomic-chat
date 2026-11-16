@@ -95,6 +95,9 @@ impl ConversationView {
             // The kit sends text only: no files, dropped or pasted.
             composer.set_attach(false, cx);
             composer.set_comfortable(true, cx);
+            // Design 0.2: the composer never turns blue; it holds the
+            // keyboard whenever its screen is open.
+            composer.set_quiet_focus(true, cx);
             composer
         });
         let composer_events =

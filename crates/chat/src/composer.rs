@@ -33,6 +33,9 @@ impl Composer {
             field.set_attach(false, cx);
             // Design 0.2's size: 96 high, round 32 send and stop.
             field.set_comfortable(true, cx);
+            // Design 0.2: the composer never turns blue; it holds the
+            // keyboard whenever its screen is open.
+            field.set_quiet_focus(true, cx);
             field
         });
         let subscription = cx.subscribe(&field, |_, _, event, cx| match event {
