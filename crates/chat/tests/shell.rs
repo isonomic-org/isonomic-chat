@@ -134,28 +134,63 @@ fn new_chat_from_the_keyboard_goes_home(cx: &mut TestAppContext) {
 }
 
 #[ui::test]
-fn keyboard_toggles_hide_and_show_both_panels(cx: &mut TestAppContext) {
+fn the_sidebar_collapses_to_its_rail_and_back_from_the_keyboard(cx: &mut TestAppContext) {
     let (window, shell) = open(cx);
     with_window(cx, window, |window, cx| {
-        assert!(window.try_find("new-chat").is_some());
-        assert!(window.try_find("context_sidebar").is_some());
-
+        window.render_frame(cx);
+        assert!(shell.read(cx).sidebar_open());
         window.press(&format!("{MOD}-\\"), cx);
         window.render_frame(cx);
         assert!(!shell.read(cx).sidebar_open());
-        assert!(window.try_find("new-chat").is_none());
-        assert!(window.try_find("header-sidebar-toggle").is_some());
-
-        window.press(&format!("{MOD}-alt-\\"), cx);
-        window.render_frame(cx);
-        assert!(!shell.read(cx).context_panel_open());
-        assert!(window.try_find("context_sidebar").is_none());
-
+        // The rail keeps the toggle.
+        assert!(window.try_find("sidebar-toggle").is_some());
         window.press(&format!("{MOD}-\\"), cx);
-        window.press(&format!("{MOD}-alt-\\"), cx);
         window.render_frame(cx);
         assert!(shell.read(cx).sidebar_open());
-        assert!(shell.read(cx).context_panel_open());
+    });
+}
+
+#[ui::test]
+fn search_opens_from_the_keyboard_and_enter_opens_the_match(cx: &mut TestAppContext) {
+    let (window, shell) = open(cx);
+    with_window(cx, window, |window, cx| {
+        window.render_frame(cx);
+        window.press(&format!("{MOD}-k"), cx);
+    });
+    cx.run_until_parked();
+    assert!(cx.update(|cx| shell.read(cx).is_searching()));
+    with_window(cx, window, |window, cx| {
+        window.render_frame(cx);
+        window.input("quantum", cx);
+        window.render_frame(cx);
+        window.press("enter", cx);
+    });
+    cx.run_until_parked();
+    cx.update(|cx| {
+        let shell = shell.read(cx);
+        assert!(!shell.is_searching());
+        assert_eq!(shell.route(), &Route::Session(SharedString::from("s4")));
+    });
+}
+
+#[ui::test]
+fn pinning_moves_a_chat_to_pinned_and_delete_drops_any_chat(cx: &mut TestAppContext) {
+    let (window, shell) = open(cx);
+    with_window(cx, window, |window, cx| {
+        shell.update(cx, |shell, cx| {
+            shell.set_pinned(&"s5".into(), true, cx);
+            shell.delete_session(&"s3".into(), window, cx);
+        });
+        let shell = shell.read(cx);
+        let pinned: Vec<&str> = shell
+            .sessions()
+            .iter()
+            .filter(|s| s.pinned)
+            .map(|s| s.id.as_ref())
+            .collect();
+        assert_eq!(pinned, ["s1", "s5"]);
+        assert!(shell.sessions().iter().all(|s| s.id.as_ref() != "s3"));
+        assert_eq!(shell.route(), &Route::Home);
     });
 }
 
@@ -396,22 +431,20 @@ fn with_no_model_installed_home_asks_the_window_to_install_the_recommended_one(
 }
 
 #[ui::test]
-fn a_narrow_window_gives_the_panels_width_to_the_conversation(cx: &mut TestAppContext) {
+fn a_narrow_window_collapses_the_sidebar_to_its_rail(cx: &mut TestAppContext) {
     let (window, shell) = open(cx);
     with_window(cx, window, |window, cx| {
         window.render_frame(cx);
         assert!(shell.read(cx).sidebar_open());
-        assert!(shell.read(cx).context_panel_open());
     });
     cx.simulate_window_resize(window.into(), size(px(700.), px(900.)));
     with_window(cx, window, |window, cx| {
         window.render_frame(cx);
         assert!(!shell.read(cx).sidebar_open());
-        assert!(!shell.read(cx).context_panel_open());
         assert!(shell.read(cx).is_narrow());
-        // The header's toggle still opens the sidebar while narrow.
+        // The rail's toggle still expands the sidebar while narrow.
         window.render_frame(cx);
-        window.click("header-sidebar-toggle", cx);
+        window.click("sidebar-toggle", cx);
     });
     cx.run_until_parked();
     with_window(cx, window, |window, cx| {
@@ -420,10 +453,9 @@ fn a_narrow_window_gives_the_panels_width_to_the_conversation(cx: &mut TestAppCo
     });
     cx.simulate_window_resize(window.into(), size(px(1400.), px(900.)));
     with_window(cx, window, |window, cx| {
-        // Wide again: both come back.
+        // Wide again: the sidebar stays expanded.
         window.render_frame(cx);
         assert!(shell.read(cx).sidebar_open());
-        assert!(shell.read(cx).context_panel_open());
     });
 }
 

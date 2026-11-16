@@ -1,12 +1,10 @@
-//! Chat's shell: the sidebar, the header, the panel between them and the
-//! context panel (Figma `ChatView/01`–`05`, layers `chat_sidebar`,
-//! `chat_panel` and `context_sidebar`).
-//!
-//! The rail of app icons to the left belongs to the desktop, not to Chat.
+//! Chat's shell (design 0.2 app shell): the app sidebar, which collapses to
+//! a rail, and the main panel with its header and the home or thread view.
+//! The search palette opens over both.
 
-mod context_panel;
 mod header;
 mod layout;
+mod search;
 mod sessions;
 mod sidebar;
 
@@ -24,7 +22,7 @@ use std::collections::HashMap;
 use crate::composer::{Composer, ComposerEvent};
 use crate::copy::{self, DayPart};
 use crate::demo::{self, SessionSummary};
-use crate::{Backend, KEY_CONTEXT, NewChat, ToggleContextPanel, ToggleSidebar, home, metrics};
+use crate::{Backend, KEY_CONTEXT, NewChat, SearchChats, ToggleSidebar, home, metrics};
 
 /// Where the panel is.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -33,13 +31,6 @@ pub enum Route {
     Home,
     /// An existing chat, by id.
     Session(SharedString),
-}
-
-/// The context panel's tabs.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum ContextTab {
-    Context,
-    Tools,
 }
 
 /// An inline rename of the open chat's title, in the header.
@@ -56,8 +47,7 @@ pub struct ChatShell {
     sessions: Vec<SessionSummary>,
     next_id: usize,
     sidebar_collapsed: bool,
-    context_panel_open: bool,
-    context_tab: ContextTab,
+    search: Option<search::Search>,
     composer: Entity<Composer>,
     backend: Option<Backend>,
     threads: HashMap<SharedString, Entity<ConversationView>>,
@@ -104,8 +94,7 @@ impl ChatShell {
             sessions,
             next_id: 1,
             sidebar_collapsed: false,
-            context_panel_open: true,
-            context_tab: ContextTab::Context,
+            search: None,
             composer,
             backend: backend.clone(),
             threads: HashMap::new(),
@@ -140,14 +129,9 @@ impl ChatShell {
         &self.sessions
     }
 
-    /// Whether the sidebar is shown.
+    /// Whether the sidebar is expanded (otherwise it is the rail).
     pub fn sidebar_open(&self) -> bool {
         !self.sidebar_collapsed
-    }
-
-    /// Whether the context panel is shown.
-    pub fn context_panel_open(&self) -> bool {
-        self.context_panel_open
     }
 
     /// Fixes the greeting's part of the day (for screenshots and tests).
@@ -167,10 +151,9 @@ impl ChatShell {
         self.composer.read(cx).text(cx)
     }
 
-    /// Shows or hides the sidebar and the context panel.
-    pub fn set_panels(&mut self, sidebar: bool, context: bool, cx: &mut Context<Self>) {
-        self.sidebar_collapsed = !sidebar;
-        self.context_panel_open = context;
+    /// Expands the sidebar, or collapses it to the rail.
+    pub fn set_sidebar_open(&mut self, open: bool, cx: &mut Context<Self>) {
+        self.sidebar_collapsed = !open;
         cx.notify();
     }
 
@@ -280,13 +263,32 @@ impl ChatShell {
 
     /// Drops the open chat and goes home.
     pub fn delete_current(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if let Route::Session(id) = &self.route {
-            let id = id.clone();
-            self.sessions.retain(|session| session.id != id);
-            self.threads.remove(&id);
-            self.sync(&id, sessions::Change::Delete, cx);
+        if let Route::Session(id) = self.route.clone() {
+            self.delete_session(&id, window, cx);
+        }
+    }
+
+    /// Drops a chat; if it was open, goes home.
+    pub fn delete_session(
+        &mut self,
+        id: &SharedString,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.sessions.retain(|session| &session.id != id);
+        self.threads.remove(id);
+        self.sync(id, sessions::Change::Delete, cx);
+        if self.route == Route::Session(id.clone()) {
             self.new_chat(window, cx);
         }
+        cx.notify();
+    }
+
+    /// Whether a chat's reply is being written.
+    pub fn is_running(&self, id: &SharedString, cx: &App) -> bool {
+        self.threads
+            .get(id)
+            .is_some_and(|thread| thread.read(cx).input_state().is_busy())
     }
 
     fn toggle_sidebar(&mut self, _: &ToggleSidebar, _: &mut Window, cx: &mut Context<Self>) {
@@ -294,14 +296,8 @@ impl ChatShell {
         cx.notify();
     }
 
-    fn toggle_context_panel(
-        &mut self,
-        _: &ToggleContextPanel,
-        _: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        self.context_panel_open = !self.context_panel_open;
-        cx.notify();
+    fn on_search(&mut self, _: &SearchChats, window: &mut Window, cx: &mut Context<Self>) {
+        self.open_search(window, cx);
     }
 
     fn on_new_chat(&mut self, _: &NewChat, window: &mut Window, cx: &mut Context<Self>) {
@@ -410,14 +406,13 @@ impl Render for ChatShell {
             .track_focus(&self.focus_handle)
             .on_action(cx.listener(Self::on_new_chat))
             .on_action(cx.listener(Self::toggle_sidebar))
-            .on_action(cx.listener(Self::toggle_context_panel))
+            .on_action(cx.listener(Self::on_search))
             .size_full()
             .items_start()
             .bg(theme.background)
             .text_color(theme.foreground)
-            .when(!self.sidebar_collapsed, |this| {
-                this.child(sidebar::render(self, cx))
-            })
+            .relative()
+            .child(sidebar::render(self, window, cx))
             .child(
                 v_flex()
                     .id("chat_panel")
@@ -427,9 +422,7 @@ impl Render for ChatShell {
                     .child(header::render(self, cx))
                     .child(div().flex_1().min_h_0().w_full().child(body)),
             )
-            .when(self.context_panel_open, |this| {
-                this.child(context_panel::render(self, cx))
-            })
+            .children(self.render_search(cx))
     }
 }
 

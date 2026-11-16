@@ -157,9 +157,16 @@ mod screenshots {
             setup: |scene| {
                 scene.shell(|shell, window, cx| {
                     shell.open_session("s2".into(), window, cx);
-                    shell.set_panels(false, false, cx);
+                    shell.set_sidebar_open(false, cx);
                 })
             },
+        },
+        State {
+            name: "search",
+            width: WIDE,
+            live: false,
+            before: nothing,
+            setup: |scene| scene.shell(|shell, window, cx| shell.open_search(window, cx)),
         },
         State {
             name: "home-narrow",

@@ -2,6 +2,22 @@
 
 /// The title of a chat before it has one, and the sidebar's new-chat entry.
 pub const NEW_CHAT: &str = "New chat";
+/// The wordmark at the top of the sidebar.
+pub const WORDMARK: &str = "Isonomic";
+/// The nav item and palette title for searching chats.
+pub const SEARCH: &str = "Search";
+/// The sidebar group of pinned chats.
+pub const PINNED: &str = "Pinned";
+/// The sidebar group of the other chats, newest first.
+pub const RECENTS: &str = "Recents";
+/// The palette group of actions.
+pub const ACTIONS: &str = "Actions";
+/// A row's menu button.
+pub const MORE: &str = "More";
+/// Pin a chat to the top of the sidebar.
+pub const PIN: &str = "Pin";
+/// Unpin a chat.
+pub const UNPIN: &str = "Unpin";
 /// The sidebar group that lists chats.
 pub const CHATS: &str = "Chats";
 /// The composer's placeholder on home.
@@ -10,32 +26,15 @@ pub const COMPOSER_HOME: &str = "How can I help you today?";
 pub const COMPOSER_THREAD: &str = "Reply…";
 /// Shown under the docked composer.
 pub const DISCLAIMER: &str = "Isonomic Chat can make mistakes. Please double-check responses.";
-/// The header's share button.
-pub const SHARE: &str = "Share";
-/// Why Share is disabled.
-pub const SHARE_LATER: &str = "Sharing comes in a later release";
 /// The header title menu.
 pub const RENAME: &str = "Rename";
 /// The header title menu.
 pub const DELETE: &str = "Delete";
-/// The context panel's tabs.
-pub const CONTEXT: &str = "Context";
-/// The context panel's tabs.
-pub const TOOLS: &str = "Tools";
-/// A context panel section.
-pub const FILES: &str = "Files";
-/// A context panel section.
-pub const CONNECTIONS: &str = "Connections";
-/// The Files section with nothing in it.
-pub const NO_FILES: &str = "Files you add to this chat appear here.";
-/// The Tools tab with nothing in it.
-pub const NO_TOOLS: &str = "Tools this chat can use appear here.";
 /// Shown where the conversation view will be.
 pub const NO_CHATS: &str = "Chats you start appear here.";
 pub const LIST_FAILED: &str = "Chats couldn't load.";
 pub const TRY_AGAIN: &str = "Try again";
 pub const SAVE_FAILED: &str = "A change couldn't be saved.";
-pub const NO_CONNECTIONS: &str = "Connections this chat can use appear here.";
 
 pub const NO_MODEL: &str = "Chat needs a model on this computer before it can reply.";
 
@@ -54,11 +53,7 @@ pub fn conversation() -> conversation_ui::ConversationCopy {
     }
 }
 /// Accessible names for icon-only buttons.
-pub const TOGGLE_SIDEBAR: &str = "Show or hide the sidebar";
-/// Accessible names for icon-only buttons.
-pub const TOGGLE_CONTEXT: &str = "Show or hide the context panel";
-/// Accessible names for icon-only buttons.
-pub const ADD: &str = "Add";
+pub const TOGGLE_SIDEBAR: &str = "Expand or collapse the sidebar";
 
 /// The part of the day a greeting names.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

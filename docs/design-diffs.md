@@ -1,8 +1,25 @@
 # Design differences
 
-Every visible difference between the Isonomic Chat Figma file and what this repository draws. Until Omar decides which source wins, the build uses Isonomic UI's tokens and icons, adds no fonts or icon sets, and records each difference here. When he decides, these become one task.
+Every visible difference between the design and what this repository draws. The design is version 0.2, written up in `docs/design/v0.2/`; where 0.2 and Isonomic UI differ, the build follows the layout and structure of 0.2 and takes colours, type, icons and components from Isonomic UI, and each difference is recorded here. Screenshots: `cargo test -p isonomic-chat --features test-support --test screenshots` (or under `$SCREENSHOT_DIR`).
 
-Figma: `A0H5z7vRJfA8J7HYFy1aKW`, section "Start a Basic Chat / Flow v1" (`19:992`), frames `ChatView/01`–`05`. Isonomic UI at `UI_REF`. Screenshots: `cargo test -p isonomic-chat --features test-support --test screenshots` writes `crates/chat/target/screenshots/{light,dark}/`.
+## Version 0.2: shell and sidebar
+
+| # | Design 0.2 | Built | Why |
+| --- | --- | --- | --- |
+| S1 | Collapsed rail 56 px | Isonomic UI's icon rail, 48 px | The sidebar component's collapsed width |
+| S2 | "Pinned" group collapses with its caret | Pinned and Recents groups, not collapsible | Isonomic UI's sidebar group has no collapse |
+| S3 | A row's "more" button shows on hover only | Shown on every row | The row suffix cannot tell hover; keeping it visible keeps it reachable by keyboard |
+| S4 | Status dots: running, unread, attention | Running only (grey), while a chat's reply is written | Unread and attention are outside version 1 |
+| S5 | Account row at the foot | Left out | The window does not hand Chat the person's ID yet |
+| S6 | Search palette: "Search or ask…", tabs, filters, compose mode, groups by status | Isonomic UI's command palette: "Type a command", chats by title and the New chat action | Version 1 searches chats by title; the palette's placeholder is fixed |
+| S7 | Wordmark in the display serif, 20 / 28 semibold | The theme's sans, large, semibold | No fonts added |
+| S8 | Header: device, side panel, Share; home: incognito | Title with its menu (Rename, Pin or Unpin, Delete) on a chat; nothing on home | Outside version 1 |
+| S9 | Narrow windows not shown | Below 1,040 px the sidebar collapses to its rail; it expands again when the window widens | Derived from the collapse rule |
+| S10 | Grey palette (`gray/50` sidebar, `gray/200` selected row) | Isonomic UI's sidebar and theme tokens, light and dark | Tokens come from Isonomic UI |
+
+## Version 0.1 (superseded by 0.2)
+
+The tables below compare the older version 0.1 reference ("Start a Basic Chat / Flow v1", `19:992`) and are kept until the home and thread layouts move to 0.2.
 
 ## Across the file
 

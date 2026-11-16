@@ -50,10 +50,10 @@ ui::actions!(
     [
         /// Start a new chat: go home and focus the composer.
         NewChat,
-        /// Show or hide the sidebar.
+        /// Expand the sidebar or collapse it to its rail.
         ToggleSidebar,
-        /// Show or hide the context panel.
-        ToggleContextPanel
+        /// Open the search palette.
+        SearchChats
     ]
 );
 
@@ -63,18 +63,18 @@ pub const PRESET: &str = "chat";
 /// The key context of Chat's root view.
 pub(crate) const KEY_CONTEXT: &str = "ChatShell";
 
-/// Keystrokes for new chat, toggle sidebar and toggle context panel.
+/// Keystrokes for new chat, toggle sidebar and search.
 #[cfg(target_os = "macos")]
-const KEYS: [&str; 3] = ["cmd-shift-o", "cmd-\\", "cmd-alt-\\"];
+const KEYS: [&str; 3] = ["cmd-shift-o", "cmd-\\", "cmd-k"];
 #[cfg(not(target_os = "macos"))]
-const KEYS: [&str; 3] = ["ctrl-shift-o", "ctrl-\\", "ctrl-alt-\\"];
+const KEYS: [&str; 3] = ["ctrl-shift-o", "ctrl-\\", "ctrl-k"];
 
 /// Registers Chat's key bindings. Call once at startup, after `ui::init`.
 pub fn init(cx: &mut App) {
-    let [new_chat, sidebar, context] = KEYS;
+    let [new_chat, sidebar, search] = KEYS;
     cx.bind_keys([
         KeyBinding::new(new_chat, NewChat, Some(KEY_CONTEXT)),
         KeyBinding::new(sidebar, ToggleSidebar, Some(KEY_CONTEXT)),
-        KeyBinding::new(context, ToggleContextPanel, Some(KEY_CONTEXT)),
+        KeyBinding::new(search, SearchChats, Some(KEY_CONTEXT)),
     ]);
 }
