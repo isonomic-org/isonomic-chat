@@ -2,6 +2,11 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · SDK 439a069: the QA'd components
+
+- `SDK_REF` moves to `439a069` (its `UI_REF` is isonomic-ui `2e3116b`, with all 86 version 1 components through QA); harness unchanged at `ae4f1a7`. `Cargo.lock` needs no change.
+- Behaviour from the components, checked against Chat: Tab skips disabled text fields (the composer disabled on a closed session); icon-only buttons are named by their tooltip (the sidebar and context panel toggles); a focused toggle draws a focus ring; the prompt composer wraps its controls below about 430 px. Every test passes unchanged.
+
 ## 2026-11-16 · SDK 99630cc: preset version 3, compaction, a conversation too large
 
 - `SDK_REF` moves to `99630cc`; every harness crate is at `ae4f1a7`, the SDK's string character for character.
