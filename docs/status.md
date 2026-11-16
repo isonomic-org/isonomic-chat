@@ -2,6 +2,13 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · Audit of the version 1 screens against design 0.2
+
+- Every screen and state was read against `docs/design/v0.2/` in both themes; the result is `docs/design-diffs.md` (one table per screen, each row fixed, needs Isonomic UI, or accepted) and `docs/accessibility.md` (keyboard path and accessible names). The 0.1 tables moved to `docs/design-diffs-v01.md`.
+- Fixed: the thread's spacing (the scroller's own insets doubled the gaps), the prompt bubble (16 / 24, 16 / 10 padding, 560), one heading size, the prompt's Copy and Edit reachable by Tab and shown on focus, the edit box (16 px text, 32 buttons, shadow, Escape cancels, named). Home's footer height and padding, the picker at 380, an empty state to the design's sizes with an icon, Downloading after Install, a failed model list with Try again, a chosen model that is downloading or unavailable no longer asks for an install. The rail centred with a 28 toggle and no selection, row padding, regular weight for a selected chat, the status dot box, menus with Open and icons at 220, the title button and rename field (300, Escape cancels), the palette centred with Recents and the New chat shortcut, focus back after search.
+- Keyboard: Chat opens on the composer; toggle sidebar moves to Mod-. (the design's key); Alt-Up and Alt-Down step through chats. Names: the toggle by state, More by chat, running chats, the title button, the rename and edit fields, code-block copy.
+- Screenshot states added: thinking before text, Markdown blocks, a failed send with Try again (19 states).
+
 ## 2026-11-16 · SDK at abe8fe4: the run status bar and no attaching
 
 - `SDK_REF` moves to `abe8fe4` (its `UI_REF` is isonomic-ui `b4c9670`); harness unchanged at `ae4f1a7`. `Cargo.lock` needs no change.

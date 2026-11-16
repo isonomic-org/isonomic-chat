@@ -22,7 +22,10 @@ use std::collections::HashMap;
 use crate::composer::{Composer, ComposerEvent};
 use crate::copy::{self, DayPart};
 use crate::demo::{self, SessionSummary};
-use crate::{Backend, KEY_CONTEXT, NewChat, SearchChats, ToggleSidebar, home, metrics};
+use crate::{
+    Backend, KEY_CONTEXT, NewChat, NextChat, PreviousChat, SearchChats, ToggleSidebar, home,
+    metrics,
+};
 
 /// Where the panel is.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -58,6 +61,7 @@ pub struct ChatShell {
     model: Option<String>,
     catalog: Option<conversation_model::ModelCatalog>,
     install_asked: Option<SharedString>,
+    models_failed: bool,
     _models: Option<ui::Task<()>>,
     save_error: Option<SharedString>,
     _load: Option<ui::Task<()>>,
@@ -101,6 +105,7 @@ impl ChatShell {
             model: None,
             catalog: None,
             install_asked: None,
+            models_failed: false,
             _models: None,
             save_error: None,
             _load: None,
@@ -235,6 +240,14 @@ impl ChatShell {
         cx.notify();
     }
 
+    /// Close the rename field and keep the title as it was.
+    pub fn cancel_rename(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.rename.take().is_some() {
+            window.focus(&self.focus_handle, cx);
+            cx.notify();
+        }
+    }
+
     /// Whether the header shows the rename field.
     pub fn is_renaming(&self) -> bool {
         self.rename.is_some()
@@ -296,6 +309,39 @@ impl ChatShell {
         self.open_search(window, cx);
     }
 
+    fn on_previous_chat(&mut self, _: &PreviousChat, window: &mut Window, cx: &mut Context<Self>) {
+        self.step_chat(-1, window, cx);
+    }
+
+    fn on_next_chat(&mut self, _: &NextChat, window: &mut Window, cx: &mut Context<Self>) {
+        self.step_chat(1, window, cx);
+    }
+
+    /// Open the chat `step` rows from the open one, in sidebar order (pinned
+    /// first). From home, down opens the first chat; up stays.
+    pub fn step_chat(&mut self, step: isize, window: &mut Window, cx: &mut Context<Self>) {
+        let ids: Vec<SharedString> = self.sidebar_order();
+        let at = match &self.route {
+            Route::Session(id) => ids.iter().position(|s| s == id),
+            Route::Home => None,
+        };
+        let next = match at {
+            Some(at) => at.checked_add_signed(step).filter(|n| *n < ids.len()),
+            None if step > 0 => (!ids.is_empty()).then_some(0),
+            None => None,
+        };
+        if let Some(next) = next {
+            self.open_session(ids[next].clone(), window, cx);
+        }
+    }
+
+    /// The chats in the order the sidebar shows them: pinned, then recents.
+    fn sidebar_order(&self) -> Vec<SharedString> {
+        let pinned = self.sessions.iter().filter(|s| s.pinned);
+        let rest = self.sessions.iter().filter(|s| !s.pinned);
+        pinned.chain(rest).map(|s| s.id.clone()).collect()
+    }
+
     fn on_new_chat(&mut self, _: &NewChat, window: &mut Window, cx: &mut Context<Self>) {
         self.new_chat(window, cx);
     }
@@ -303,7 +349,12 @@ impl ChatShell {
     fn render_body(&mut self, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
         match self.route {
             Route::Home => match self.missing_model().cloned() {
-                Some(model) => home::render_install(&model, cx),
+                Some(model) => {
+                    let asked = self
+                        .install_asked()
+                        .is_some_and(|asked| asked.as_ref() == model.id);
+                    home::render_install(&model, asked, cx)
+                }
                 None => home::render(self, self.day_part, &self.composer.clone(), window, cx),
             },
             Route::Session(ref id) => match self.threads.get(id) {
@@ -395,6 +446,8 @@ impl Render for ChatShell {
             .on_action(cx.listener(Self::on_new_chat))
             .on_action(cx.listener(Self::toggle_sidebar))
             .on_action(cx.listener(Self::on_search))
+            .on_action(cx.listener(Self::on_previous_chat))
+            .on_action(cx.listener(Self::on_next_chat))
             .size_full()
             .items_start()
             .bg(theme.background)

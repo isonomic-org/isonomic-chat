@@ -13,7 +13,7 @@ use ui::component::message_scroller::MessageScroller;
 use ui::component::{ActiveTheme as _, v_flex};
 use ui::extra::run_status_bar::RunStatus;
 use ui::prelude::*;
-use ui::{App, SharedString, Window, div};
+use ui::{App, ElementId, SharedString, StyleRefinement, Window, div};
 
 impl ConversationView {
     /// The status bar: closed, reconnecting or an app away; else how the
@@ -74,14 +74,22 @@ impl Render for ConversationView {
         let list = MessageScroller::new(
             "conversation-turns",
             self.scroller.clone(),
-            move |index, _, cx| {
+            move |index, window, cx| {
                 let thread = thread.borrow();
                 let Some(turn) = thread.turns().get(index) else {
                     return div().into_any_element();
                 };
                 let count = thread.turns().len();
                 let last = index + 1 == count;
-                let controls = controls(&view, index, cx);
+                let mut controls = controls(&view, index, cx);
+                // The prompt's actions show while one of them has focus, so a
+                // keyboard reaches them as a pointer does.
+                let focus = window.use_keyed_state(
+                    ElementId::NamedInteger("prompt-actions".into(), index as u64),
+                    cx,
+                    |_, cx| cx.focus_handle().tab_stop(false),
+                );
+                controls.prompt_focus = Some(focus.read(cx).clone());
                 // The column: centred, at most 720 wide, 32 above the first
                 // turn and below the last, 24 between turns.
                 div()
@@ -100,6 +108,10 @@ impl Render for ConversationView {
                     .into_any_element()
             },
         )
+        // The kit sets every gap and inset itself (design 0.2 thread.md):
+        // none from the scroller.
+        .with_list_style(StyleRefinement::default().pt_0().pb_0())
+        .with_row_style(StyleRefinement::default().px_0().pb_0())
         .with_bottom_fade(cx.theme().background);
 
         v_flex()
@@ -172,5 +184,6 @@ fn controls(view: &WeakEntity<ConversationView>, index: usize, cx: &App) -> Repl
         versions,
         on_edit,
         editing,
+        prompt_focus: None,
     }
 }

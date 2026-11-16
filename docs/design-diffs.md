@@ -1,118 +1,144 @@
 # Design differences
 
-Every visible difference between the design and what this repository draws. The design is version 0.2, written up in `docs/design/v0.2/`; where 0.2 and Isonomic UI differ, the build follows the layout and structure of 0.2 and takes colours, type, icons and components from Isonomic UI, and each difference is recorded here. Screenshots: `cargo test -p isonomic-chat --features test-support --test screenshots` (or under `$SCREENSHOT_DIR`).
+Every visible difference between the version 0.2 design (`docs/design/v0.2/`) and what this repository draws, from the audit of 16 Nov 2026. Each row has one verdict:
 
-## Version 0.2: shell and sidebar
+- **Fixed**: layout or structure matched with existing components (fixed in the audit pull request).
+- **Needs UI**: Isonomic UI's component cannot do it; the ask is in the row.
+- **Accepted**: Isonomic UI's tokens, type and icons, or outside version 1.
 
-| # | Design 0.2 | Built | Why |
+Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-support --test screenshots` (19 states, light and dark). The keyboard path and accessible names are in `docs/accessibility.md`. The superseded 0.1 tables are in `docs/design-diffs-v01.md`.
+
+## Shell (`app-shell.md`)
+
+| # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| S1 | Collapsed rail 56 px | Isonomic UI's icon rail, 48 px | The sidebar component's collapsed width |
-| S2 | "Pinned" group collapses with its caret | Pinned and Recents groups, not collapsible | Isonomic UI's sidebar group has no collapse |
-| S3 | A row's "more" button shows on hover only | Shown on every row | The row suffix cannot tell hover; keeping it visible keeps it reachable by keyboard |
-| S4 | Status dots: running, unread, attention | Running only (grey), while a chat's reply is written | Unread and attention are outside version 1 |
-| S5 | Account row at the foot | Left out | The window does not hand Chat the person's ID yet |
-| S6 | Search palette: "Search or ask…", tabs, filters, compose mode, groups by status | Isonomic UI's command palette: "Type a command", chats by title and the New chat action | Version 1 searches chats by title; the palette's placeholder is fixed |
-| S7 | Wordmark in the display serif, 20 / 28 semibold | The theme's sans, large, semibold | No fonts added |
-| S8 | Header: device, side panel, Share; home: incognito | Title with its menu (Rename, Pin or Unpin, Delete) on a chat; nothing on home | Outside version 1 |
-| S9 | Narrow windows not shown | Below 1,040 px the sidebar collapses to its rail; it expands again when the window widens | Derived from the collapse rule |
-| S10 | Grey palette (`gray/50` sidebar, `gray/200` selected row) | Isonomic UI's sidebar and theme tokens, light and dark | Tokens come from Isonomic UI |
+| A1 | Rail 56 wide | Isonomic UI's icon rail, 48 | Accepted (component width) |
+| A2 | Rail padding 12 top, 8 sides; expanded header pt 10, px 12; content px 8 | The sidebar's own 8 / 12 | Needs UI: `Sidebar` header, content and footer padding settable |
+| A3 | Rail items centred; toggle, 16, then 28 × 28 nav buttons 4 apart | Same | Fixed |
+| A4 | Rail shows no selected item | Same | Fixed |
+| A5 | Toggle is a 28 × 28 icon button | Same | Fixed |
+| A6 | Wordmark serif semibold 20 / 28 | Theme sans semibold 20 | Accepted (font) |
+| A7 | Account row and rail avatar; Projects, Artifacts, Scheduled, Customize | Left out | Accepted (version 1; no account ID yet) |
+| A8 | Scrim `gray/900` at 25 % | Theme `overlay` | Accepted (token) |
+| A9 | Narrow windows not shown | Below 1,040 the sidebar collapses to its rail | Accepted (collapse rule) |
 
-## Version 0.2: home and composer
+## Sidebar (`sidebar.md`)
 
-| # | Design 0.2 | Built | Why |
+| # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| H1 | Greeting mark is the brand face, 3xl serif text | Isonomic UI's `sparkles` icon at 32 px and the theme's sans, 3xl | No brand mark or fonts in Isonomic UI |
-| H2 | Composer 720 × 96, radius 16; empty state shows voice | Isonomic UI's prompt composer at 720 wide; empty shows a disabled send | Voice is outside version 1 |
-| H3 | No attach button | None: attaching is off (`set_attach(false)`), which also refuses dropped files and pasted images | Matches |
-| H4 | Model control in the footer, with taglines and ratings | Isonomic UI's model picker, right-aligned; each model carries only Recommended, Not installed, Downloading or Unavailable, in the tagline slot | The catalog's honest data only |
-| H5 | Choosing a model that is not installed is not shown | Choosing it asks the window to install it | Decision for version 1 |
-| H6 | No-model state not shown | Isonomic UI's empty state: icon, "Install a model to start", one line, one primary button | `first-run-and-system-states.md` uses the empty state |
-| H7 | Greeting names the person | No name on a live backend; the example name on example data | The window does not hand Chat the person's name yet |
+| B1 | Rows 8 from the edge, 271 wide | 12 from the edge, 263 wide | Needs UI: as A2 (content px 8) |
+| B2 | Nav and chat rows 32 high, 1 apart | 28 high, 8 apart | Needs UI: `SidebarMenuItem` height after its defaults; `SidebarMenu` gap settable |
+| B3 | Row padding 10 left (chats 6 right), icon to label 10 | Same | Fixed |
+| B4 | A selected chat row keeps regular weight | Same | Fixed |
+| B5 | Group label 30 high, pt 10, pb 4, with a caret that collapses Pinned | 32 high, px 8, no caret, not collapsible | Needs UI: `SidebarGroup` padding and a collapsible group |
+| B6 | Groups 1 apart | 12 apart | Needs UI: `Sidebar` content gap settable |
+| B7 | A row's More shows on hover only | Always shown | Accepted (keeps it reachable; rows cannot take focus) |
+| B8 | Status dot in a 20 × 20 box, More 10 after it | Same | Fixed |
+| B9 | Dots: running, unread, attention | Running only | Accepted (version 1) |
+| B10 | On home, New chat stays selected under the palette | Same; Search is never shown selected | Fixed |
+| B11 | Empty and failed list not drawn | Footer note "Start a chat and Isonomic will keep track of it here." (the `EmptyState` wording); failed list with its reason and a Try again that hugs its label | Fixed (wording, button) / Accepted (placement: a 360 empty state does not fit 288) |
+| B12 | Selected `gray/200`, hover `gray/100`, `gray/50` background | Sidebar tokens | Accepted (tokens) |
 
-## Version 0.2: thread
+## Header (`app-shell.md` session header)
 
-| # | Design 0.2 | Built | Why |
+| # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| T1 | Prompt bubble wraps at 560 | Isonomic UI's message bubble, which wraps at 80 % of the column (576 at 720) | The component's own limit |
-| T2 | Prompt hover actions: time, retry, edit, copy | Copy and Edit, shown on hover; the row keeps its space | Try again sits on the reply; turns carry no time |
-| T11 | Edit box: 560 wide, border 2 `gray/900`, radius 16, Cancel and Save; no pager on the prompt | Isonomic UI's textarea in a 560 box with a 2 px foreground border, Cancel (outline) and Save (primary); Mod-Enter saves. The versions show in the reply's pager | The design leaves the pager on an edited prompt undrawn; one pager per turn |
-| T3 | Reply actions: copy, read aloud, thumbs up and down, retry, time; version pager beside them | Isonomic UI's message action bar: Copy and Try again, always shown; the pager ("2 / 2") beside Try again once a reply has versions | Votes and read aloud have no service; no time; the pager is the action bar's own |
-| T4 | Stream cursor block under the text | None; the thinking indicator shows until text arrives | The text view streams with its own fade |
-| T5 | Thinking row: orb, label, seconds, caret; expands to a summary or log | Isonomic UI's thinking indicator: orb and the last line of thinking, not expandable, no seconds | No expandable thinking row in Isonomic UI |
-| T6 | Stopped note "You stopped this response" in the reply | On the last turn, said by the status bar with Continue; on earlier turns, the note under the reply | The status bar is the one stop and error bar |
-| T7 | Run status bar: 44 high, radius 10; Running, Stopped, Error, Done; Steer, Stop, Dismiss, Resume, Retry | Isonomic UI's run status bar as of `b4c9670`: Stopped and cut short with Continue, failed with Try again, reconnecting and closed; one outline action, no Dismiss; stop stays on the composer | The bar's nine differences from the design went to the UI worker, who is aligning it; steering is outside version 1 |
-| T8 | Errors: only the status bar's Error variant | Every failure of the last turn in the bar's failed state, with Try again where a resend can work; reconnecting and closed there too | Version 1 keeps errors |
-| T9 | Code blocks: `CodeBlock` | The text view's fences with a copy button | Tail-only re-parse with a fence renderer is unproven (O9) |
-| T10 | Page not found | Not built | No route in version 1 reaches a missing page; a deleted chat returns home |
+| C1 | Title button 28 high, 14 / 20 medium | Same | Fixed |
+| C2 | Long titles: no rule | The label clips and pushes the caret out | Needs UI: `Button` label truncation that keeps the dropdown caret |
+| C3 | Inline rename field 300 × 32 | Same, named "Chat title"; Escape cancels | Fixed |
+| C4 | Title menu (page undecided) | Pin or Unpin, Rename, separator, Delete, with icons, 220 wide; the same order as a row's menu | Fixed (order, icons, width) |
+| C5 | Device, running pill, side panel, Share; incognito on home | Left out | Accepted (version 1) |
+| C6 | Delete asks first (dialog 440 × 240) | Delete is immediate | Accepted until the session management page is decided |
 
-## Version 0.1 (superseded by 0.2)
+## Search palette (`search-and-menus.md`)
 
-The tables below compare the older version 0.1 reference ("Start a Basic Chat / Flow v1", `19:992`) and are kept until the home and thread layouts move to 0.2.
-
-## Across the file
-
-| # | Figma | Built | Why |
+| # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| D1 | IBM Plex Serif for the greeting and message bodies | IBM Plex Sans (the bundled interface face) everywhere | No fonts added; Isonomic UI bundles Sans and Mono only |
-| D2 | Phosphor icons, regular weight | Isonomic UI's icon set, nearest match per icon (table below) | No icon sets added |
-| D3 | Blue accent: selected tab text and underline, Send (`#0161FE`, `#3280FF`) | Ink: the theme's primary for Send and the tab underline | Isonomic UI's design language: the primary action is ink |
-| D4 | The kit's gray scale (`gray/200`…`gray/900`) | Theme neutrals: border, input border, muted foreground, foreground, sidebar | Tokens only |
-| D5 | Body and sidebar rows 14 px; composer text 16 px | The theme's default text size (larger than 14 px in rows and tabs) | Tokens only; Isonomic UI's 13 px scale is specified but not yet applied |
-| D6 | Light only | Light and dark from the theme | The brief requires both |
+| D1 | 640 wide, centred | The palette caps itself at 520; now centred | Fixed (centred) / Needs UI: `CommandPalette` width setter |
+| D2 | Placeholder "Search or ask…" | "Type a command" | Needs UI: `CommandPalette::placeholder` |
+| D3 | Esc key chip in the input; input 53 high, 16 / 24 | No chip; about 48 high, 14 px | Needs UI: input suffix slot and size |
+| D4 | Rows 36 high, 16 px icon, meta such as "2h" on the right | 32 high, no icon, keys only | Needs UI: `PaletteCommand::icon`, `::meta`, row height 36 |
+| D5 | Chats under "Recents", then "Actions" | Same | Fixed |
+| D6 | New chat shows its shortcut | Same | Fixed |
+| D7 | Typed query: results grouped "Chats" | One "Best matches" heading | Needs UI: keep groups while filtering, or set the heading |
+| D8 | Footer hints as key chips plus label | Plain text hints | Needs UI: settable footer hints |
+| D9 | Nothing selected until the person types or presses an arrow | First row always selected | Needs UI: no cursor on open |
+| D10 | No-results state not drawn | "No commands match." | Needs UI: `CommandPalette::empty_text` |
+| D11 | Tabs, filters, compose mode, groups by status | Left out | Accepted (version 1 searches titles) |
+| D12 | Radius 14, `shadow/2xl` | Theme radius and shadow | Accepted (tokens) |
 
-## Shell
+## Menus (`sidebar.md` pinned item menu, `search-and-menus.md` menu)
 
-| # | Figma | Built | Why |
+| # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| S1 | `chat_sidebar` is 272 px including a 40 px `app_rail` | Chat's sidebar is 232 px with no rail | The rail belongs to the desktop shell |
-| S2 | Rail top holds "collapse sidebar" and "new chat" | Both sit at the top of Chat's sidebar; when the sidebar is hidden, the toggle moves into the header | Chat owns those actions; the rail does not |
-| S3 | Sidebar shows saved prompts and a pinned-models group | Not shown | Not in Milestone 0 |
-| S4 | Sidebar shows a Projects group | Not shown | Projects are out of scope for Milestone 0 |
-| S5 | User avatar at the foot of the rail | Not shown | The desktop shell owns the account |
-| S6 | Chat list rows end in an ellipsis; the first row has a logo and a pin | Long titles are clipped without an ellipsis; pinned rows show a pin and no logo | Isonomic UI's sidebar item does not ellipsize yet (isonomic-ui #210); sessions have no logo |
-| S7 | Header Untitled: muted "New chat". Titled: title, caret, Share | Same; the caret opens Rename and Delete; Share is disabled with a tooltip | Sharing lands later, as an outward action through host policy |
-| S8 | No control for the context panel | A context-panel toggle at the right of the header | Chat owns when the panel opens |
-| S9 | Context panel tabs: Context, Tools, More | Context and Tools | Nothing is defined for More yet |
-| S10 | Connections list four named third-party services with their logos | Four generic placeholder connections with icons | No third-party names; real connections come from the desktop's connection settings |
-| S11 | Context rows are the kit's stacked-list item | A plain icon-and-two-lines row | Isonomic UI has no stacked list item yet (isonomic-ui #208) |
+| E1 | 220 wide | Same | Fixed |
+| E2 | Open, Pin or Unpin, Rename, Delete, each with a 16 icon | Same | Fixed |
+| E3 | Delete in the destructive tone | Default tone | Needs UI: `PopupMenuItem::destructive()` |
+| E4 | Open in new tab, Add to project | Left out | Accepted (version 1) |
 
-## Home
+## Home (`home.md`)
 
-| # | Figma | Built | Why |
+| # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| H1 | Composer toolbar: "Add files", "Voice", model selector, "Send message" | Isonomic UI's prompt composer: the plus menu, the model menu (when models are known), and the send arrow, which becomes stop | Isonomic UI as built is the design source; dictation is off and voice is out of scope |
-| H2 | Model selector shows a third-party model name and logo | "Local model", no logo | No third-party names |
-| H3 | Send disabled: blue at 40% opacity | The theme's disabled primary | D3 |
-| H4 | Greeting mark: the old logo glyph | The Isonomic mark from the icon set | The icon set has it |
-| H5 | Chips: Write, Learn, Code, Life stuff, Brainstorm | Same labels and order, nearest icons; each opens three example prompts | D2 |
+| H1 | Greeting: brand mark, display serif | Sparkles icon at 32, theme sans 3xl | Accepted (no mark or serif in Isonomic UI) |
+| H2 | Greeting names the person | No name on a live backend | Accepted (the window does not hand over the name) |
+| H3 | Column: greeting, 20, composer, 20, a 28 footer; bottom padding 140 | Same; the footer keeps its 28 when empty | Fixed |
+| H4 | 16 at each side on narrow windows | Same | Fixed |
+| H5 | Footer padding 8 at the sides | Same | Fixed |
+| H6 | Footer always names a model | No picker while the catalog is empty; "Models couldn't load." with Try again when listing failed | Fixed |
+| H7 | Project, effort, mode and Apps in the footer; usage banner | Left out | Accepted (version 1) |
 
-## Thread (frames 03–05)
+## Composer (`composer.md`)
 
-The thread is the kit's `ConversationView`: the prompt on the trailing side on a muted bubble, the reply as Markdown, notes and Continue or Try again under a turn, a quiet divider for a compaction, and the composer with the disclaimer under it. Example chats with no conversation behind them show one muted line.
-
-| Id | Figma | Built | Why |
+| # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| L1 | Fixed three-column layout | Below 1,100 px the context panel gives way, below 860 px the sidebar too (the header's toggle opens it); both come back when the window widens | Narrow windows keep the conversation readable |
-| L2 | Empty sidebar, no error state | "Chats you start appear here." and a failed list with Try again, in the sidebar's footer | Isonomic UI's sidebar takes only menus in its body; its footer is the slot for a note |
-| L3 | Greeting with the person's name | No name when Chat runs on a backend: the SDK has no identity in version 1 | Never invent a name |
+| K1 | 720 × 96; padding 14 / 12 / 10 / 16; 14 above a 32 toolbar | 720 × about 85 | Needs UI: `PromptComposer` comfortable size |
+| K2 | Send and stop: round 32, filled `gray/900` | Small rounded squares; stop is not filled | Needs UI: round 32 trailing button, stop filled like send |
+| K3 | Empty shows voice; plus; context ring | No voice, no plus (attaching off), no ring | Accepted (version 1) |
+| K4 | Focus look not drawn | Ring colour border | Accepted (token) |
+| K5 | Placeholders and disclaimer | Match exactly | — |
 
-## Icon matches
+## Model picker (`model-picker.md`, design B)
 
-| Figma (Phosphor) | Isonomic UI |
-| --- | --- |
-| sidebar-simple | panel-left |
-| note-pencil | pen |
-| push-pin | pin |
-| stack (Context tab) | layers |
-| wrench (Tools tab) | tools |
-| plus | plus |
-| paperclip | attachment |
-| caret-down | the button's dropdown caret |
-| share | share |
-| pencil-simple-line (Write) | text-creation |
-| graduation-cap (Learn) | education |
-| code (Code) | code |
-| coffee (Life stuff) | cafe |
-| lightbulb (Brainstorm) | idea |
-| greeting logo | isonomic |
-| Connection logos | folder, notebook, layers, chat |
+| # | Design 0.2 | Built | Verdict |
+| --- | --- | --- | --- |
+| M1 | Menu 380 wide | Same | Fixed |
+| M2 | Menu header "Model" | None (it draws only with meter columns) | Needs UI: `ModelPicker::header` without columns |
+| M3 | Trigger is the model's name only | Letter tile, name, chevron | Needs UI: `tile(false)`, `caret(false)` on trigger and rows |
+| M4 | Trailing check slot; chosen row filled | Check after the name; the fill follows the active row | Needs UI: trailing check slot, chosen-row fill apart from the active row |
+| M5 | Rows 8 / 10 padding, 12 gap | 44 high, 8 padding, 10 gap | Needs UI: row padding and gap |
+| M6 | No footer | Key-hint footer always shown | Needs UI: `footer(false)` |
+| M7 | Rows are named for assistive technology | Rows are plain, unnamed | Needs UI: list box roles and names on rows |
+| M8 | Taglines, ratings, settings | Notes only: Recommended, Not installed, Downloading, Unavailable | Accepted (version 1: honest data only) |
+| M9 | Choosing a model that is not installed installs it | Only Not installed asks the window; Downloading and Unavailable do nothing | Fixed |
+
+## Empty and error states (`first-run-and-system-states.md`)
+
+| # | Design 0.2 | Built | Verdict |
+| --- | --- | --- | --- |
+| N1 | `EmptyState` 360 wide, padding 28 / 24, gap 8; tile 44, icon 22; text wraps at 300; primary button with an icon | Same, with the download icon | Fixed |
+| N2 | Wording "Nothing here yet" | "Install a model to start" / "Install Medium" | Accepted (content) |
+| N3 | After the button: not drawn | The button says "Downloading" and stands still | Fixed (the catalog does not refresh until the kit's host can watch models) |
+| N4 | Errors as a toast with Retry | In place: the sidebar foot, home's footer and the status bar, each with Try again; a failed save is a quiet line | Accepted (version 1 keeps errors where they happen) |
+| N5 | Page not found | Not built; a deleted chat returns home | Accepted (no route reaches it) |
+
+## Thread (`thread.md`, `thread-states.md`, `thread-states-part-2.md`, `message-content.md`)
+
+| # | Design 0.2 | Built | Verdict |
+| --- | --- | --- | --- |
+| T1 | Column min(720, width − 64); 32 above and below; 24 between turns | Same (the scroller's own insets removed) | Fixed |
+| T2 | Bubble 16 / 24, padding 16 / 10, wraps at 560 | Same | Fixed |
+| T3 | Hover row: 28 buttons, gap 2, hidden but keeping its space | Same; it also shows while one of its buttons has focus | Fixed |
+| T4 | Hover row holds time, retry, edit, copy | Copy and Edit | Accepted (try again sits on the reply; turns carry no time) |
+| T5 | One heading level, 18 / 28 | Every level 18 | Fixed |
+| T6 | Lists: text 28 in, marker 4 in, `gray/500` markers | About 22 and 1 | Needs UI: `TextViewStyle` list indent, marker gap and marker colour |
+| T7 | Code block: no header, padding 14 / 12, radius 10 | The text view's fence with a copy button | Accepted (fences stay the text view's; isonomic-ui #375) |
+| T8 | Reply actions: copy, read aloud, votes, retry, time; 28 buttons | Copy and Try again; 20 buttons | Accepted (version 1) / Needs UI: `MessageActionBar` button size |
+| T9 | Pager before the actions, 8 apart | After Try again | Needs UI: `MessageActionBar` pager position |
+| T10 | Retry is called as the app says ("Try again") | The bar says "Regenerate", "Copy", "Previous version", "Next version" | Needs UI: `MessageActionBar` label overrides |
+| T11 | Thinking row: orb, label, seconds, expands | Isonomic UI's thinking indicator; no seconds; not expandable | Accepted (no expandable row in Isonomic UI) |
+| T12 | Stream cursor block | The text view's fade | Accepted |
+| T13 | Stopped note in the reply | The last turn says it in the status bar with Continue; earlier turns keep the note | Accepted (the bar is the one stop and error bar) |
+| T14 | Run status bar 44 high; Running, Stopped, Error, Done; several buttons | Isonomic UI's run status bar at `b4c9670`: one action | Needs UI: alignment already with the UI worker |
+| T15 | Edit box: input 16 / 24 at the padding edge; 34 high buttons; small shadow | Same (buttons 32: token) | Fixed |
+| T16 | Composer dock 720, disclaimer 8 below, 12 bottom padding | Same | — |

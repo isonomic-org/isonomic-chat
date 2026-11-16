@@ -229,6 +229,27 @@ mod screenshots {
             setup: editing,
         },
         State {
+            name: "thread-thinking",
+            width: WIDE,
+            live: true,
+            before: nothing,
+            setup: thinking,
+        },
+        State {
+            name: "thread-markdown",
+            width: WIDE,
+            live: true,
+            before: nothing,
+            setup: markdown,
+        },
+        State {
+            name: "thread-failed",
+            width: WIDE,
+            live: true,
+            before: nothing,
+            setup: failed,
+        },
+        State {
             name: "thread-narrow",
             width: NARROW,
             live: true,
@@ -359,6 +380,43 @@ mod screenshots {
         scene.send("Hello");
         scene.host().finish();
         scene.settle();
+        scene.reply("One more question");
+        scene.settle();
+    }
+
+    /// Thinking before any words of the reply.
+    fn thinking(scene: &mut Scene) {
+        scene.host().script(
+            ScriptedReply::text("Here is a plan.")
+                .with_reasoning("Picking an analogy that holds up"),
+        );
+        scene.send("Explain public-key cryptography with one analogy.");
+        scene.host().pump(5);
+        scene.settle();
+    }
+
+    /// A reply with a heading, a list and a code block.
+    fn markdown(scene: &mut Scene) {
+        scene.host().script(
+            ScriptedReply::text(
+                "Signing takes three steps.\n\n## The two jobs it does\n\n- Encryption: anyone can lock a message with your public key.\n- Signatures: you sign with your private key.\n\n```rust\nfn sign(message: &[u8], key: &PrivateKey) -> Signature {\n    key.sign(message)\n}\n```",
+            )
+            .with_title("Signing"),
+        );
+        scene.send("How do I sign a message?");
+        scene.host().finish();
+        scene.settle();
+    }
+
+    /// A send the host refused: the bar says so and offers Try again.
+    fn failed(scene: &mut Scene) {
+        scene
+            .host()
+            .script(ScriptedReply::text("Sure.").with_title("Hello"));
+        scene.send("Hello");
+        scene.host().finish();
+        scene.settle();
+        // Nothing is scripted, so the host refuses this one.
         scene.reply("One more question");
         scene.settle();
     }

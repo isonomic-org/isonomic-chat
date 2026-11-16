@@ -49,3 +49,58 @@ pub(crate) const TITLE_MAX_CHARS: usize = 48;
 pub(crate) fn sidebar_breakpoint() -> Pixels {
     px(1040.)
 }
+
+/// Height of the row under home's composer, which holds the model picker.
+pub(crate) fn footer_height() -> Pixels {
+    px(28.)
+}
+
+/// Width of the model picker's menu (design B).
+pub(crate) fn model_picker_width() -> Pixels {
+    px(380.)
+}
+
+/// Width of an empty state.
+pub(crate) fn empty_width() -> Pixels {
+    px(360.)
+}
+
+/// Width an empty state's description wraps at.
+pub(crate) fn empty_text_width() -> Pixels {
+    px(300.)
+}
+
+/// An empty state's icon tile, and the icon in it.
+pub(crate) fn empty_tile() -> Pixels {
+    px(44.)
+}
+
+/// The icon in an empty state's tile.
+pub(crate) fn empty_icon() -> Pixels {
+    px(22.)
+}
+
+/// An empty state's padding above and below.
+pub(crate) fn empty_padding_y() -> Pixels {
+    px(28.)
+}
+
+/// An icon button: the sidebar toggle (design 0.2 `IconButton`, 28 × 28).
+pub(crate) fn icon_button() -> Pixels {
+    px(28.)
+}
+
+/// The box a row's status dot sits in.
+pub(crate) fn status_box() -> Pixels {
+    px(20.)
+}
+
+/// Width of a row's and the title's menu.
+pub(crate) fn menu_width() -> Pixels {
+    px(220.)
+}
+
+/// Width of the inline rename field.
+pub(crate) fn rename_width() -> Pixels {
+    px(300.)
+}

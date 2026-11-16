@@ -4,7 +4,7 @@
 
 use conversation_host::{ConversationHost, SessionEntry, SessionQuery};
 use conversation_model::schema::SessionId;
-use conversation_model::{Branch, newest_first};
+use conversation_model::{Availability, Branch, newest_first};
 use conversation_ui::{ConversationEvent, ConversationView};
 use std::rc::Rc;
 use ui::prelude::*;
@@ -114,14 +114,28 @@ impl ChatShell {
     /// Load the models, to know whether any chat model can answer.
     pub(super) fn load_models(&mut self, backend: &Backend, cx: &mut Context<Self>) {
         let request = backend.host.models();
+        self.models_failed = false;
         let task = cx.spawn(async move |this, cx| {
-            let catalog = request.await.unwrap_or_default();
+            let listed = request.await;
             let _ = this.update(cx, |this, cx| {
-                this.catalog = Some(catalog);
+                this.models_failed = listed.is_err();
+                this.catalog = Some(listed.unwrap_or_default());
                 cx.notify();
             });
         });
         self._models = Some(task);
+    }
+
+    /// Whether listing the models failed; home offers to try again.
+    pub fn models_failed(&self) -> bool {
+        self.models_failed
+    }
+
+    /// List the models again, after a failure.
+    pub fn reload_models(&mut self, cx: &mut Context<Self>) {
+        if let Some(backend) = self.backend.clone() {
+            self.load_models(&backend, cx);
+        }
     }
 
     /// Pick the model new chats run on.
@@ -138,18 +152,19 @@ impl ChatShell {
     /// Choose a model in home's picker: one that can answer is picked for
     /// new chats; one that is not installed is asked of the window.
     pub fn choose_model(&mut self, id: String, cx: &mut Context<Self>) {
-        let installed = self
+        let availability = self
             .catalog
             .as_ref()
             .and_then(|catalog| catalog.get(&id))
-            .map(|option| option.availability.can_answer());
-        match installed {
-            Some(true) => self.pick_model(id, cx),
-            Some(false) => {
+            .map(|option| option.availability);
+        match availability {
+            Some(Availability::Installed) => self.pick_model(id, cx),
+            Some(Availability::NotInstalled) => {
                 self.install_model(&id);
                 cx.notify();
             }
-            None => {}
+            // Downloading, unavailable or unknown: nothing to do yet.
+            _ => {}
         }
     }
 

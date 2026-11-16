@@ -33,6 +33,36 @@ pub fn greeting() -> IconName {
     IconName::Sparkles
 }
 
+/// Open a chat, in a row's menu.
+pub fn open() -> IconName {
+    IconName::ArrowUpRight
+}
+
+/// Pin a chat.
+pub fn pin() -> IconName {
+    IconName::Pin
+}
+
+/// Unpin a chat.
+pub fn unpin() -> IconName {
+    IconName::PinFilled
+}
+
+/// Rename a chat.
+pub fn rename() -> IconName {
+    IconName::Edit
+}
+
+/// Delete a chat.
+pub fn delete() -> IconName {
+    IconName::Delete
+}
+
+/// Install a model.
+pub fn install() -> IconName {
+    IconName::Download
+}
+
 /// Every icon Chat draws, for a host that registers only the icons in use.
 pub const ALL: &[IconName] = &[
     IconName::PanelLeft,
@@ -42,6 +72,11 @@ pub const ALL: &[IconName] = &[
     IconName::Ellipsis,
     IconName::ChevronDown,
     IconName::Sparkles,
+    IconName::Download,
+    IconName::ArrowUpRight,
+    IconName::Pin,
+    IconName::PinFilled,
+    IconName::Delete,
     // Drawn by the conversation kit: copy and copied, try again and the
     // version pager, edit, the stopped note and the status bar's icons.
     IconName::Copy,

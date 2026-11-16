@@ -31,7 +31,7 @@ pub const RENAME: &str = "Rename";
 /// The header title menu.
 pub const DELETE: &str = "Delete";
 /// Shown where the conversation view will be.
-pub const NO_CHATS: &str = "Chats you start appear here.";
+pub const NO_CHATS: &str = "Start a chat and Isonomic will keep track of it here.";
 pub const LIST_FAILED: &str = "Chats couldn't load.";
 pub const TRY_AGAIN: &str = "Try again";
 pub const SAVE_FAILED: &str = "A change couldn't be saved.";
@@ -48,6 +48,9 @@ pub const MODEL_DOWNLOADING: &str = "Downloading";
 /// A model's note in the picker: the engine stopped trying it.
 pub const MODEL_UNAVAILABLE: &str = "Unavailable";
 
+/// Home's line when the models could not be listed.
+pub const MODELS_FAILED: &str = "Models couldn't load.";
+
 /// The button that asks the window to install a model.
 pub fn install_model(name: &str) -> String {
     format!("Install {name}")
@@ -63,7 +66,31 @@ pub fn conversation() -> conversation_ui::ConversationCopy {
     }
 }
 /// Accessible names for icon-only buttons.
-pub const TOGGLE_SIDEBAR: &str = "Expand or collapse the sidebar";
+/// The sidebar toggle's name while the sidebar is expanded.
+pub const COLLAPSE_SIDEBAR: &str = "Collapse sidebar";
+/// The sidebar toggle's name while the sidebar is a rail.
+pub const EXPAND_SIDEBAR: &str = "Expand sidebar";
+/// A row's menu item that opens the chat.
+pub const OPEN: &str = "Open";
+/// The rename field's name.
+pub const CHAT_TITLE: &str = "Chat title";
+/// The sidebar's Try again, named for what it retries.
+pub const RETRY_CHATS: &str = "Try loading chats again";
+
+/// A row's More button, named for its chat.
+pub fn more_for(title: &str) -> String {
+    format!("More actions for {title}")
+}
+
+/// A running chat's row, named so its state is heard.
+pub fn running(title: &str) -> String {
+    format!("{title}, writing a reply")
+}
+
+/// The header's title button, named for the menu it opens.
+pub fn chat_options(title: &str) -> String {
+    format!("{title}, chat options")
+}
 
 /// The part of the day a greeting names.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

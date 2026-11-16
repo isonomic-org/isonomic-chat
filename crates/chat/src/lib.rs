@@ -53,7 +53,11 @@ ui::actions!(
         /// Expand the sidebar or collapse it to its rail.
         ToggleSidebar,
         /// Open the search palette.
-        SearchChats
+        SearchChats,
+        /// Open the chat above the open one in the sidebar.
+        PreviousChat,
+        /// Open the chat below the open one in the sidebar.
+        NextChat
     ]
 );
 
@@ -63,18 +67,24 @@ pub const PRESET: &str = "chat";
 /// The key context of Chat's root view.
 pub(crate) const KEY_CONTEXT: &str = "ChatShell";
 
-/// Keystrokes for new chat, toggle sidebar and search.
+/// Keystrokes for new chat, toggle sidebar, search, and the chat above and
+/// below (design 0.2 keyboard shortcuts).
 #[cfg(target_os = "macos")]
-const KEYS: [&str; 3] = ["cmd-shift-o", "cmd-\\", "cmd-k"];
+const KEYS: [&str; 5] = ["cmd-shift-o", "cmd-.", "cmd-k", "alt-up", "alt-down"];
 #[cfg(not(target_os = "macos"))]
-const KEYS: [&str; 3] = ["ctrl-shift-o", "ctrl-\\", "ctrl-k"];
+const KEYS: [&str; 5] = ["ctrl-shift-o", "ctrl-.", "ctrl-k", "alt-up", "alt-down"];
+
+/// The new-chat keystroke, as the search palette shows it.
+pub(crate) const NEW_CHAT_KEY: &str = KEYS[0];
 
 /// Registers Chat's key bindings. Call once at startup, after `ui::init`.
 pub fn init(cx: &mut App) {
-    let [new_chat, sidebar, search] = KEYS;
+    let [new_chat, sidebar, search, previous, next] = KEYS;
     cx.bind_keys([
         KeyBinding::new(new_chat, NewChat, Some(KEY_CONTEXT)),
         KeyBinding::new(sidebar, ToggleSidebar, Some(KEY_CONTEXT)),
         KeyBinding::new(search, SearchChats, Some(KEY_CONTEXT)),
+        KeyBinding::new(previous, PreviousChat, Some(KEY_CONTEXT)),
+        KeyBinding::new(next, NextChat, Some(KEY_CONTEXT)),
     ]);
 }

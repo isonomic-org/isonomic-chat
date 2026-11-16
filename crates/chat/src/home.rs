@@ -6,7 +6,7 @@ use ui::component::button::{Button, ButtonVariants as _};
 use ui::component::empty::{
     Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyMediaVariant, EmptyTitle,
 };
-use ui::component::{ActiveTheme as _, Icon, h_flex, v_flex};
+use ui::component::{ActiveTheme as _, Disableable as _, Icon, Sizable as _, h_flex, v_flex};
 use ui::extra::model_picker::{ModelOption as PickerOption, ModelPicker};
 use ui::prelude::*;
 use ui::{AnyElement, App, Entity, SharedString, TestSupportExt as _, Window, div, rems};
@@ -46,7 +46,7 @@ pub(crate) fn render(
         .items_center()
         .justify_center()
         .gap_5()
-        .px_6()
+        .px_4()
         .pb(metrics::home_lift())
         .child(greeting(part, !shell.is_live(), cx))
         .child(
@@ -56,18 +56,42 @@ pub(crate) fn render(
                 .child(composer.clone()),
         )
         .child(
+            // Always its full height, so the group sits where the design puts
+            // it whether or not there is a picker.
             h_flex()
                 .id("composer-footer")
                 .w_full()
                 .max_w(metrics::content_max_width())
+                .h(metrics::footer_height())
+                .px_2()
                 .justify_end()
-                .children(
-                    shell
-                        .catalog()
-                        .map(|catalog| picker(catalog, shell.model(), cx)),
-                ),
+                .children(footer(shell, cx)),
         )
         .into_any_element()
+}
+
+/// The footer's control: the picker once there are models, or a way to list
+/// them again when that failed.
+fn footer(shell: &ChatShell, cx: &mut Context<ChatShell>) -> Option<AnyElement> {
+    if shell.models_failed() {
+        return Some(
+            h_flex()
+                .gap_2()
+                .text_sm()
+                .text_color(cx.theme().muted_foreground)
+                .child(copy::MODELS_FAILED)
+                .child(
+                    Button::new("models-retry")
+                        .ghost()
+                        .small()
+                        .label(copy::TRY_AGAIN)
+                        .on_click(cx.listener(|shell, _, _, cx| shell.reload_models(cx))),
+                )
+                .into_any_element(),
+        );
+    }
+    let catalog = shell.catalog().filter(|c| !c.options().is_empty())?;
+    Some(picker(catalog, shell.model(), cx))
 }
 
 /// The model picker in the footer: the catalog's models, each noted as
@@ -79,7 +103,9 @@ fn picker(catalog: &ModelCatalog, picked: Option<&str>, cx: &mut Context<ChatShe
         .or_else(|| catalog.choose(None).map(|o| o.id.as_str()))
         .map(str::to_owned);
     let recommended = catalog.recommended().map(|o| o.id.clone());
-    let mut picker = ModelPicker::new("model-picker").align_end(true);
+    let mut picker = ModelPicker::new("model-picker")
+        .align_end(true)
+        .w(metrics::model_picker_width());
     for option in catalog.options() {
         let note = match option.availability {
             Availability::NotInstalled => Some(copy::MODEL_NOT_INSTALLED),
@@ -112,24 +138,38 @@ fn picker(catalog: &ModelCatalog, picked: Option<&str>, cx: &mut Context<ChatShe
 /// recommended model.
 pub(crate) fn render_install(
     model: &conversation_model::ModelOption,
+    asked: bool,
     cx: &mut Context<ChatShell>,
 ) -> AnyElement {
     let id = model.id.clone();
+    // Once asked, the button says the model is on its way and stands still.
+    let label = if asked {
+        copy::MODEL_DOWNLOADING.to_owned()
+    } else {
+        copy::install_model(&model.name)
+    };
     v_flex()
         .id("home-install")
         .size_full()
         .items_center()
         .justify_center()
-        .px_6()
+        .px_4()
         .pb(metrics::home_lift())
         .child(
+            // Design 0.2 `EmptyState`: 360 wide, 28 / 24 padding, 8 gap.
             Empty::new()
+                .w(metrics::empty_width())
+                .gap_2()
+                .py(metrics::empty_padding_y())
+                .px_6()
                 .header(
                     EmptyHeader::new()
+                        .max_w(metrics::empty_text_width())
                         .media(
                             EmptyMedia::new()
                                 .with_variant(EmptyMediaVariant::Icon)
-                                .child(Icon::new(icons::greeting())),
+                                .size(metrics::empty_tile())
+                                .child(Icon::new(icons::greeting()).size(metrics::empty_icon())),
                         )
                         .title(EmptyTitle::new().child(copy::NO_MODEL_TITLE))
                         .description(EmptyDescription::new().child(copy::NO_MODEL)),
@@ -138,7 +178,9 @@ pub(crate) fn render_install(
                     EmptyContent::new().child(
                         Button::new("install-model")
                             .primary()
-                            .label(copy::install_model(&model.name))
+                            .icon(icons::install())
+                            .label(label)
+                            .disabled(asked)
                             .on_click(cx.listener(move |shell, _, _, cx| {
                                 shell.install_model(&id);
                                 cx.notify();
