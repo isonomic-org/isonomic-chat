@@ -2,8 +2,8 @@
 
 /// The title of a chat before it has one, and the sidebar's new-chat entry.
 pub const NEW_CHAT: &str = "New chat";
-/// The wordmark at the top of the sidebar.
-pub const WORDMARK: &str = "Isonomic";
+/// The product's name in the wordmark, after "Isonomic".
+pub const PRODUCT: &str = "Chat";
 /// The nav item and palette title for searching chats.
 pub const SEARCH: &str = "Search";
 /// The sidebar group of pinned chats.
