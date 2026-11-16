@@ -3,13 +3,15 @@
 
 use super::ConversationView;
 use crate::metrics;
-use crate::status::{OnClick, Status};
+use crate::status::{Action, OnClick, Status};
 use crate::turn::{ReplyControls, ending, render_turn};
 use conversation_model::InputState;
+use conversation_model::TurnState;
 use std::rc::Rc;
 use ui::WeakEntity;
 use ui::component::message_scroller::MessageScroller;
 use ui::component::{ActiveTheme as _, v_flex};
+use ui::extra::run_status_bar::RunStatus;
 use ui::prelude::*;
 use ui::{App, SharedString, Window, div};
 
@@ -18,45 +20,47 @@ impl ConversationView {
     /// last turn ended, with continue or try again where they apply.
     fn status(&self, cx: &mut Context<Self>) -> Option<Status> {
         let thread = self.thread.borrow();
-        let plain = |message: &SharedString| Status {
+        let plain = |status: RunStatus, message: &SharedString| Status {
+            status,
             message: message.clone(),
-            error: false,
-            stopped: false,
-            on_continue: None,
-            on_retry: None,
+            action: None,
         };
         if thread.input_state() == InputState::Closed {
-            return Some(plain(&self.copy.closed));
+            return Some(plain(RunStatus::Closed, &self.copy.closed));
         } else if self.reconnecting {
-            return Some(plain(&self.copy.reconnecting));
+            return Some(plain(RunStatus::Reconnecting, &self.copy.reconnecting));
         } else if thread.awaiting_client() {
-            return Some(plain(&self.copy.awaiting_client));
+            return Some(plain(RunStatus::Reconnecting, &self.copy.awaiting_client));
         }
         let turn = thread.turns().last()?;
         let message = ending(turn, &self.copy)?;
         let view = cx.weak_entity();
-        let on_continue = thread.input_state().can_continue().then(|| {
-            let view = view.clone();
-            let click = Box::new(move |_: &mut Window, cx: &mut App| {
-                let _ = view.update(cx, |view, cx| view.resume(cx));
-            }) as OnClick;
-            (self.copy.continue_label.clone(), click)
-        });
         let retry = turn.state.can_retry()
             && !turn.prompt.is_empty()
             && turn.error_code.as_deref() != Some(conversation_model::TOO_LARGE);
-        let on_retry = retry.then(|| {
+        let action = if thread.input_state().can_continue() {
+            let click = Box::new(move |_: &mut Window, cx: &mut App| {
+                let _ = view.update(cx, |view, cx| view.resume(cx));
+            }) as OnClick;
+            Some((Action::Continue, self.copy.continue_label.clone(), click))
+        } else if retry {
             let click = Box::new(move |_: &mut Window, cx: &mut App| {
                 let _ = view.update(cx, |view, cx| view.retry(cx));
             }) as OnClick;
-            (self.copy.try_again.clone(), click)
-        });
+            Some((Action::Retry, self.copy.try_again.clone(), click))
+        } else {
+            None
+        };
+        let status = match &turn.state {
+            _ if turn.retrying.is_some() => RunStatus::Reconnecting,
+            TurnState::Stopped => RunStatus::Stopped,
+            TurnState::Truncated | TurnState::Limited => RunStatus::CutShort,
+            _ => RunStatus::Failed,
+        };
         Some(Status {
+            status,
             message,
-            error: turn.state.can_retry(),
-            stopped: turn.state == conversation_model::TurnState::Stopped,
-            on_continue,
-            on_retry,
+            action,
         })
     }
 }
@@ -111,7 +115,7 @@ impl Render for ConversationView {
                     .items_center()
                     .gap_2()
                     .px_8()
-                    .children(status.map(|status| crate::status::render(status, cx)))
+                    .children(status.map(crate::status::render))
                     .child(
                         div()
                             .w_full()

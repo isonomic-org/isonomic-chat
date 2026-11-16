@@ -154,7 +154,12 @@ fn stop_keeps_the_partial_reply_and_continue_finishes_it(cx: &mut TestAppContext
     );
     assert_eq!(h.state(cx), InputState::Continuable);
 
-    h.frame(cx, |window, cx| window.click("conversation-continue", cx));
+    h.frame(cx, |window, cx| {
+        window.click(
+            conversation_ui::action_button(conversation_ui::CONTINUE_ID),
+            cx,
+        )
+    });
     cx.run_until_parked();
     assert_eq!(h.state(cx), InputState::Busy);
 
@@ -180,7 +185,11 @@ fn reasoning_shows_before_the_answer(cx: &mut TestAppContext) {
     assert_eq!(thinking, "Check the ");
     h.frame(cx, |window, _| {
         assert!(window.try_find("stop").is_some());
-        assert!(window.try_find("conversation-continue").is_none());
+        assert!(
+            window
+                .try_find(conversation_ui::action_button(conversation_ui::CONTINUE_ID))
+                .is_none()
+        );
     });
     h.host.finish();
     cx.run_until_parked();
@@ -313,11 +322,20 @@ fn a_refused_send_can_be_tried_again(cx: &mut TestAppContext) {
     h.send(cx, "Hello");
     assert!(matches!(h.last(cx).1, TurnState::Rejected(_)));
     h.frame(cx, |window, _| {
-        assert!(window.try_find("conversation-retry").is_some())
+        assert!(
+            window
+                .try_find(conversation_ui::action_button(conversation_ui::RETRY_ID))
+                .is_some()
+        )
     });
 
     h.host.script(ScriptedReply::text("Hi there."));
-    h.frame(cx, |window, cx| window.click("conversation-retry", cx));
+    h.frame(cx, |window, cx| {
+        window.click(
+            conversation_ui::action_button(conversation_ui::RETRY_ID),
+            cx,
+        )
+    });
     cx.run_until_parked();
     h.host.finish();
     cx.run_until_parked();
@@ -325,7 +343,11 @@ fn a_refused_send_can_be_tried_again(cx: &mut TestAppContext) {
     assert_eq!(turns, 1, "the rejected send is replaced, not repeated");
     assert_eq!(h.last(cx), ("Hi there.".into(), TurnState::Done));
     h.frame(cx, |window, _| {
-        assert!(window.try_find("conversation-retry").is_none())
+        assert!(
+            window
+                .try_find(conversation_ui::action_button(conversation_ui::RETRY_ID))
+                .is_none()
+        )
     });
 }
 
@@ -371,7 +393,12 @@ fn stop_at_the_first_delta_then_continue_finishes_in_the_same_turn(cx: &mut Test
     cx.run_until_parked();
     assert_eq!(h.last(cx), ("Welcome ".into(), TurnState::Stopped));
 
-    h.frame(cx, |window, cx| window.click("conversation-continue", cx));
+    h.frame(cx, |window, cx| {
+        window.click(
+            conversation_ui::action_button(conversation_ui::CONTINUE_ID),
+            cx,
+        )
+    });
     cx.run_until_parked();
     assert_eq!(
         h.state(cx),
@@ -415,7 +442,12 @@ fn a_refused_continue_shows_why_on_the_turn(cx: &mut TestAppContext) {
         "continue_refused",
         "The reply is complete.",
     ));
-    h.frame(cx, |window, cx| window.click("conversation-continue", cx));
+    h.frame(cx, |window, cx| {
+        window.click(
+            conversation_ui::action_button(conversation_ui::CONTINUE_ID),
+            cx,
+        )
+    });
     cx.run_until_parked();
     let refusal = cx.update(|cx| h.view.read(cx).thread().turns()[0].refusal.clone());
     assert_eq!(refusal.as_deref(), Some("The reply is complete."));
@@ -423,7 +455,12 @@ fn a_refused_continue_shows_why_on_the_turn(cx: &mut TestAppContext) {
         "The reply is complete.".into()
     )));
     // Continuing again clears it once the host opens the turn.
-    h.frame(cx, |window, cx| window.click("conversation-continue", cx));
+    h.frame(cx, |window, cx| {
+        window.click(
+            conversation_ui::action_button(conversation_ui::CONTINUE_ID),
+            cx,
+        )
+    });
     cx.run_until_parked();
     h.host.finish();
     cx.run_until_parked();
@@ -442,7 +479,12 @@ fn a_reply_cut_at_the_limit_offers_continue(cx: &mut TestAppContext) {
     cx.run_until_parked();
     assert_eq!(h.last(cx), ("One two ".into(), TurnState::Truncated));
     assert_eq!(h.state(cx), InputState::Continuable);
-    h.frame(cx, |window, cx| window.click("conversation-continue", cx));
+    h.frame(cx, |window, cx| {
+        window.click(
+            conversation_ui::action_button(conversation_ui::CONTINUE_ID),
+            cx,
+        )
+    });
     cx.run_until_parked();
     h.host.finish();
     cx.run_until_parked();
@@ -486,7 +528,9 @@ fn a_conversation_too_large_shows_the_reason_and_keeps_the_composer(cx: &mut Tes
     h.frame(cx, |window, _| {
         assert!(window.try_find("send").is_some());
         assert!(
-            window.try_find("conversation-retry").is_none(),
+            window
+                .try_find(conversation_ui::action_button(conversation_ui::RETRY_ID))
+                .is_none(),
             "the same prompt would not fit either"
         );
     });

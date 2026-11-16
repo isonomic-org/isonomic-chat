@@ -19,4 +19,5 @@ mod turn;
 mod view;
 
 pub use copy::ConversationCopy;
+pub use status::{CONTINUE_ID, RETRY_ID, action_button};
 pub use view::{ConversationEvent, ConversationView};

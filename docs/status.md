@@ -2,6 +2,14 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · SDK at abe8fe4: the run status bar and no attaching
+
+- `SDK_REF` moves to `abe8fe4` (its `UI_REF` is isonomic-ui `b4c9670`); harness unchanged at `ae4f1a7`. `Cargo.lock` needs no change.
+- The kit's status bar is now Isonomic UI's `RunStatusBar`: stopped (with Continue, passed as its action label), cut short (Continue), failed (Try again), reconnecting (also for an app away) and closed. Its button is the child `"action"` of the bar's id (`conversation_ui::action_button`).
+- Both composers turn attaching off (`set_attach(false)`): no plus button, no dropped files, no pasted images.
+- The `gpui` alias stays: `#[ui::test]` still resolves through it.
+- Chat's icon list gains the bar's icons.
+
 ## 2026-11-16 · The chat list by newest version
 
 - A chat is as new as its newest version: the list orders chats by the latest change in any of their sessions (`conversation_model::newest_first`), pins still on top in pin order. A fork whose first session is not listed (an archived chat) never shows as a chat.

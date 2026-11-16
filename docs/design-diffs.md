@@ -23,7 +23,7 @@ Every visible difference between the design and what this repository draws. The 
 | --- | --- | --- | --- |
 | H1 | Greeting mark is the brand face, 3xl serif text | Isonomic UI's `sparkles` icon at 32 px and the theme's sans, 3xl | No brand mark or fonts in Isonomic UI |
 | H2 | Composer 720 × 96, radius 16; empty state shows voice | Isonomic UI's prompt composer at 720 wide; empty shows a disabled send | Voice is outside version 1 |
-| H3 | No attach button | The composer's plus is shown | Isonomic UI's prompt composer cannot hide it yet (request filed) |
+| H3 | No attach button | None: attaching is off (`set_attach(false)`), which also refuses dropped files and pasted images | Matches |
 | H4 | Model control in the footer, with taglines and ratings | Isonomic UI's model picker, right-aligned; each model carries only Recommended, Not installed, Downloading or Unavailable, in the tagline slot | The catalog's honest data only |
 | H5 | Choosing a model that is not installed is not shown | Choosing it asks the window to install it | Decision for version 1 |
 | H6 | No-model state not shown | Isonomic UI's empty state: icon, "Install a model to start", one line, one primary button | `first-run-and-system-states.md` uses the empty state |
@@ -40,8 +40,8 @@ Every visible difference between the design and what this repository draws. The 
 | T4 | Stream cursor block under the text | None; the thinking indicator shows until text arrives | The text view streams with its own fade |
 | T5 | Thinking row: orb, label, seconds, caret; expands to a summary or log | Isonomic UI's thinking indicator: orb and the last line of thinking, not expandable, no seconds | No expandable thinking row in Isonomic UI |
 | T6 | Stopped note "You stopped this response" in the reply | On the last turn, said by the status bar with Continue; on earlier turns, the note under the reply | The status bar is the one stop and error bar |
-| T7 | Run status bar: 44 high, radius 10, Steer, Stop, Dismiss, Resume, Retry | A plain placeholder on theme tokens: icon, words, Try again and Continue; no Dismiss, no Steer; stop stays on the composer | No run status bar in Isonomic UI yet (O12); steering is outside version 1 |
-| T8 | Errors: only the status bar's Error variant | Every failure of the last turn in the bar, in the danger colours, with Try again where a resend can work; reconnecting and closed there too | Version 1 keeps errors |
+| T7 | Run status bar: 44 high, radius 10; Running, Stopped, Error, Done; Steer, Stop, Dismiss, Resume, Retry | Isonomic UI's run status bar as of `b4c9670`: Stopped and cut short with Continue, failed with Try again, reconnecting and closed; one outline action, no Dismiss; stop stays on the composer | The bar's nine differences from the design went to the UI worker, who is aligning it; steering is outside version 1 |
+| T8 | Errors: only the status bar's Error variant | Every failure of the last turn in the bar's failed state, with Try again where a resend can work; reconnecting and closed there too | Version 1 keeps errors |
 | T9 | Code blocks: `CodeBlock` | The text view's fences with a copy button | Tail-only re-parse with a fence renderer is unproven (O9) |
 | T10 | Page not found | Not built | No route in version 1 reaches a missing page; a deleted chat returns home |
 

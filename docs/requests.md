@@ -6,11 +6,11 @@ What this repository needs from others, and what others asked of it. Newest firs
 
 ### O12 · Isonomic UI: a run status bar
 
-**To:** isonomic-ui. **Status:** filed as isonomic-ui #378, next for version 1. Design 0.2 `RunStatusBar` (`thread-states-part-2.md`): a 720 x 44 bar above the composer with an icon, a message and buttons; statuses Running, Stopped, Error and Done. The kit draws a plain placeholder (`conversation-ui/src/status.rs`) on theme tokens until it lands.
+**To:** isonomic-ui. **Status:** done at isonomic-ui `b4c9670` (`extra::run_status_bar`), in use; its nine differences from the design went back to the UI worker. Design 0.2 `RunStatusBar` (`thread-states-part-2.md`): a 720 x 44 bar above the composer with an icon, a message and buttons; statuses Running, Stopped, Error and Done. The kit draws a plain placeholder (`conversation-ui/src/status.rs`) on theme tokens until it lands.
 
 ### O11 · Isonomic UI: hide the prompt composer's attach button
 
-**To:** isonomic-ui. **Status:** filed as isonomic-ui #377, next for version 1. `PromptComposer` always shows its plus (attach) button; Chat has no attachments in version 1. Add a switch, like `set_dictation`, to leave it out.
+**To:** isonomic-ui. **Status:** done at isonomic-ui `b4c9670` (`PromptComposer::set_attach`), in use. `PromptComposer` always shows its plus (attach) button; Chat has no attachments in version 1. Add a switch, like `set_dictation`, to leave it out.
 
 ### O10 · Isonomic UI: streamed answer with a Markdown body and no question
 

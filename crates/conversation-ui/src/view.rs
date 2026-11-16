@@ -84,6 +84,8 @@ impl ConversationView {
         let composer = cx.new(|cx| {
             let mut composer = PromptComposer::new(copy.placeholder.clone(), window, cx);
             composer.set_dictation(false, cx);
+            // The kit sends text only: no files, dropped or pasted.
+            composer.set_attach(false, cx);
             composer
         });
         let composer_events =

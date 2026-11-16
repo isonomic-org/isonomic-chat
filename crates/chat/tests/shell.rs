@@ -289,7 +289,10 @@ fn a_chat_sent_from_home_runs_a_turn_with_stop_and_continue(cx: &mut TestAppCont
     assert_eq!(state(cx).2, TurnState::Stopped);
     with_window(cx, window, |window, cx| {
         window.render_frame(cx);
-        window.click("conversation-continue", cx);
+        window.click(
+            conversation_ui::action_button(conversation_ui::CONTINUE_ID),
+            cx,
+        );
     });
     cx.run_until_parked();
     host.finish();
