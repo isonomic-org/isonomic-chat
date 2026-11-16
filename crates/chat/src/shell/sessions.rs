@@ -104,7 +104,6 @@ impl ChatShell {
             let catalog = request.await.unwrap_or_default();
             let _ = this.update(cx, |this, cx| {
                 this.catalog = Some(catalog);
-                this.show_models(cx);
                 cx.notify();
             });
         });
@@ -114,28 +113,30 @@ impl ChatShell {
     /// Pick the model new chats run on.
     pub fn pick_model(&mut self, model: String, cx: &mut Context<Self>) {
         self.model = Some(model);
-        self.show_models(cx);
         cx.notify();
     }
 
-    /// Offer the catalog's models in home's composer, with the one new chats
-    /// run on selected.
-    pub(super) fn show_models(&mut self, cx: &mut Context<Self>) {
-        let Some(catalog) = &self.catalog else {
-            return;
-        };
-        let models = catalog
-            .options()
-            .iter()
-            .map(|o| (o.id.clone(), o.name.clone()))
-            .collect();
-        let selected = self
-            .model
-            .clone()
-            .filter(|id| catalog.get(id).is_some())
-            .or_else(|| catalog.choose(None).map(|o| o.id.clone()));
-        self.composer
-            .update(cx, |composer, cx| composer.set_models(models, selected, cx));
+    /// The models Chat can run on, once loaded.
+    pub fn catalog(&self) -> Option<&conversation_model::ModelCatalog> {
+        self.catalog.as_ref()
+    }
+
+    /// Choose a model in home's picker: one that can answer is picked for
+    /// new chats; one that is not installed is asked of the window.
+    pub fn choose_model(&mut self, id: String, cx: &mut Context<Self>) {
+        let installed = self
+            .catalog
+            .as_ref()
+            .and_then(|catalog| catalog.get(&id))
+            .map(|option| option.availability.can_answer());
+        match installed {
+            Some(true) => self.pick_model(id, cx),
+            Some(false) => {
+                self.install_model(&id);
+                cx.notify();
+            }
+            None => {}
+        }
     }
 
     /// The model new chats run on, once one has been picked.
@@ -177,8 +178,11 @@ impl ChatShell {
         };
         let session = SessionId::new(id.to_string());
         let host = backend.host.clone();
-        let thread =
-            cx.new(|cx| ConversationView::open(host, session, copy::conversation(), window, cx));
+        let thread = cx.new(|cx| {
+            let mut view = ConversationView::open(host, session, copy::conversation(), window, cx);
+            view.set_model_menu(false, cx);
+            view
+        });
         self.watch(id.clone(), &thread, cx);
         self.threads.insert(id.clone(), thread);
     }
@@ -195,6 +199,8 @@ impl ChatShell {
         let thread = cx.new(|cx| {
             let mut view =
                 ConversationView::new(host, crate::PRESET, copy::conversation(), window, cx);
+            // Home's footer picks the model; the thread's composer has none.
+            view.set_model_menu(false, cx);
             // The model picked on home, or in an earlier chat, runs this one.
             if let Some(model) = model {
                 view.select_model(model, cx);
@@ -235,10 +241,7 @@ impl ChatShell {
                     }
                     *local.borrow_mut() = named;
                 }
-                ConversationEvent::ModelSelected(model) => {
-                    this.model = Some(model.to_string());
-                    this.show_models(cx);
-                }
+                ConversationEvent::ModelSelected(model) => this.model = Some(model.to_string()),
                 // Downloads belong to the window: ask it to offer this one.
                 ConversationEvent::ModelUnavailable(model) => {
                     this.install_model(model);

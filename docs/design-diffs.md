@@ -17,6 +17,18 @@ Every visible difference between the design and what this repository draws. The 
 | S9 | Narrow windows not shown | Below 1,040 px the sidebar collapses to its rail; it expands again when the window widens | Derived from the collapse rule |
 | S10 | Grey palette (`gray/50` sidebar, `gray/200` selected row) | Isonomic UI's sidebar and theme tokens, light and dark | Tokens come from Isonomic UI |
 
+## Version 0.2: home and composer
+
+| # | Design 0.2 | Built | Why |
+| --- | --- | --- | --- |
+| H1 | Greeting mark is the brand face, 3xl serif text | Isonomic UI's `sparkles` icon at 32 px and the theme's sans, 3xl | No brand mark or fonts in Isonomic UI |
+| H2 | Composer 720 × 96, radius 16; empty state shows voice | Isonomic UI's prompt composer at 720 wide; empty shows a disabled send | Voice is outside version 1 |
+| H3 | No attach button | The composer's plus is shown | Isonomic UI's prompt composer cannot hide it yet (request filed) |
+| H4 | Model control in the footer, with taglines and ratings | Isonomic UI's model picker, right-aligned; each model carries only Recommended, Not installed, Downloading or Unavailable, in the tagline slot | The catalog's honest data only |
+| H5 | Choosing a model that is not installed is not shown | Choosing it asks the window to install it | Decision for version 1 |
+| H6 | No-model state not shown | Isonomic UI's empty state: icon, "Install a model to start", one line, one primary button | `first-run-and-system-states.md` uses the empty state |
+| H7 | Greeting names the person | No name on a live backend; the example name on example data | The window does not hand Chat the person's name yet |
+
 ## Version 0.1 (superseded by 0.2)
 
 The tables below compare the older version 0.1 reference ("Start a Basic Chat / Flow v1", `19:992`) and are kept until the home and thread layouts move to 0.2.

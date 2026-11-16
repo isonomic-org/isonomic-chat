@@ -15,6 +15,11 @@ pub(crate) fn content_max_width() -> Pixels {
     px(720.)
 }
 
+/// Home's bottom padding, which lifts its column above true centre.
+pub(crate) fn home_lift() -> Pixels {
+    px(140.)
+}
+
 /// Height of the header above home and the thread.
 pub(crate) fn header_height() -> Pixels {
     px(52.)

@@ -2,6 +2,14 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · Home and composer to design 0.2
+
+- Home is the greeting (sparkles and the time of day), the 720 composer ("How can I help you today?") and a footer with Isonomic UI's model picker, lifted 140 px above centre. No suggestion chips.
+- The picker lists the catalog's models with their state only (Recommended, Not installed, Downloading, Unavailable). Choosing one that can answer runs the next chat with it; choosing one that is not installed asks the window to install it (`ChatShell::choose_model`, tested).
+- The thread's composer no longer has a model menu (`ConversationView::set_model_menu`, a kit switch, default on). Its placeholder is "Reply to Isonomic…" and the disclaimer is the 0.2 wording.
+- With no chat model, home is Isonomic UI's empty state with one button that installs the recommended model.
+- Differences: `docs/design-diffs.md`, H1 to H7.
+
 ## 2026-11-16 · Shell and sidebar to design 0.2
 
 - The context panel is gone. The app sidebar (288 px) has the toggle and the wordmark, the nav (New chat, Search), and the Pinned and Recents groups; each row has a chat icon, a running dot while its reply is written, and a menu (Pin or Unpin, Rename, Delete). Collapsed, it is Isonomic UI's icon rail: the toggle and the nav only. Below 1,040 px the window collapses it.

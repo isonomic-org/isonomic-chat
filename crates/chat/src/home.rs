@@ -1,24 +1,29 @@
-//! Home: the greeting, the composer and the starter chips (Figma
-//! `ChatView/01_NewChat` and `02_Composing`).
+//! Home (design 0.2 `HomeView/01_Home`): the greeting, the composer and,
+//! under it, the footer with the model picker. A 720 column, centred, lifted
+//! above true centre. No suggestion chips.
 
 use ui::component::button::{Button, ButtonVariants as _};
-use ui::component::menu::{DropdownMenu as _, PopupMenuItem};
-use ui::component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
+use ui::component::empty::{
+    Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyMediaVariant, EmptyTitle,
+};
+use ui::component::{ActiveTheme as _, Icon, h_flex, v_flex};
+use ui::extra::model_picker::{ModelOption as PickerOption, ModelPicker};
 use ui::prelude::*;
-use ui::{AnyElement, App, Entity, TestSupportExt as _, Window, div, rems};
+use ui::{AnyElement, App, Entity, SharedString, TestSupportExt as _, Window, div, rems};
 
 use crate::composer::Composer;
 use crate::copy::{self, DayPart};
-use crate::{demo, icons, metrics};
+use crate::{ChatShell, demo, icons, metrics};
+use conversation_model::{Availability, ModelCatalog};
 
-/// The greeting row: the mark and a time-of-day greeting.
+/// The greeting row: the sparkle and a time-of-day greeting.
 pub(crate) fn greeting(part: DayPart, examples: bool, cx: &App) -> impl IntoElement {
     h_flex()
         .id("greeting")
         .test_support()
-        .gap_3()
+        .gap_3p5()
         .items_center()
-        .child(Icon::new(icons::mark()).size(rems(1.75)))
+        .child(Icon::new(icons::greeting()).size(rems(2.)))
         .child(
             div()
                 .text_3xl()
@@ -27,92 +32,119 @@ pub(crate) fn greeting(part: DayPart, examples: bool, cx: &App) -> impl IntoElem
         )
 }
 
-/// One row of starter chips. Each opens its example prompts; picking one
-/// fills the composer.
-pub(crate) fn starters(composer: &Entity<Composer>) -> impl IntoElement {
-    h_flex()
-        .id("starters")
-        .gap_2()
-        .flex_wrap()
-        .justify_center()
-        .children(copy::STARTERS.iter().enumerate().map(|(index, starter)| {
-            let composer = composer.clone();
-            Button::new(("starter", index))
-                .outline()
-                .small()
-                .icon(icons::starter(index))
-                .label(starter.label)
-                .dropdown_menu(move |mut menu, _, _| {
-                    for prompt in starter.prompts {
-                        let composer = composer.clone();
-                        menu = menu.item(PopupMenuItem::new(*prompt).on_click(
-                            move |_, window, cx| {
-                                composer.update(cx, |composer, cx| {
-                                    composer.set_text(prompt, window, cx)
-                                });
-                            },
-                        ));
-                    }
-                    menu
-                })
-        }))
-}
-
-/// Home, centred in the panel below the header.
+/// Home, in the panel below the header.
 pub(crate) fn render(
+    shell: &ChatShell,
     part: DayPart,
-    examples: bool,
     composer: &Entity<Composer>,
     _: &mut Window,
-    cx: &mut Context<impl Sized>,
+    cx: &mut Context<ChatShell>,
 ) -> AnyElement {
     v_flex()
         .id("home")
         .size_full()
         .items_center()
         .justify_center()
-        .gap_7()
+        .gap_5()
         .px_6()
-        .pb_24()
-        .child(greeting(part, examples, cx))
+        .pb(metrics::home_lift())
+        .child(greeting(part, !shell.is_live(), cx))
         .child(
             div()
                 .w_full()
                 .max_w(metrics::content_max_width())
                 .child(composer.clone()),
         )
-        .child(starters(composer))
+        .child(
+            h_flex()
+                .id("composer-footer")
+                .w_full()
+                .max_w(metrics::content_max_width())
+                .justify_end()
+                .children(
+                    shell
+                        .catalog()
+                        .map(|catalog| picker(catalog, shell.model(), cx)),
+                ),
+        )
+        .into_any_element()
+}
+
+/// The model picker in the footer: the catalog's models, each noted as
+/// recommended, not installed or downloading. Picking one that is not
+/// installed asks the window to install it.
+fn picker(catalog: &ModelCatalog, picked: Option<&str>, cx: &mut Context<ChatShell>) -> AnyElement {
+    let selected = picked
+        .filter(|id| catalog.get(id).is_some())
+        .or_else(|| catalog.choose(None).map(|o| o.id.as_str()))
+        .map(str::to_owned);
+    let recommended = catalog.recommended().map(|o| o.id.clone());
+    let mut picker = ModelPicker::new("model-picker").align_end(true);
+    for option in catalog.options() {
+        let note = match option.availability {
+            Availability::NotInstalled => Some(copy::MODEL_NOT_INSTALLED),
+            Availability::Downloading => Some(copy::MODEL_DOWNLOADING),
+            Availability::Unavailable => Some(copy::MODEL_UNAVAILABLE),
+            _ if recommended.as_deref() == Some(option.id.as_str()) => {
+                Some(copy::MODEL_RECOMMENDED)
+            }
+            _ => None,
+        };
+        let mut entry = PickerOption::new(option.id.clone(), option.name.clone());
+        if let Some(note) = note {
+            entry = entry.tagline(note);
+        }
+        picker = picker.model(entry);
+    }
+    if let Some(selected) = selected {
+        picker = picker.value(selected);
+    }
+    let view = cx.entity();
+    picker
+        .on_change(move |id: &SharedString, _, cx| {
+            view.update(cx, |shell, cx| shell.choose_model(id.to_string(), cx))
+        })
         .into_any_element()
 }
 
 /// Home when no chat model can answer: in place of a composer that cannot
-/// reply, one button asks the window to install the recommended model.
+/// reply, an empty state whose one button asks the window to install the
+/// recommended model.
 pub(crate) fn render_install(
     model: &conversation_model::ModelOption,
-    cx: &mut Context<crate::ChatShell>,
+    cx: &mut Context<ChatShell>,
 ) -> AnyElement {
     let id = model.id.clone();
-    let label = copy::install_model(&model.name);
     v_flex()
         .id("home-install")
         .size_full()
         .items_center()
         .justify_center()
-        .gap_4()
         .px_6()
+        .pb(metrics::home_lift())
         .child(
-            div()
-                .text_color(cx.theme().muted_foreground)
-                .child(copy::NO_MODEL),
-        )
-        .child(
-            Button::new("install-model")
-                .primary()
-                .label(label)
-                .on_click(cx.listener(move |shell, _, _, cx| {
-                    shell.install_model(&id);
-                    cx.notify();
-                })),
+            Empty::new()
+                .header(
+                    EmptyHeader::new()
+                        .media(
+                            EmptyMedia::new()
+                                .with_variant(EmptyMediaVariant::Icon)
+                                .child(Icon::new(icons::greeting())),
+                        )
+                        .title(EmptyTitle::new().child(copy::NO_MODEL_TITLE))
+                        .description(EmptyDescription::new().child(copy::NO_MODEL)),
+                )
+                .content(
+                    EmptyContent::new().child(
+                        Button::new("install-model")
+                            .primary()
+                            .label(copy::install_model(&model.name))
+                            .on_click(cx.listener(move |shell, _, _, cx| {
+                                shell.install_model(&id);
+                                cx.notify();
+                            })),
+                    ),
+                ),
         )
         .into_any_element()
 }
