@@ -11,7 +11,7 @@ use conversation_host::{
     UpdateStream,
 };
 use conversation_model::schema::{Block, ForkReason, Seq, SessionId};
-use conversation_model::{Availability, ModelCatalog, ModelOption, Update};
+use conversation_model::{Availability, ModelCatalog, ModelOption, Update, display_name};
 use futures::{FutureExt as _, StreamExt as _, stream};
 use isonomic_client::{Agents, ClientError, Models, SessionUpdate};
 use isonomic_proto::agents::{CreateSession, ForkPoint, ListSessions, PresetId};
@@ -217,7 +217,7 @@ impl ConversationHost for SdkHost {
                 let state = models.info(&model.id).await.map(|d| d.state).ok();
                 options.push(ModelOption {
                     id: model.id,
-                    name: model.name,
+                    name: display_name(&model.name),
                     remote: model.remote,
                     availability: state.map_or(Availability::Unknown, availability),
                 });

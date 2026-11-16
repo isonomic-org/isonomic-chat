@@ -367,3 +367,16 @@ fn a_chat_is_listed_by_its_newest_version(cx: &mut TestAppContext) {
         assert!(active[0].is_some() && active[0] > active[1]);
     });
 }
+
+#[test]
+fn every_icon_chat_draws_is_in_the_icon_catalog() {
+    use ui::AssetSource as _;
+    for icon in isonomic_chat::icons::ALL {
+        let path = (*icon).path();
+        let svg = ui::assets::AllAssets
+            .load(&path)
+            .expect("the asset source answers")
+            .unwrap_or_else(|| panic!("{path} is not in the icon catalog"));
+        assert!(!svg.is_empty(), "{path} is empty");
+    }
+}

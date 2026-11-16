@@ -18,7 +18,7 @@ mod versions;
 
 pub use harness_core as schema;
 pub use input::InputState;
-pub use models::{Availability, ModelCatalog, ModelOption};
+pub use models::{Availability, ModelCatalog, ModelOption, display_name};
 pub use thread::{TOO_LARGE, Thread};
 pub use turn::{Notice, ToolUse, Turn, TurnState};
 pub use versions::{Branch, Path, Slot, newest_first, plan};

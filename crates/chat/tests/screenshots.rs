@@ -40,6 +40,8 @@ mod screenshots {
     /// A narrow window: the composer wraps and the panels give way.
     const NARROW: f32 = 720.;
     const HEIGHT: f32 = 1024.;
+    /// The Mac's window at its usual size (2200 x 1442 at 2x).
+    const MAC: f32 = 1100.;
 
     /// What a state needs: the window, the shell and, when live, its host.
     struct Scene<'a> {
@@ -288,6 +290,20 @@ mod screenshots {
                 ))
             },
             setup: |_| {},
+        },
+        State {
+            name: "home-mac",
+            width: MAC,
+            live: true,
+            before: models,
+            setup: |_| {},
+        },
+        State {
+            name: "thread-mac",
+            width: MAC,
+            live: true,
+            before: nothing,
+            setup: thread,
         },
         State {
             name: "home-models",

@@ -106,3 +106,48 @@ impl ModelCatalog {
             .or_else(|| self.options.iter().find(usable))
     }
 }
+
+/// A model's name as a person reads it: the host's name without a trailing
+/// quantisation tag, so "Qwen3.5 2B (Q4_K_M)" reads "Qwen3.5 2B". The id is
+/// untouched; only what is shown changes.
+pub fn display_name(name: &str) -> String {
+    let name = name.trim();
+    let quantisation = |tag: &str| {
+        let tag = tag.trim().to_ascii_uppercase();
+        let tag = tag.strip_prefix('I').unwrap_or(&tag);
+        let numbered = |prefix: &str| {
+            tag.strip_prefix(prefix)
+                .is_some_and(|rest| rest.starts_with(|c: char| c.is_ascii_digit()))
+        };
+        numbered("Q") || numbered("F") || numbered("BF") || numbered("FP") || numbered("INT")
+    };
+    if let Some(open) = name.rfind(" (")
+        && name.ends_with(')')
+        && quantisation(&name[open + 2..name.len() - 1])
+    {
+        return name[..open].trim_end().to_owned();
+    }
+    if let Some(space) = name.rfind(' ')
+        && quantisation(&name[space + 1..])
+    {
+        return name[..space].trim_end().to_owned();
+    }
+    name.to_owned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::display_name;
+
+    #[test]
+    fn a_quantisation_tag_is_not_part_of_the_name() {
+        assert_eq!(display_name("Qwen3.5 2B (Q4_K_M)"), "Qwen3.5 2B");
+        assert_eq!(display_name("Llama 3.2 3B (IQ4_XS)"), "Llama 3.2 3B");
+        assert_eq!(display_name("Gemma 3 4B BF16"), "Gemma 3 4B");
+        assert_eq!(display_name("Phi 4 (f16)"), "Phi 4");
+        // Other words in brackets, and names without a tag, stay.
+        assert_eq!(display_name("Medium (recommended)"), "Medium (recommended)");
+        assert_eq!(display_name("Qwen3.5 2B"), "Qwen3.5 2B");
+        assert_eq!(display_name("Mistral Small 3"), "Mistral Small 3");
+    }
+}
