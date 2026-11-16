@@ -1,6 +1,6 @@
 # Design differences
 
-Every visible difference between the version 0.2 design (`docs/design/v0.2/`) and what this repository draws, from the audit of 16 Nov 2026, updated for Isonomic UI `0a8f39d` (isonomic-ui #381, #385 and the bundled serif). Each row has one verdict:
+Every visible difference between the version 0.2 design (`docs/design/v0.2/`) and what this repository draws, from the audit of 16 Nov 2026, updated for Isonomic UI `a1b30e1` (isonomic-ui #381, #385, the `Wordmark`). Each row has one verdict:
 
 - **Fixed**: matched, with existing components or the options isonomic-ui #381 added.
 - **Needs UI**: Isonomic UI's component cannot do it; the ask is in the row.
@@ -17,7 +17,7 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | A3 | Rail items centred; toggle, 16, then 28 × 28 nav buttons 4 apart | Same | Fixed |
 | A4 | Rail shows no selected item | Same | Fixed |
 | A5 | Toggle is a 28 × 28 icon button | Same | Fixed |
-| A6 | Wordmark serif semibold 20 / 28 | The bundled serif, medium, 20 / 28 | Fixed (weight: medium is the heaviest bundled; no semibold) |
+| A6 | Wordmark serif semibold 20 / 28 | Isonomic UI's `Wordmark`: "Isonomic" in IBM Plex Sans Regular, "Chat" in Light, at 20 | Follows Omar's brand rule, not the reference: the wordmark is never in the serif |
 | A7 | Account row and rail avatar; Projects, Artifacts, Scheduled, Customize | Left out | Accepted (version 1; no account ID yet) |
 | A8 | Scrim `gray/900` at 25 % | Theme `overlay` | Accepted (token) |
 | A9 | Narrow windows not shown | Below 1,040 the sidebar collapses to its rail | Accepted (collapse rule) |
@@ -80,7 +80,7 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 
 | # | Design 0.2 | Built | Verdict |
 | --- | --- | --- | --- |
-| H1 | Greeting: brand mark, display serif | The bundled serif, 34 / 42, regular; Sparkles icon at 32 | Fixed (font) / Accepted (no brand mark in Isonomic UI) |
+| H1 | Greeting: brand mark, display serif | The theme's sans, 34 / 42, regular; Sparkles icon at 32 | Follows Omar's brand rule, not the reference: the serif is for long-form reading only / Accepted (no brand mark in Isonomic UI) |
 | H2 | Greeting names the person | No name on a live backend | Accepted (the window does not hand over the name) |
 | H3 | Column: greeting, 20, composer, 20, a 28 footer; bottom padding 140 | Same; the footer keeps its 28 when empty | Fixed |
 | H4 | 16 at each side on narrow windows | Same | Fixed |

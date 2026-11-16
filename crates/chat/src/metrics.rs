@@ -168,14 +168,9 @@ pub(crate) fn picker_row_gap() -> Pixels {
     px(12.)
 }
 
-/// The wordmark's size and line height (design 0.2: 20 / 28).
+/// The wordmark's size (design 0.2: 20).
 pub(crate) fn wordmark_size() -> Pixels {
     px(20.)
-}
-
-/// See [`wordmark_size`].
-pub(crate) fn wordmark_line() -> Pixels {
-    px(28.)
 }
 
 /// The home greeting's size and line height (design 0.2: 34 / 42).

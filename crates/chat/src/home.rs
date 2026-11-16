@@ -25,9 +25,9 @@ pub(crate) fn greeting(part: DayPart, examples: bool, cx: &App) -> impl IntoElem
         .items_center()
         .child(Icon::new(icons::greeting()).size(rems(2.)))
         .child(
-            // Design 0.2: display serif, 34 / 42, regular.
+            // The theme's sans at the design's 34 / 42, regular: the serif is
+            // for long-form reading only (Omar's brand rule).
             div()
-                .font_family(cx.theme().serif_font_family.clone())
                 .text_size(metrics::greeting_size())
                 .line_height(metrics::greeting_line())
                 .text_color(cx.theme().foreground)

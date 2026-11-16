@@ -2,6 +2,12 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-16 · The wordmark, by Omar's brand rule
+
+- `SDK_REF` moves to `a3ac3bf` (`UI_REF` `a1b30e1`); harness unchanged.
+- The sidebar's wordmark is Isonomic UI's `Wordmark::product("Chat")` at 20: "Isonomic" in IBM Plex Sans Regular, "Chat" in Light. The home greeting is back in the theme's sans, 34 / 42. No serif anywhere in Chat: the serif is for long-form reading. A6 and H1 in `docs/design-diffs.md` follow this rule, not the reference.
+- A chat row's More button has the id `chat-row-menu-<session id>` for the window's QA. The other QA ids wait on Isonomic UI (`docs/accessibility.md`).
+
 ## 2026-11-16 · SDK at 1f28327: the serif, and 28 px buttons
 
 - `SDK_REF` moves to `1f28327` (`UI_REF` `0a8f39d`); harness unchanged.

@@ -33,7 +33,7 @@ Bound on Chat's root, so they work from any control inside it (`crates/chat/src/
 | Sidebar toggle | `shell/sidebar.rs` | "Collapse sidebar" or "Expand sidebar", by state |
 | New chat, Search | `shell/sidebar.rs` | Their labels |
 | Chat row | `shell/sidebar.rs` | The title; "{title}, writing a reply" while one runs |
-| Row More | `shell/sidebar.rs` | "More actions for {title}" |
+| Row More | `shell/sidebar.rs` | "More actions for {title}"; id `chat-row-menu-<session id>` |
 | Row and title menu items | `shell/sidebar.rs`, `shell/header.rs` | Open, Pin or Unpin, Rename, Delete |
 | List Try again | `shell/sidebar.rs` | "Try loading chats again" |
 | Title button | `shell/header.rs` | "{title}, chat options" |
@@ -52,3 +52,16 @@ Bound on Chat's root, so they work from any control inside it (`crates/chat/src/
 ## Requests to Isonomic UI
 
 The four asks from the audit (focusable sidebar rows, focus held in the palette, named picker rows, action bar labels) landed in isonomic-ui #381 and are in use.
+
+## Test ids
+
+For the window's scripted QA. Found with the test window's `try_find`.
+
+| Id | Control | Status |
+| --- | --- | --- |
+| `chat-row-menu-<session id>` | A chat row's More button | In place (tested in `crates/chat/tests/ids.rs`) |
+| `chat-row-<session id>` | A chat row | Waits on `SidebarMenuItem::id` in Isonomic UI |
+| `chat-row-menu-<session id>-pin`, `-rename`, `-delete` | The row menu's items | Waits on `PopupMenuItem::id` |
+| `palette-row-<id>`, `palette-row-<id>-active` | A search row and its last-active time | Waits on ids in `CommandPalette` |
+| `model-picker-list`, `model-picker-row-<model id>` | The model picker's list and rows (rows carry their selected state) | Waits on ids in `ModelPicker` |
+

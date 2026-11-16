@@ -8,9 +8,8 @@ use ui::component::menu::{DropdownMenu as _, PopupMenuItem};
 use ui::component::sidebar::{
     Sidebar, SidebarCollapsible, SidebarGroup, SidebarItem as _, SidebarMenu, SidebarMenuItem,
 };
-use ui::component::{
-    ActiveTheme as _, Collapsible as _, Sizable as _, StyledExt as _, h_flex, v_flex,
-};
+use ui::component::{ActiveTheme as _, Collapsible as _, Sizable as _, h_flex, v_flex};
+use ui::extra::wordmark::Wordmark;
 use ui::prelude::*;
 use ui::{Entity, FontWeight, SharedString, StyleRefinement, Window, div};
 
@@ -42,17 +41,12 @@ pub(super) fn render(
         .when(collapsed, |this| this.justify_center())
         .child(toggle)
         .when(!collapsed, |this| {
+            // The brand's wordmark: "Isonomic" in the sans, regular, then
+            // the product's name in light, at the design's 20.
             this.child(
                 div()
                     .id("wordmark")
-                    // Design 0.2: display serif, 20 / 28; medium is the
-                    // heaviest weight of the bundled serif.
-                    .font_family(cx.theme().serif_font_family.clone())
-                    .text_size(metrics::wordmark_size())
-                    .line_height(metrics::wordmark_line())
-                    .font_medium()
-                    .text_color(cx.theme().foreground)
-                    .child(copy::WORDMARK),
+                    .child(Wordmark::product(copy::PRODUCT).size(metrics::wordmark_size())),
             )
         });
 
@@ -209,7 +203,7 @@ fn row_menu(
     title: SharedString,
     pinned: bool,
 ) -> impl IntoElement {
-    Button::new(SharedString::from(format!("more-{id}")))
+    Button::new(SharedString::from(format!("chat-row-menu-{id}")))
         .ghost()
         .xsmall()
         .icon(icons::more())
