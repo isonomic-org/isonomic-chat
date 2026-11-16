@@ -232,3 +232,85 @@ fn the_manifest_icon_is_in_the_icon_catalog() {
         .unwrap_or_else(|| panic!("{path} is not in the icon catalog"));
     assert!(!svg.is_empty());
 }
+
+#[ui::test]
+fn a_reply_tried_again_is_a_version_inside_its_chat(cx: &mut TestAppContext) {
+    use conversation_host::{ForkAt, SessionQuery};
+    use conversation_model::schema::{Block, ForkReason};
+    use futures::StreamExt as _;
+
+    let host = TestHost::new();
+    host.engine().agents().with(|memory| {
+        memory.model.text("Apple.");
+        memory.model.text("Fruit");
+        memory.model.text("Pear.");
+    });
+    // A chat whose first reply was tried again, made before Chat mounts.
+    let (app, _) = host.context::<Chat>();
+    let sdk = SdkHost::new(app.client().agents());
+    let root = host.runtime().block_on(async {
+        let new = NewSession {
+            preset: isonomic_chat::PRESET.into(),
+            title: None,
+            model: None,
+        };
+        let root = sdk.create(new).await.expect("create");
+        let mut updates = sdk.subscribe(&root, 0).await.expect("subscribe");
+        let mut thread = conversation_model::Thread::for_session(root.clone());
+        sdk.send(&root, vec![Block::text("Name a fruit")])
+            .await
+            .expect("send");
+        while thread.title().is_none() {
+            thread.apply(&updates.next().await.expect("an update"));
+        }
+        let turn = thread.turns()[0].ids[0].clone();
+        host.engine().agents().advance(1_000);
+        let child = sdk
+            .fork(&root, ForkAt::Before(turn), ForkReason::Regenerate)
+            .await
+            .expect("fork");
+        let mut own = sdk.subscribe(&child, 0).await.expect("subscribe");
+        let mut branch = conversation_model::Thread::for_session(child.clone());
+        sdk.send(&child, vec![Block::text("Name a fruit")])
+            .await
+            .expect("send");
+        while !branch
+            .turns()
+            .first()
+            .is_some_and(|t| t.state == TurnState::Done)
+        {
+            branch.apply(&own.next().await.expect("an update"));
+        }
+        let listed = sdk.list(SessionQuery::default()).await.expect("list");
+        assert_eq!(listed.len(), 2, "the host lists the fork");
+        root
+    });
+
+    let (open, shell) = mount(cx, &host);
+    let id: ui::SharedString = root.0.clone().into();
+    shell.read_with(cx, |shell, _| {
+        let ids: Vec<_> = shell.sessions().iter().map(|s| s.id.clone()).collect();
+        assert_eq!(
+            ids,
+            std::slice::from_ref(&id),
+            "one chat, not one per version"
+        );
+    });
+    cx.update_window(open.window.into(), |_, window, cx| {
+        shell.update(cx, |shell, cx| shell.open_session(id.clone(), window, cx));
+    })
+    .unwrap();
+    let thread = shell.read_with(cx, |shell, _| shell.thread(&id).cloned().expect("a view"));
+    wait_until(cx, &thread, |view| {
+        view.thread()
+            .turns()
+            .first()
+            .is_some_and(|t| t.reply() == "Pear.")
+    });
+    let versions = thread.read_with(cx, |view, _| view.versions(0));
+    assert_eq!(
+        versions,
+        Some((2, 1)),
+        "the newer version shows, with the pager"
+    );
+}

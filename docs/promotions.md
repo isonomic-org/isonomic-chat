@@ -2,6 +2,15 @@
 
 Every decision about where a type, helper, binding or screen lives: the kit (`crates/conversation-*`), Chat (`crates/chat`), or neither (a request to the host). The test: could Agents, an in-app assistant or the Activity tab use it? Newest first.
 
+## 2026-11-16 · Try again and versions
+
+| Piece | Where | Verdict | Why |
+| --- | --- | --- | --- |
+| `ConversationHost::fork`, `ForkAt`, `SessionEntry::forked_from` and `created_at` | `crates/conversation-host`, `crates/conversation-sdk` | Kit | Mirrors `sessions.fork`; any app with sessions can branch them |
+| Carried turns (`Thread::with_turns`, `turns_through`, `Turn::start_seq`) and the version planner (`plan`, `Branch`, `Slot`, `Path`) | `crates/conversation-model` | Kit | Pure folding over sessions, no product terms |
+| Try again and the pager | `crates/conversation-ui` `view/versions.rs` | Kit | Every conversation surface regenerates the same way |
+| Leaving forks out of the chat list | `crates/chat` `shell/sessions.rs` | Chat | Which sessions are "chats" is Chat's list |
+
 ## 2026-11-16 · Thread to design 0.2
 
 | Piece | Where | Verdict | Why |

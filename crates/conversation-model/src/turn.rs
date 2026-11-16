@@ -1,6 +1,6 @@
 //! One turn as a view shows it.
 
-use crate::schema::{CallId, StepId, ToolOutcome, TurnId};
+use crate::schema::{CallId, Seq, StepId, ToolOutcome, TurnId};
 use std::collections::BTreeMap;
 
 /// Where a turn is.
@@ -95,6 +95,9 @@ pub struct Turn {
     pub retrying: Option<String>,
     /// Where it is.
     pub state: TurnState,
+    /// The `seq` of its first `turn.start` in its session's log; 0 until the
+    /// host confirms it. A fork that shares this turn forks after it.
+    pub start_seq: Seq,
     /// Bumped on every change, so a view re-renders only the turns that moved.
     pub revision: u64,
 }
@@ -104,6 +107,7 @@ impl Turn {
         Self {
             ids: id.into_iter().collect(),
             prompt,
+            start_seq: 0,
             reasoning: String::new(),
             text: String::new(),
             live: BTreeMap::new(),

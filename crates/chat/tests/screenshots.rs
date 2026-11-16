@@ -96,6 +96,22 @@ mod screenshots {
             self.cx.run_until_parked();
         }
 
+        /// Write the open conversation's reply at `index` again.
+        fn again(&mut self, index: usize) {
+            let shell = self.shell.clone();
+            self.cx
+                .update_window(self.handle, |_, _, cx| {
+                    let Route::Session(id) = shell.read(cx).route().clone() else {
+                        return;
+                    };
+                    if let Some(thread) = shell.read(cx).thread(&id).cloned() {
+                        thread.update(cx, |thread, cx| thread.regenerate(index, cx));
+                    }
+                })
+                .unwrap();
+            self.cx.run_until_parked();
+        }
+
         fn host(&self) -> &ScriptedHost {
             self.host.as_ref().expect("a live state")
         }
@@ -181,6 +197,13 @@ mod screenshots {
             live: true,
             before: nothing,
             setup: thread,
+        },
+        State {
+            name: "thread-versions",
+            width: WIDE,
+            live: true,
+            before: nothing,
+            setup: versions,
         },
         State {
             name: "thread-narrow",
@@ -274,6 +297,22 @@ mod screenshots {
             .script(ScriptedReply::text(ANSWER).with_reasoning("Plain terms, one analogy, short."));
         scene.send("Explain how public-key cryptography works, in plain terms.");
         scene.host().pump(20);
+        scene.settle();
+    }
+
+    /// A reply written twice: the second shows, with the pager.
+    fn versions(scene: &mut Scene) {
+        scene.host().script(
+            ScriptedReply::text("Try a short walk after lunch.").with_title("Afternoon energy"),
+        );
+        scene.send("One tip for afternoon energy?");
+        scene.host().finish();
+        scene.settle();
+        scene.host().script(ScriptedReply::text(
+            "Drink a glass of water before you reach for coffee.",
+        ));
+        scene.again(0);
+        scene.host().finish();
         scene.settle();
     }
 

@@ -34,8 +34,8 @@ Every visible difference between the design and what this repository draws. The 
 | # | Design 0.2 | Built | Why |
 | --- | --- | --- | --- |
 | T1 | Prompt bubble wraps at 560 | Isonomic UI's message bubble, which wraps at 80 % of the column (576 at 720) | The component's own limit |
-| T2 | Prompt hover actions: time, retry, edit, copy | Copy only, shown on hover; the row keeps its space | Retry and edit need `fork` and versions (next kit PR); turns carry no time |
-| T3 | Reply actions: copy, read aloud, thumbs up and down, retry, time | Isonomic UI's message action bar with Copy only, always shown | Try again and the version pager come with `fork`; votes and read aloud have no service; no time |
+| T2 | Prompt hover actions: time, retry, edit, copy | Copy only, shown on hover; the row keeps its space | Try again sits on the reply; edit is not built yet; turns carry no time |
+| T3 | Reply actions: copy, read aloud, thumbs up and down, retry, time; version pager beside them | Isonomic UI's message action bar: Copy and Try again, always shown; the pager ("2 / 2") beside Try again once a reply has versions | Votes and read aloud have no service; no time; the pager is the action bar's own |
 | T4 | Stream cursor block under the text | None; the thinking indicator shows until text arrives | The text view streams with its own fade |
 | T5 | Thinking row: orb, label, seconds, caret; expands to a summary or log | Isonomic UI's thinking indicator: orb and the last line of thinking, not expandable, no seconds | No expandable thinking row in Isonomic UI |
 | T6 | Stopped note "You stopped this response" in the reply | On the last turn, said by the status bar with Continue; on earlier turns, the note under the reply | The status bar is the one stop and error bar |
