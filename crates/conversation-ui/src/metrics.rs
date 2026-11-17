@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The kit's few timings and layout sizes. Colours, type and spacing come
 //! from the theme.
 

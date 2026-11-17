@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The conversation kit's host on the SDK's agents interface.
 //!
 //! [`SdkHost`] maps each [`ConversationHost`] method one to one onto the

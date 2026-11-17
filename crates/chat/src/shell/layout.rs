@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! How the shell fits its window: the sidebar collapses to its rail at
 //! narrow widths and expands again when the window grows, unless the person
 //! toggled it in between.

@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Chat as an Isonomic app: the manifest the window shows and grants, and
 //! the root view it mounts.
 

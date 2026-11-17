@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Forks through `SdkHost`, against the SDK testkit's in-memory agents
 //! host: what a fork's own log holds, and how it lists.
 

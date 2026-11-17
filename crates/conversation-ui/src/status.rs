@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The status bar above the composer: the one place that says a reply is
 //! being written, how the last one ended, or that the conversation is
 //! reconnecting, closed or could not load, with what can be done about it.

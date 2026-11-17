@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The ids the window's scripted QA finds Chat's controls by.
 
 extern crate ui as gpui;

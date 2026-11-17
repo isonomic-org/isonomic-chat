@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! A whole turn through `SdkHost`, against the SDK testkit's in-memory
 //! agents host: no engine, the real host loop.
 

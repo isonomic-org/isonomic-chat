@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The models a person may pick from, in the order to offer them.
 
 /// Whether a model can answer now.

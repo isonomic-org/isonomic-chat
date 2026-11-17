@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The search palette (design 0.2 `SearchPalette`): Isonomic UI's command
 //! palette over the shell, listing the chats by title and the New chat
 //! action. Typing narrows them; Enter opens; Escape closes.

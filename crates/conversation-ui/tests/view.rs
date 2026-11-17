@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Headless tests of the conversation view against the scripted host: send,
 //! stream, stop, continue, refusal and a refused send.
 

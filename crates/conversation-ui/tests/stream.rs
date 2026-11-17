@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! A reply streamed one word per frame, as a real engine streams tokens,
 //! stays drawn whole once a later turn starts.
 

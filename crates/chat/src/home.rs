@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Home (design 0.2 `HomeView/01_Home`): the greeting, the composer and,
 //! under it, the footer with the model picker. A 720 column, centred, lifted
 //! above true centre. No suggestion chips.

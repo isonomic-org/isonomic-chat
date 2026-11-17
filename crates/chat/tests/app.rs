@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Chat as the window mounts it, against the SDK's headless host: the
 //! manifest, the chat list from the host, pins in Chat's schema, and a real
 //! turn sent from home.

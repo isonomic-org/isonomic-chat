@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The model catalog's order and choice.
 
 use conversation_model::{Availability, ModelCatalog, ModelOption};

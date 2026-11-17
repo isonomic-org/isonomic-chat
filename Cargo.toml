@@ -16,7 +16,7 @@ default-members = ["examples/dev"]
 version = "0.0.1"
 edition = "2024"
 publish = false
-license = "UNLICENSED"
+license = "GPL-3.0-or-later"
 
 [workspace.dependencies]
 ui = { path = "crates/ui" }

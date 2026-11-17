@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! First run against the SDK's headless host: no chat model, Install asks
 //! the window, the download runs, and home leaves Downloading the moment the
 //! model is ready, with no restart.

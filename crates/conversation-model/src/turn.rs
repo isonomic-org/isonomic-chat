@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! One turn as a view shows it.
 
 use crate::schema::{CallId, Seq, StepId, ToolOutcome, TurnId};

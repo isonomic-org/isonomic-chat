@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Reloading the chat list: an answer asked for before a delete never brings
 //! the chat back, the shell says when a reload has finished, and a write the
 //! host or the store refuses leaves the list as they hold it.

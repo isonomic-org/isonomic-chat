@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The app sidebar (design 0.2 `AppSidebar`, `AppSidebarRail`): the toggle
 //! and the wordmark, the nav (New chat, Search), then the Pinned and Recents
 //! groups of chats. Collapsed, it is a rail of icons: the toggle and the nav

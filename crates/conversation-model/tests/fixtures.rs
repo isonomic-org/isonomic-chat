@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The thread model against the harness's recorded fixtures.
 
 use conversation_model::schema::{DeltaKind, Event};

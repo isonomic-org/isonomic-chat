@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The conversation kit's one way in.
 //!
 //! Every binding reaches the platform through [`ConversationHost`] and

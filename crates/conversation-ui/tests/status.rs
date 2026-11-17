@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The status bar against the scripted host: its buttons in each state, as
 //! design 0.2 draws them, Dismiss, and a conversation whose log stalls
 //! showing a plain error with Try again instead of loading for ever.

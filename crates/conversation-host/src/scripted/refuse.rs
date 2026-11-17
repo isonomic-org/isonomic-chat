@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! A test hook for a host that refuses a write.
 
 use super::{Inner, ScriptedHost};

@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Versions against the scripted host: trying a reply again forks the
 //! session before its turn, the pager switches between the versions, and a
 //! conversation opened again shows the version last worked on.

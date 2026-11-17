@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The live screenshot states: what each one sends, streams and stops.
 
 use conversation_host::{ScriptedHost, ScriptedReply};
