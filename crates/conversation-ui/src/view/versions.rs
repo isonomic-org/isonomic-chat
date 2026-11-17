@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Versions: trying a reply again forks the session before its turn and
 //! writes the turn anew; the pager under a reply switches between them.
 //!

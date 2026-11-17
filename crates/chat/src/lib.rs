@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Isonomic Chat: the assistant you talk to.
 //!
 //! Chat is thin. It owns its screens, navigation, home, settings and preset;

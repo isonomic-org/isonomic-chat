@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! A thread that carries on from another: the turns a fork shares with the
 //! session it was forked from come first, then its own.
 

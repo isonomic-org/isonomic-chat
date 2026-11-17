@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Listing sessions, and test hooks for a stream that stalls and a list
 //! answer that arrives late.
 

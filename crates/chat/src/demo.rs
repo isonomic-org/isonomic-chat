@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Static data for the shell and home while the kit and the host are not
 //! wired. Development data only: none of it ships as a default.
 

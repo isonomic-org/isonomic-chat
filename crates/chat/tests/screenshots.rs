@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Renders Chat's shell and home offscreen, light and dark, to
 //! `target/screenshots/<theme>/<state>.png` (or under `$SCREENSHOT_DIR`).
 //!

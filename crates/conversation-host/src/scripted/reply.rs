@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The replies a scripted host gives, in order.
 
 /// One reply the host will give, in order.

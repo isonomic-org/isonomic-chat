@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! One turn as a row of the conversation list: the prompt's bubble on the
 //! trailing side, then the reply, unboxed, with its actions.
 //!

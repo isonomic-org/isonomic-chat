@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The text view state behind each reply, owned by the conversation view.
 //!
 //! A reply is drawn from a state the view keeps per turn, not one the text

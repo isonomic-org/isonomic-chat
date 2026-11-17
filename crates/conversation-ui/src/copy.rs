@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The words a conversation view shows. The app that mounts it may replace
 //! any of them.
 

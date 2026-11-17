@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Chat's shell (design 0.2 app shell): the app sidebar, which collapses to
 //! a rail, and the main panel with its header and the home or thread view.
 //! The search palette opens over both.

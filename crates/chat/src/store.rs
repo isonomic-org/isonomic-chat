@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Chat's own state, kept beside the sessions the host stores: which chats
 //! are pinned. Sessions, titles and history live in the host; only what
 //! Chat alone means is stored here.

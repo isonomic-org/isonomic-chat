@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The wall clock, for how long ago a chat was active.
 
 use std::time::{SystemTime, UNIX_EPOCH};

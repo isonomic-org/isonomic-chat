@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! A host that plays scripted replies, word by word, as real session events.
 //!
 //! Tests and the gallery drive it by hand: [`ScriptedHost::pump`] streams the

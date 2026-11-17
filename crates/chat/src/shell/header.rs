@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The header above the panel (design 0.2 `SessionHeader`): on a chat, its
 //! title with a menu to rename, pin or delete it; on home, nothing. The
 //! device indicator, side-panel toggle, Share and incognito are outside

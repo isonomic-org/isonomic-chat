@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The versions of a conversation's turns.
 //!
 //! Trying a reply again, or editing a prompt, forks the session before that

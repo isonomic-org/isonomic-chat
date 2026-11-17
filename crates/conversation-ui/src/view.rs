@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! One conversation: the turns, the composer and continue.
 
 use conversation_host::{ConversationHost, HostError, NewSession};

@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Headless tests of Chat's shell and home: routing, sending from home,
 //! rename, delete and the keyboard toggles.
 

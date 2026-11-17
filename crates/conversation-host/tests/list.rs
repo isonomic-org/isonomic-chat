@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The scripted host's session list.
 
 use conversation_host::{ConversationHost, NewSession, ScriptedHost, ScriptedReply, SessionQuery};

@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Home's composer (design 0.2 `Composer`): Isonomic UI's prompt composer,
 //! the same one the thread uses. The model is picked in the footer under
 //! it, not in the composer.

@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The icons Chat draws, all from Isonomic UI's catalog. The window must
 //! register an asset source that contains them (see `ALL`).
 

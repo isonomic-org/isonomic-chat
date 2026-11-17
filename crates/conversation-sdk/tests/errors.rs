@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Errors and updates from the SDK, as the kit sees them.
 
 use conversation_host::{ConversationHost, NewSession};

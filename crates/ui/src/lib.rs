@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The single re-export of Isonomic UI.
 //!
 //! Every other crate in this repository depends on `ui` for its interface and

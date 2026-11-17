@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Forks, as the engine makes them: the child's own log is its
 //! `session.start` and a `forked` naming the parent and the last `seq`
 //! shared; the shared turns stay in the parent's log.

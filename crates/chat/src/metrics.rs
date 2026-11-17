@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Chat's layout sizes, from the version 0.2 design reference
 //! (`docs/design/v0.2/`). Colours, type and spacing come from the theme;
 //! the few sizes that belong to Chat's layout live here and nowhere else.

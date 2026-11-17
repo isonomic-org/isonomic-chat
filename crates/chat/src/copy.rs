@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Everything Chat says on screen, in one place.
 
 /// The title of a chat before it has one, and the sidebar's new-chat entry.

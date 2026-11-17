@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Chat in a standalone window, for development. Chats sent from home run on
 //! the kit's scripted host, which streams a few canned replies word by word
 //! until the SDK adapter lands.

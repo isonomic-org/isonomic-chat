@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! Editing a sent prompt: a field in place of its bubble, with Cancel and
 //! Save. Saving sends the new prompt as a new version of that turn (a fork
 //! with reason edit); the pager under the reply switches back.

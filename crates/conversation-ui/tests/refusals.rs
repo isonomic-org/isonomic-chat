@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! A fork the host refuses, on try again or on an edited prompt: the thread
 //! stays as it was, no version is added, the error is reported, and the
 //! next attempt goes through.

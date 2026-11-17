@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The conversation kit's bindings to Isonomic UI.
 //!
 //! [`ConversationView`] is one conversation: its turns in a virtualized list,

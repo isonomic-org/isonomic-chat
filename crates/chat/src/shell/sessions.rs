@@ -1,3 +1,6 @@
+// Copyright 2026 Anud Inc.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //! The shell's chats when it has a backend: the list comes from the host,
 //! pins from Chat's store, and opening, renaming and deleting go through
 //! them. Without a backend the shell shows the static example chats.
