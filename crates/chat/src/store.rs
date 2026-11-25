@@ -42,6 +42,8 @@ pub struct MemoryStore {
     pins: RefCell<Vec<String>>,
     /// Why writes fail, while they do.
     refusing: RefCell<Option<String>>,
+    /// Why reads fail, while they do.
+    unreadable: RefCell<Option<String>>,
 }
 
 impl MemoryStore {
@@ -54,10 +56,23 @@ impl MemoryStore {
     pub fn accept_writes(&self) {
         *self.refusing.borrow_mut() = None;
     }
+
+    /// Make every read fail with `reason` until [`Self::accept_reads`].
+    pub fn refuse_reads(&self, reason: &str) {
+        *self.unreadable.borrow_mut() = Some(reason.to_owned());
+    }
+
+    /// Let reads through again.
+    pub fn accept_reads(&self) {
+        *self.unreadable.borrow_mut() = None;
+    }
 }
 
 impl Store for MemoryStore {
     fn pins(&self) -> StoreFuture<Vec<String>> {
+        if let Some(reason) = self.unreadable.borrow().clone() {
+            return futures::future::ready(Err(reason)).boxed_local();
+        }
         futures::future::ready(Ok(self.pins.borrow().clone())).boxed_local()
     }
 

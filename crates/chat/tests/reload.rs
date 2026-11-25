@@ -226,3 +226,41 @@ fn a_list_that_failed_loads_on_try_again(cx: &mut TestAppContext) {
     assert!(shell.read_with(cx, |shell, _| shell.load_error().is_none()));
     assert_eq!(listed(&shell, cx), vec![lisbon]);
 }
+
+#[ui::test]
+fn a_store_that_cannot_be_read_keeps_the_pins_shown(cx: &mut TestAppContext) {
+    let host = ScriptedHost::new();
+    let lisbon = chat(&host, "Lisbon");
+    let porto = chat(&host, "Porto");
+    let store = Rc::new(MemoryStore::default());
+    let (_window, shell) = open_with(cx, host.clone(), store.clone());
+    cx.run_until_parked();
+    shell.update(cx, |shell, cx| shell.set_pinned(&lisbon, true, cx));
+    cx.run_until_parked();
+
+    // The store stops answering reads; a reload keeps Lisbon pinned.
+    store.refuse_reads("the store is locked");
+    shell.update(cx, |shell, cx| shell.reload(cx));
+    cx.run_until_parked();
+    let pinned = |shell: &Entity<ChatShell>, cx: &mut TestAppContext, id: &SharedString| {
+        shell.read_with(cx, |shell, _| {
+            shell.sessions().iter().any(|s| &s.id == id && s.pinned)
+        })
+    };
+    assert!(
+        pinned(&shell, cx, &lisbon),
+        "the pin survives an unreadable store"
+    );
+    assert!(!pinned(&shell, cx, &porto));
+    assert_eq!(
+        listed(&shell, cx).first(),
+        Some(&lisbon),
+        "pinned stays on top"
+    );
+
+    // Once it reads again, its answer wins.
+    store.accept_reads();
+    shell.update(cx, |shell, cx| shell.reload(cx));
+    cx.run_until_parked();
+    assert!(pinned(&shell, cx, &lisbon));
+}

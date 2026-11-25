@@ -2,6 +2,10 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-25 · Pins survive a store that cannot be read
+
+- When Chat's store cannot be read during a list load, the chats already shown as pinned stay pinned, in their order, instead of every pin being dropped. The store's next good answer wins. Tested in `crates/chat/tests/reload.rs` (it fails without the change); test hook `MemoryStore::refuse_reads` / `accept_reads`.
+
 ## 2026-11-25 · Delete asks first
 
 - Deleting a chat from its row's menu or the title menu opens Isonomic UI's alert dialog (design 0.2 `SessionMenu/05_DeleteConfirm`, decided in issue #49): 440 wide, centred, "Delete chat?", the chat's title in the body, Cancel and a danger-tone Delete. Enter deletes; Escape, Cancel and the close button keep the chat. `ChatShell::confirm_delete` asks; `delete_session` still deletes at once for callers that already asked.
