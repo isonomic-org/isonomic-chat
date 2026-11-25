@@ -288,7 +288,7 @@ fn row_menu(
                         .icon(icons::delete())
                         .on_click(move |_, window, cx| {
                             delete.update(cx, |shell, cx| {
-                                shell.delete_session(&delete_id, window, cx)
+                                shell.confirm_delete(&delete_id, window, cx)
                             })
                         }),
                 )
