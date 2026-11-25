@@ -76,6 +76,10 @@ impl isonomic_app::App for Chat {
         }
     }
 
+    fn hosts_shell_header() -> bool {
+        true
+    }
+
     fn build(cx: AppContext, window: &mut Window, app: &mut App) -> AnyView {
         if !app.has_global::<KeysBound>() {
             crate::init(app);
@@ -94,6 +98,10 @@ impl isonomic_app::App for Chat {
             }),
         };
         let shell = app.new(|shell| ChatShell::new(Some(backend), window, shell));
+        // The window's header sits in Chat's sidebar; its rail goes.
+        shell.update(app, |shell, shell_cx| {
+            shell.host_shell_header(cx.clone(), shell_cx)
+        });
         // Open on the composer, so the first key typed is the prompt.
         shell.update(app, |shell, cx| shell.new_chat(window, cx));
         app.new(|_| Chat {

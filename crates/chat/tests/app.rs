@@ -383,3 +383,28 @@ fn every_icon_chat_draws_is_in_the_icon_catalog() {
         assert!(!svg.is_empty(), "{path} is empty");
     }
 }
+
+#[ui::test]
+fn chat_hosts_the_windows_header_and_reports_its_sidebar(cx: &mut TestAppContext) {
+    let host = TestHost::new();
+    let (open, shell) = mount(cx, &host);
+    assert!(open.hosts_shell_header, "the window leaves out its rail");
+    open.window
+        .update(cx, |_, window, _| window.refresh())
+        .unwrap();
+    cx.run_until_parked();
+    let headers = host.shell_headers();
+    assert!(
+        headers.contains(&(APP_ID.to_owned(), isonomic_app::Sidebar::Expanded)),
+        "the header is drawn expanded: {headers:?}"
+    );
+
+    shell.update(cx, |shell, cx| shell.set_sidebar_open(false, cx));
+    cx.run_until_parked();
+    assert_eq!(*open.sidebar.borrow(), isonomic_app::Sidebar::Collapsed);
+    assert!(
+        host.shell_headers()
+            .contains(&(APP_ID.to_owned(), isonomic_app::Sidebar::Collapsed)),
+        "the header is drawn collapsed"
+    );
+}
