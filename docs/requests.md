@@ -4,13 +4,17 @@ What this repository needs from others, and what others asked of it. Newest firs
 
 ## Out
 
+### O19 · SDK: move UI_REF to isonomic-ui 6e0c4a5
+
+**To:** isonomic-sdk #56. **Status:** open. Chat gets Isonomic UI only through the SDK; the stop glyph and the thought row need `6e0c4a5`. Chat moves `SDK_REF` to the resulting commit.
+
 ### O18 · Isonomic UI: thinking row with its time, expandable
 
-**To:** isonomic-ui #417. **Status:** open. Design 0.2's `ThinkingRow` keeps "Thought for N seconds" once finished and expands to the reasoning; `ThinkingIndicator` has neither (design-diffs T11).
+**To:** isonomic-ui #417. **Status:** done at isonomic-ui `6e0c4a5`, in use once the SDK's `UI_REF` moves (isonomic-sdk #56). Design 0.2's `ThinkingRow` keeps "Thought for N seconds" once finished and expands to the reasoning; `ThinkingIndicator` has neither (design-diffs T11).
 
 ### O17 · Isonomic UI: the Stopped icon
 
-**To:** isonomic-ui #416. **Status:** open. The run status bar's Stopped state draws an outlined square that reads as a checkbox; asked for a filled stop glyph or a caller-chosen icon.
+**To:** isonomic-ui #416. **Status:** done at isonomic-ui `6e0c4a5` (no Chat change), in use once the SDK's `UI_REF` moves (isonomic-sdk #56). The run status bar's Stopped state draws an outlined square that reads as a checkbox; asked for a filled stop glyph or a caller-chosen icon.
 
 ### O16 · Isonomic UI: lists and the reply pager
 

@@ -258,11 +258,36 @@ fn reply(
         .min_w_0()
         .gap_3();
     let text = turn.reply();
+    let reasoning = turn.thinking();
+    if shown.is_some() && !reasoning.is_empty() {
+        // Design 0.2: once the words come, the row says how long it thought
+        // and opens to the reasoning. Its id is the reply's, so the open
+        // state stays with this reply.
+        column = column.child(
+            div().id("thought").child(
+                ThinkingIndicator::new(
+                    ElementId::NamedInteger("thought-row".into(), index as u64),
+                    OrbState::Reasoning,
+                )
+                .finished(true)
+                .label(copy.thought_for(turn.thought_ms))
+                .reasoning(
+                    div()
+                        .w_full()
+                        .min_w_0()
+                        .text_sm()
+                        .text_color(muted)
+                        .whitespace_normal()
+                        .child(reasoning.trim().to_owned()),
+                ),
+            ),
+        );
+    }
     if turn.state.is_open() && shown.is_none() {
-        let label = if turn.thinking().is_empty() {
+        let label = if reasoning.is_empty() {
             copy.thinking.clone()
         } else {
-            SharedString::from(last_line(&turn.thinking()))
+            SharedString::from(last_line(&reasoning))
         };
         column = column.child(
             div()

@@ -136,7 +136,7 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | T8 | Reply actions: copy, read aloud, votes, retry, time; 28 buttons with 16 `gray/500` icons, 2 apart | Copy and Try again, 28 buttons with 16 icons; mid grey until pointed at, then the text colour (the bar's quiet mode); the pager quiet, its arrows and numbers at 12 in the muted colour | Fixed / Accepted (version 1: no read aloud, votes or times) |
 | T9 | Pager before the actions, 8 apart | Same | Fixed |
 | T10 | Retry is called as the app says ("Try again") | Same ("Try again", "Copy") | Fixed |
-| T11 | Thinking row: orb, label, seconds, expands | Isonomic UI's thinking indicator; no seconds; not expandable | Accepted (no expandable row in Isonomic UI) |
+| T11 | Thinking row: orb, label, seconds, expands | Isonomic UI's thinking indicator; once words come, a light bulb with "Thought for N seconds" that opens to the reasoning. The time runs from the turn's start to the reply, so it includes writing; no running seconds while it thinks | Fixed (isonomic-ui `6e0c4a5`) / Accepted (no clock in the view yet for running seconds) |
 | T12 | Stream cursor block | The text view's fade | Accepted |
 | T13 | Stopped note in the reply | The last turn says it in the status bar with Continue; earlier turns keep the note | Accepted (the bar is the one stop and error bar) |
 | T14 | Run status bar: Stop while running; Dismiss, Retry, Resume when stopped; Dismiss, Retry on an error; Steer | Isonomic UI's aligned run status bar at `66e93d3`, the same buttons; cut short has Dismiss and Continue; Steer left out | Fixed / Accepted (no steering in version 1) |
