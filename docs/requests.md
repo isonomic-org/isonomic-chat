@@ -4,6 +4,14 @@ What this repository needs from others, and what others asked of it. Newest firs
 
 ## Out
 
+### O18 · Isonomic UI: thinking row with its time, expandable
+
+**To:** isonomic-ui #417. **Status:** open. Design 0.2's `ThinkingRow` keeps "Thought for N seconds" once finished and expands to the reasoning; `ThinkingIndicator` has neither (design-diffs T11).
+
+### O17 · Isonomic UI: the Stopped icon
+
+**To:** isonomic-ui #416. **Status:** open. The run status bar's Stopped state draws an outlined square that reads as a checkbox; asked for a filled stop glyph or a caller-chosen icon.
+
 ### O16 · Isonomic UI: lists and the reply pager
 
 **To:** isonomic-ui (filed by the orchestrator). **Status:** done at isonomic-ui `fa70c9b`, in use: `bullet_list_indent`, `bullet_list_marker_gap`, `ordered_list_indent`, `ordered_list_marker_gap`, `MessageActionBar::pager_quiet`.
