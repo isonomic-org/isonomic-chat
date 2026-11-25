@@ -217,6 +217,18 @@ mod screenshots {
             setup: |scene| scene.shell(|shell, window, cx| shell.open_search(window, cx)),
         },
         State {
+            name: "delete-confirm",
+            width: WIDE,
+            live: false,
+            before: nothing,
+            setup: |scene| {
+                scene.shell(|shell, window, cx| {
+                    shell.open_session("s2".into(), window, cx);
+                    shell.confirm_delete(&"s2".into(), window, cx);
+                })
+            },
+        },
+        State {
             name: "home-narrow",
             width: NARROW,
             live: false,

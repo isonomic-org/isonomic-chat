@@ -48,7 +48,7 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | C3 | Inline rename field 300 × 32 | Same, named "Chat title"; Escape cancels | Fixed |
 | C4 | Title menu (page undecided) | Pin or Unpin, Rename, separator, Delete, with icons, 220 wide; the same order as a row's menu | Fixed (order, icons, width) |
 | C5 | Device, running pill, side panel, Share; incognito on home | Left out | Accepted (version 1) |
-| C6 | Delete asks first (dialog 440 × 240) | Delete is immediate | Accepted until the session management page is decided |
+| C6 | Delete asks first (dialog 440 × 240) | Isonomic UI's alert dialog, 440 wide, centred: "Delete chat?", the chat's title in the body ("… will be permanently deleted. This can't be undone."), close button, Cancel and Delete in the danger tone; Enter deletes, Escape keeps. From a row's menu and the title menu. The body drops "and its files" (version 1 chats have no files); the danger button is Isonomic UI's tone, not the reference's solid red; the footer keeps the dialog's padding where the frame has none | Fixed (issue #49) / Accepted (tokens) |
 
 ## Search palette (`search-and-menus.md`)
 

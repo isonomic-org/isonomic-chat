@@ -5,6 +5,7 @@
 //! a rail, and the main panel with its header and the home or thread view.
 //! The search palette opens over both.
 
+mod confirm;
 mod header;
 mod layout;
 mod search;
@@ -56,6 +57,8 @@ pub struct ChatShell {
     /// The window, when it hosts Chat with its shell header in the sidebar.
     window_shell: Option<isonomic_app::AppContext>,
     search: Option<search::Search>,
+    /// The chat whose delete the confirm dialog is asking about.
+    confirming: Option<SharedString>,
     composer: Entity<Composer>,
     backend: Option<Backend>,
     threads: HashMap<SharedString, Entity<ConversationView>>,
@@ -111,6 +114,7 @@ impl ChatShell {
             sidebar_collapsed: false,
             window_shell: None,
             search: None,
+            confirming: None,
             composer,
             backend: backend.clone(),
             threads: HashMap::new(),
