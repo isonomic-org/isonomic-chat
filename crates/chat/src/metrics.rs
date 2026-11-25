@@ -103,6 +103,12 @@ pub(crate) fn menu_width() -> Pixels {
     px(220.)
 }
 
+/// Width of the dialog that asks before a chat is deleted (design 0.2
+/// `SessionMenu/05_DeleteConfirm`).
+pub(crate) fn confirm_width() -> Pixels {
+    px(440.)
+}
+
 /// Width of the inline rename field.
 pub(crate) fn rename_width() -> Pixels {
     px(300.)

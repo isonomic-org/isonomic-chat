@@ -39,6 +39,15 @@ pub const DISCLAIMER: &str = "Isonomic is AI and can make mistakes. Please doubl
 pub const RENAME: &str = "Rename";
 /// The header title menu.
 pub const DELETE: &str = "Delete";
+/// The title of the dialog that asks before a chat is deleted.
+pub const DELETE_TITLE: &str = "Delete chat?";
+/// The dialog's Cancel button.
+pub const CANCEL: &str = "Cancel";
+
+/// The body of the dialog that asks before a chat is deleted.
+pub fn delete_body(title: &str) -> String {
+    format!("\u{201c}{title}\u{201d} will be permanently deleted. This can\u{2019}t be undone.")
+}
 /// Shown where the conversation view will be.
 pub const NO_CHATS: &str = "Start a chat and Isonomic will keep track of it here.";
 pub const LIST_FAILED: &str = "Chats couldn't load.";
