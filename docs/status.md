@@ -2,6 +2,13 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-25 · Engine errors part way through a reply
+
+- A reply the engine gives up on part way keeps the words it had written on show, above the error, with Try again (before, they vanished and only the error remained). The words are display only, as the session schema says of an errored attempt's content; they are not sent to the model. Fixed in `conversation-model` (the errored attempt's content is committed to the turn).
+- A passing error the engine tries again clears the first try's words and streams the answer from the start, once, with the "Trying again" note meanwhile; nothing is doubled.
+- The scripted host can now fail part way (`ScriptedReply::fail_after`, `retry_after`), writing what the engine writes: an errored attempt with what streamed, then a fresh try or a failed step and turn (`scripted/fail.rs`).
+- Tested in `conversation-ui/tests/failures.rs`; the keep-the-words test fails without the fix.
+
 ## 2026-11-25 · Pins survive a store that cannot be read
 
 - When Chat's store cannot be read during a list load, the chats already shown as pinned stay pinned, in their order, instead of every pin being dropped. The store's next good answer wins. Tested in `crates/chat/tests/reload.rs` (it fails without the change); test hook `MemoryStore::refuse_reads` / `accept_reads`.

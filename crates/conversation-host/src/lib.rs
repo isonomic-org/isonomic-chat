@@ -11,7 +11,7 @@
 
 mod scripted;
 
-pub use scripted::{ScriptedHost, ScriptedReply};
+pub use scripted::{Failure, ScriptedHost, ScriptedReply};
 
 use conversation_model::schema::{Block, ForkReason, Seq, SessionId, TurnId};
 use conversation_model::{Availability, ModelCatalog, Update};

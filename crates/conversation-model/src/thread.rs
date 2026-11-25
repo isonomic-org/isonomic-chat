@@ -276,6 +276,11 @@ impl Thread {
                         self.turns[index].retrying = Some(reason.unwrap_or_default());
                     }
                     AttemptOutcome::Error => {
+                        // The engine gave up: what streamed stays on show
+                        // above the error (display only; it is not sent).
+                        let turn = &mut self.turns[index];
+                        let joins = turn.continuing;
+                        commit(turn, &attempt.content, joins);
                         self.attempt_message =
                             attempt.error.as_ref().map(|error| error.message.clone());
                     }
