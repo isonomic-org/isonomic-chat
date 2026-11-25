@@ -2,6 +2,10 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-25 · Pins survive a store that cannot be read
+
+- When Chat's store cannot be read during a list load, the chats already shown as pinned stay pinned, in their order, instead of every pin being dropped. The store's next good answer wins. Tested in `crates/chat/tests/reload.rs` (it fails without the change); test hook `MemoryStore::refuse_reads` / `accept_reads`.
+
 ## 2026-11-16 · The window's header in Chat's sidebar
 
 - `SDK_REF` moves to `c849f9d` (`UI_REF` `fa70c9b`); harness unchanged. `Cargo.lock` needs no change.

@@ -30,8 +30,19 @@ impl ChatShell {
             // could push chats out.
             let query = SessionQuery::default();
             let listed = backend.host.list(query).await;
-            let pins = backend.store.pins().await.unwrap_or_default();
+            let pins = backend.store.pins().await;
             let _ = this.update(cx, |this, cx| {
+                // A store that cannot be read keeps the pins already shown,
+                // in their order, rather than unpinning every chat.
+                let pins: Vec<String> = match pins {
+                    Ok(pins) => pins,
+                    Err(_) => this
+                        .sessions
+                        .iter()
+                        .filter(|s| s.pinned)
+                        .map(|s| s.id.to_string())
+                        .collect(),
+                };
                 match listed {
                     Ok(entries) => {
                         // A fork is a version inside its chat, not a chat;
