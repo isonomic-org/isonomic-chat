@@ -101,6 +101,11 @@ pub struct Turn {
     /// The `seq` of its first `turn.start` in its session's log; 0 until the
     /// host confirms it. A fork that shares this turn forks after it.
     pub start_seq: Seq,
+    /// When the host started it, in milliseconds since the epoch.
+    pub started_at: Option<u64>,
+    /// How long it took from the start to the first reply that carried
+    /// reasoning; `None` when the reply had no reasoning.
+    pub thought_ms: Option<u64>,
     /// Bumped on every change, so a view re-renders only the turns that moved.
     pub revision: u64,
 }
@@ -123,6 +128,8 @@ impl Turn {
             refusal: None,
             retrying: None,
             state,
+            started_at: None,
+            thought_ms: None,
             revision: 0,
         }
     }

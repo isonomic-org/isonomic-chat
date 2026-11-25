@@ -13,6 +13,16 @@ pub struct ConversationCopy {
     pub placeholder: SharedString,
     /// The status while the host works before the first words.
     pub thinking: SharedString,
+    /// The reasoning row once the reply is written, when its time is unknown.
+    pub thought: SharedString,
+    /// The reasoning row after about one second.
+    pub thought_second: SharedString,
+    /// The reasoning row after some seconds; `{n}` is the count.
+    pub thought_seconds: SharedString,
+    /// The reasoning row after about one minute.
+    pub thought_minute: SharedString,
+    /// The reasoning row after some minutes; `{n}` is the count.
+    pub thought_minutes: SharedString,
     /// The continue button under a reply that stopped early.
     pub continue_label: SharedString,
     /// The note under a reply the person stopped.
@@ -76,6 +86,11 @@ impl Default for ConversationCopy {
         Self {
             placeholder: "Reply…".into(),
             thinking: "Thinking".into(),
+            thought: "Thought".into(),
+            thought_second: "Thought for 1 second".into(),
+            thought_seconds: "Thought for {n} seconds".into(),
+            thought_minute: "Thought for 1 minute".into(),
+            thought_minutes: "Thought for {n} minutes".into(),
             continue_label: "Continue".into(),
             stopped: "You stopped this response".into(),
             truncated: "The reply reached its length limit.".into(),
@@ -105,6 +120,31 @@ impl Default for ConversationCopy {
             model_unknown: "That model isn't available any more. Pick another.".into(),
             model_unavailable: "That model isn't installed yet. Download it, or pick another."
                 .into(),
+        }
+    }
+}
+
+impl ConversationCopy {
+    /// The reasoning row's words for a reply that took `ms` to arrive:
+    /// whole seconds (at least one) under a minute, then whole minutes.
+    pub fn thought_for(&self, ms: Option<u64>) -> SharedString {
+        let Some(ms) = ms else {
+            return self.thought.clone();
+        };
+        let seconds = ms.div_ceil(1000).max(1);
+        let (one, many, n) = if seconds < 60 {
+            (&self.thought_second, &self.thought_seconds, seconds)
+        } else {
+            (
+                &self.thought_minute,
+                &self.thought_minutes,
+                (seconds + 30) / 60,
+            )
+        };
+        if n == 1 {
+            one.clone()
+        } else {
+            many.replace("{n}", &n.to_string()).into()
         }
     }
 }

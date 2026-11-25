@@ -238,7 +238,12 @@ impl Thread {
                 self.awaiting_client = status.status == Status::AwaitingClient;
             }
             Event::Title(title) => self.title = Some(title.title.clone()),
-            Event::TurnStart(start) => self.start_turn(event.turn.clone(), &start.cause, event.seq),
+            Event::TurnStart(start) => {
+                self.start_turn(event.turn.clone(), &start.cause, event.seq);
+                if let Some(turn) = self.turns.last_mut() {
+                    turn.started_at.get_or_insert(event.at);
+                }
+            }
             Event::User(user) => {
                 if let Some(index) = event.turn.as_ref().and_then(|t| self.turn_index(t)) {
                     self.turns[index].prompt = text_of(&user.content);
@@ -256,6 +261,9 @@ impl Thread {
                 turn.retrying = None;
                 let joins = reply.continues.is_some() || turn.continuing;
                 commit(turn, &reply.content, joins);
+                if turn.thought_ms.is_none() && !turn.reasoning.is_empty() {
+                    turn.thought_ms = turn.started_at.map(|at| event.at.saturating_sub(at));
+                }
                 turn.continuing = false;
                 self.last_stop = Some(reply.stop.clone());
                 self.touch(index);

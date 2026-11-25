@@ -2,6 +2,13 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-25 · The thought row and the stop glyph
+
+- Once a reply's words come, a reply with reasoning shows a light bulb row, "Thought for N seconds" (whole seconds, at least one; whole minutes from a minute), that opens to the reasoning. Closed by default; the open state is kept per reply. Words are the kit's copy (`ConversationCopy::thought_for`).
+- `Turn::thought_ms` comes from the durable log (the turn's start to the first reply with reasoning), so a reloaded chat shows the same time. It includes the time spent writing, since the log has no separate end of reasoning.
+- The status bar's Stopped icon is a filled stop glyph from Isonomic UI; no Chat change.
+- `SDK_REF` moves to `123d0b4` (`UI_REF` `6e0c4a5`); harness unchanged. `Cargo.lock` gains the SDK test engine's new dependencies (`isonomic-words`, from the SDK's recovery kit). Tested in `conversation-ui/tests/thought.rs`.
+
 ## 2026-11-25 · Engine errors part way through a reply
 
 - A reply the engine gives up on part way keeps the words it had written on show, above the error, with Try again (before, they vanished and only the error remained). The words are display only, as the session schema says of an errored attempt's content; they are not sent to the model. Fixed in `conversation-model` (the errored attempt's content is committed to the turn).
