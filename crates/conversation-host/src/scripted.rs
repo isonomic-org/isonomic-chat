@@ -11,12 +11,13 @@
 use events::{assistant, compacted, step_end, title_event, too_large, turn_end, words};
 
 mod events;
+mod fail;
 mod fork;
 mod list;
 mod refuse;
 mod reply;
 
-pub use reply::ScriptedReply;
+pub use reply::{Failure, ScriptedReply};
 
 use crate::{
     ConversationHost, ForkAt, HostError, HostFuture, NewSession, SessionEntry, SessionQuery,
@@ -51,6 +52,7 @@ struct Open {
     title: Option<String>,
     refuse: bool,
     continues: Option<Seq>,
+    fail: Option<reply::Failure>,
 }
 
 /// What a stopped reply did not get to write.
@@ -276,6 +278,7 @@ impl ConversationHost for ScriptedHost {
                 title: reply.title,
                 refuse: reply.refuse,
                 continues: None,
+                fail: reply.fail,
             };
             let state = inner.session(&session)?;
             state.leftover = None;
@@ -311,6 +314,7 @@ impl ConversationHost for ScriptedHost {
                 written_text: String::new(),
                 title: leftover.title,
                 refuse: false,
+                fail: None,
                 continues: Some(leftover.after),
             });
             Ok(())
@@ -478,6 +482,9 @@ impl Inner {
     /// Write one word of the session's open reply, or end it. Returns whether
     /// the reply is still open.
     fn write_word(&mut self, id: &SessionId) -> bool {
+        if self.fail_due(id) {
+            return self.fail_reply(id);
+        }
         let Some(session) = self.sessions.get_mut(id) else {
             return false;
         };
