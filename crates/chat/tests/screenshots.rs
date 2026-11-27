@@ -292,6 +292,20 @@ mod screenshots {
             setup: streaming,
         },
         State {
+            name: "thread-tools",
+            width: WIDE,
+            live: true,
+            before: nothing,
+            setup: tools,
+        },
+        State {
+            name: "thread-approval",
+            width: WIDE,
+            live: true,
+            before: nothing,
+            setup: approval,
+        },
+        State {
             name: "thread-errors",
             width: WIDE,
             live: true,

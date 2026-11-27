@@ -89,6 +89,18 @@ pub(crate) fn edit_width() -> Pixels {
     px(560.)
 }
 
+/// At most this many characters of one value on an approval card.
+const DETAIL_CHARS: usize = 160;
+
+/// A value cut to fit one line of an approval card, with an ellipsis.
+pub(crate) fn clip(value: &str) -> String {
+    let value = value.trim();
+    match value.char_indices().nth(DETAIL_CHARS) {
+        Some((cut, _)) => format!("{}…", value[..cut].trim_end()),
+        None => value.to_owned(),
+    }
+}
+
 /// How long to wait before following a session again after its stream
 /// ended: a quarter second, doubling with each try, at most eight seconds.
 pub(crate) fn reconnect_wait(tries: u32) -> Duration {

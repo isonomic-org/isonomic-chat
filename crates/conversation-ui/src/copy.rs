@@ -73,6 +73,26 @@ pub struct ConversationCopy {
     pub resume: SharedString,
     /// Stop the reply being written.
     pub stop: SharedString,
+    /// A tool call's row while it waits for the person's approval.
+    pub tool_waiting: SharedString,
+    /// A tool call's row once the person denied it.
+    pub tool_denied: SharedString,
+    /// A tool call's row once the reply was stopped before it ran.
+    pub tool_stopped: SharedString,
+    /// The status bar while a call waits for the person's approval.
+    pub waiting_approval: SharedString,
+    /// An approval card's title; `{name}` is the operation or tool.
+    pub approval_title: SharedString,
+    /// The title of an approval that gates no tool call.
+    pub approval_lone: SharedString,
+    /// The label of the connection on an approval card.
+    pub approval_app: SharedString,
+    /// The label of the operation on an approval card.
+    pub approval_tool: SharedString,
+    /// Allow the call.
+    pub allow: SharedString,
+    /// Deny the call.
+    pub deny: SharedString,
     /// The picked model is not one this app may use.
     pub model_denied: SharedString,
     /// The picked model does not exist.
@@ -116,6 +136,16 @@ impl Default for ConversationCopy {
             retry: "Retry".into(),
             resume: "Resume".into(),
             stop: "Stop".into(),
+            tool_waiting: "Waiting for your approval".into(),
+            tool_denied: "Denied".into(),
+            tool_stopped: "Stopped before it ran".into(),
+            waiting_approval: "Waiting for your approval".into(),
+            approval_title: "Allow {name}?".into(),
+            approval_lone: "Allow this action?".into(),
+            approval_app: "App".into(),
+            approval_tool: "Action".into(),
+            allow: "Allow".into(),
+            deny: "Deny".into(),
             model_denied: "This app isn't allowed to use that model.".into(),
             model_unknown: "That model isn't available any more. Pick another.".into(),
             model_unavailable: "That model isn't installed yet. Download it, or pick another."
@@ -125,6 +155,11 @@ impl Default for ConversationCopy {
 }
 
 impl ConversationCopy {
+    /// An approval card's title for an operation or tool.
+    pub fn approve_title(&self, name: &str) -> SharedString {
+        self.approval_title.replace("{name}", name).into()
+    }
+
     /// The reasoning row's words for a reply that took `ms` to arrive:
     /// whole seconds (at least one) under a minute, then whole minutes.
     pub fn thought_for(&self, ms: Option<u64>) -> SharedString {

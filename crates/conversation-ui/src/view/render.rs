@@ -53,11 +53,12 @@ impl ConversationView {
             return Some((RunStatus::Reconnecting, copy.retrying.clone(), Vec::new()));
         }
         if turn.state.is_open() {
-            return Some((
-                RunStatus::Running,
-                copy.working.clone(),
-                vec![StatusButton::Stop],
-            ));
+            // Waiting for the person still runs: Stop ends the turn.
+            let words = match turn.pending_approval() {
+                Some(_) => copy.waiting_approval.clone(),
+                None => copy.working.clone(),
+            };
+            return Some((RunStatus::Running, words, vec![StatusButton::Stop]));
         }
         let message = ending(turn, copy)?;
         let can_continue = thread.input_state().can_continue();
@@ -267,11 +268,17 @@ fn controls(view: &WeakEntity<ConversationView>, index: usize, cx: &App) -> Repl
                 }),
             }
         });
+    let decide = view.clone();
+    let on_decide = Rc::new(move |approval, decision, _: &mut Window, cx: &mut App| {
+        let _ = decide.update(cx, |view, cx| view.decide(approval, decision, cx));
+    }) as crate::tools::DecideHandler;
     ReplyControls {
         on_regenerate,
         versions,
         on_edit,
         editing,
         prompt_focus: None,
+        on_decide: Some(on_decide),
+        deciding: this.deciding().to_vec(),
     }
 }

@@ -2,6 +2,14 @@
 
 Every decision about where a type, helper, binding or screen lives: the kit (`crates/conversation-*`), Chat (`crates/chat`), or neither (a request to the host). The test: could Agents, an in-app assistant or the Activity tab use it? Newest first.
 
+## 2026-11-27 · Tool calls and approvals
+
+| Piece | Where | Verdict | Why |
+| --- | --- | --- | --- |
+| Folding tool calls, results and approvals into a turn; `Target` read from a call's input | `crates/conversation-model` | Kit | Every surface that runs a session shows the same calls |
+| `ConversationHost::decide`, the user-action source on `SdkHost` | `crates/conversation-host`, `crates/conversation-sdk` | Kit | Mirrors `approvals.decide`; minting the token stays the window's |
+| The tool row, the approval card, the waiting status | `crates/conversation-ui` `tools.rs` | Kit | Isonomic UI's components, bound once for every surface |
+
 ## 2026-11-16 · Models watch and the status bar's buttons
 
 | Piece | Where | Verdict | Why |

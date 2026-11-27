@@ -4,7 +4,7 @@
 //! The replies a scripted host gives, in order.
 
 /// One reply the host will give, in order.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct ScriptedReply {
     /// Reasoning streamed before the answer.
     pub reasoning: Option<String>,
@@ -22,6 +22,8 @@ pub struct ScriptedReply {
     pub too_large: Option<String>,
     /// The engine fails part way through the answer.
     pub fail: Option<Failure>,
+    /// Tool calls made before the answer, in order.
+    pub tools: Vec<super::ScriptedTool>,
 }
 
 /// An engine error part way through a reply.
@@ -92,6 +94,12 @@ impl ScriptedReply {
             message: message.into(),
             retry: true,
         });
+        self
+    }
+
+    /// Make this tool call before answering.
+    pub fn with_tool(mut self, tool: super::ScriptedTool) -> Self {
+        self.tools.push(tool);
         self
     }
 

@@ -6,14 +6,14 @@
 //! Every binding reaches the platform through [`ConversationHost`] and
 //! nothing else: the kit never opens a socket. Its methods mirror the SDK's
 //! agents interface (`sessions.create`, `send`, `continue`, `cancel`,
-//! `rename`, `fork`, `subscribe`), so the SDK adapter is a thin mapping. Until that
+//! `rename`, `fork`, `subscribe`, `approvals.decide`), so the SDK adapter is a thin mapping. Until that
 //! adapter lands, [`ScriptedHost`] plays scripted replies with real events.
 
 mod scripted;
 
-pub use scripted::{Failure, ScriptedHost, ScriptedReply};
+pub use scripted::{Failure, ScriptedHost, ScriptedReply, ScriptedTool};
 
-use conversation_model::schema::{Block, ForkReason, Seq, SessionId, TurnId};
+use conversation_model::schema::{ApprovalId, Block, Decision, ForkReason, Seq, SessionId, TurnId};
 use conversation_model::{Availability, ModelCatalog, Update};
 use futures::future::LocalBoxFuture;
 use futures::stream::LocalBoxStream;
@@ -142,6 +142,16 @@ pub trait ConversationHost {
     /// One model's availability now. The window owns downloads; an app
     /// watches a model it asked for by asking this while it is on its way.
     fn availability(&self, model: &str) -> HostFuture<Availability>;
+
+    /// Answer an approval the session asked for, as the person chose. Only a
+    /// clear `Allow` allows; anything else is a denial. The answer arrives
+    /// on the session's stream as `approval.decision`.
+    fn decide(
+        &self,
+        session: &SessionId,
+        approval: &ApprovalId,
+        decision: Decision,
+    ) -> HostFuture<()>;
 
     /// Follow a session from just after `from_seq` (0 for everything).
     fn subscribe(&self, session: &SessionId, from_seq: Seq) -> HostFuture<UpdateStream>;

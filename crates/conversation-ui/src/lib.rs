@@ -18,9 +18,11 @@ extern crate ui as gpui;
 mod copy;
 mod metrics;
 mod status;
+mod tools;
 mod turn;
 mod view;
 
 pub use copy::ConversationCopy;
 pub use status::{STATUS_ID, StatusButton};
+pub use tools::{approval_card_id, tool_row_id};
 pub use view::{ConversationEvent, ConversationView};

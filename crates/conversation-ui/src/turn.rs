@@ -48,6 +48,10 @@ pub(crate) struct ReplyControls {
     pub(crate) editing: Option<EditBox>,
     /// Shows the prompt's actions while one of them has focus.
     pub(crate) prompt_focus: Option<FocusHandle>,
+    /// Answer an approval the turn waits on.
+    pub(crate) on_decide: Option<crate::tools::DecideHandler>,
+    /// Approvals whose answer is on its way.
+    pub(crate) deciding: Vec<conversation_model::schema::ApprovalId>,
 }
 
 /// An open edit field on a prompt.
@@ -82,8 +86,10 @@ pub(crate) fn render_turn(
         });
     }
     let open = turn.state.is_open();
-    let said =
-        !shown(&turn.reply()).is_empty() || !turn.notices.is_empty() || controls.versions.is_some();
+    let said = !shown(&turn.reply()).is_empty()
+        || !turn.notices.is_empty()
+        || !turn.tools.is_empty()
+        || controls.versions.is_some();
     let noted = turn.refusal.is_some()
         || matches!(turn.state, TurnState::Refused(_))
         || (!last && ending(turn, copy).is_some());
@@ -283,7 +289,10 @@ fn reply(
             ),
         );
     }
-    if turn.state.is_open() && shown.is_none() {
+    let tools =
+        crate::tools::render_tools(turn, copy, controls.on_decide.as_ref(), &controls.deciding);
+    column = column.children(tools);
+    if turn.state.is_open() && shown.is_none() && turn.pending_approval().is_none() {
         let label = if reasoning.is_empty() {
             copy.thinking.clone()
         } else {
