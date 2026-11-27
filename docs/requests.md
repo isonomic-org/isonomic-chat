@@ -4,6 +4,10 @@ What this repository needs from others, and what others asked of it. Newest firs
 
 ## Out
 
+### O20 · SDK: an app asks the window for a user-action token
+
+**To:** isonomic-sdk #64 (follows #25). **Status:** open. `approvals.decide` needs a token only the shell can mint (`approvals.user_action`), and no `AppContext` call lets an app ask the window for one when the person presses Allow or Deny in the app's view. Until it lands, Chat's approval card works on the testkit and is refused (`missing_user_action`) in the window. Asked: `AppContext::user_action(session, approval)`, answered only for a focused tab during an input event; the same in the test host, with a refusal to test; a stable refusal code.
+
 ### O19 · SDK: move UI_REF to isonomic-ui 6e0c4a5
 
 **To:** isonomic-sdk #56. **Status:** done at isonomic-sdk `123d0b4` (#57), in use. Chat gets Isonomic UI only through the SDK; the stop glyph and the thought row need `6e0c4a5`. Chat moves `SDK_REF` to the resulting commit.

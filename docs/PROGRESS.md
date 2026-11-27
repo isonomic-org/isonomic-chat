@@ -2,22 +2,21 @@
 
 Newest first. Updated at every task boundary so a new session can resume from this repository alone. Detail is in `status.md`.
 
-## 2026-11-15 · Step 0
+## 2026-11-27 · The gallery, after the launch decisions
 
 **Where the work is**
 
-| Task | Pull request | State |
+| Task | Where | State |
 | --- | --- | --- |
-| Step 0: workspace, `Cargo.lock`, inventory, name map | #2 | open; CI blocked by the organization's Actions billing |
-| Chat shell and home with static data | #3 | open, stacked on #2 |
+| Launch decisions (#49) | issue | closed: every decision carried out |
+| The kit's gallery, the fixture player, the boundary and product-term checks | `kit-gallery` pull request | open |
+| Approvals live in the window | isonomic-sdk #64 (O20) | waiting on the SDK |
+| Ask widgets (questions, choices) | spec, then the kit | next |
+| Tool bindings in the kit (#57) | after harness #50 brings `kits-files-read` | next |
+| Display widgets (#51) | after the harness display specs and fixture merge | queued |
 
 **Notes for whoever resumes**
 
-- The GitHub connector cannot create repositories, write `.github/workflows/`, or carry very large files such as `Cargo.lock`. The repository was created in the browser as @QadmiriOmar; large pushes go through git on Omar's Mac (`~/Code/isonomic/repos/isonomic-chat`), whose `gh` is signed in as @QadmiriOmar.
-- Isonomic UI is checked out next to this repository at the commit in the SDK's `UI_REF`.
-
-**Next, in order**
-
-1. `conversation-model` and `composer-model`, once the harness schema and fixtures merge (isonomic-harness #2, #3).
-2. The `ConversationHost` trait and the fixture player.
-3. The gallery: every binding against every fixture, light and dark, with replay.
+- Check out isonomic-sdk next to this repository at `SDK_REF`, and isonomic-ui at the SDK's `UI_REF`. The harness comes by git over SSH; with HTTPS only, point `ssh://git@github.com/` at `https://github.com/` with git's `insteadOf` and set `CARGO_NET_GIT_FETCH_WITH_CLI=true`.
+- Linux needs the xkbcommon development libraries to link, and a Vulkan driver (a software one works) for the gallery and Chat's screenshots.
+- The gallery: `cargo test -p conversation-ui --features test-support --test gallery`. Chat's screens: `cargo test -p isonomic-chat --features test-support --test screenshots`.
