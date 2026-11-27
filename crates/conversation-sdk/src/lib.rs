@@ -13,18 +13,26 @@ use conversation_host::{
     ConversationHost, ForkAt, HostError, HostFuture, NewSession, SessionEntry, SessionQuery,
     UpdateStream,
 };
-use conversation_model::schema::{Block, ForkReason, Seq, SessionId};
+use conversation_model::schema::{ApprovalId, Block, Decision, ForkReason, Seq, SessionId};
 use conversation_model::{Availability, ModelCatalog, ModelOption, Update, display_name};
+use futures::future::LocalBoxFuture;
 use futures::{FutureExt as _, StreamExt as _, stream};
 use isonomic_client::{Agents, ClientError, Models, SessionUpdate};
-use isonomic_proto::agents::{CreateSession, ForkPoint, ListSessions, PresetId};
+use isonomic_proto::agents::{CreateSession, DecisionInput, ForkPoint, ListSessions, PresetId};
 use isonomic_proto::models::ModelState;
+use std::rc::Rc;
+
+/// The window's user-action token for the person's decision on an
+/// approval in a session: what `approvals.decide` needs.
+pub type UserActions =
+    Rc<dyn Fn(SessionId, ApprovalId) -> LocalBoxFuture<'static, Result<String, HostError>>>;
 
 /// A conversation host on the SDK's agents interface.
 #[derive(Clone)]
 pub struct SdkHost {
     agents: Agents,
     models: Option<Models>,
+    user_actions: Option<UserActions>,
 }
 
 impl SdkHost {
@@ -33,7 +41,16 @@ impl SdkHost {
         Self {
             agents,
             models: None,
+            user_actions: None,
         }
+    }
+
+    /// Ask for the window's user-action token when the person decides an
+    /// approval. Without it a decision goes without one, and the engine
+    /// refuses it (`missing_user_action`).
+    pub fn with_user_actions(mut self, user_actions: UserActions) -> Self {
+        self.user_actions = Some(user_actions);
+        self
     }
 
     /// Also list models, through the app's `models` interface.
@@ -226,6 +243,32 @@ impl ConversationHost for SdkHost {
                 });
             }
             Ok(ModelCatalog::new(options, recommended))
+        }
+        .boxed_local()
+    }
+
+    fn decide(
+        &self,
+        session: &SessionId,
+        approval: &ApprovalId,
+        decision: Decision,
+    ) -> HostFuture<()> {
+        let (agents, session, approval) = (self.agents.clone(), session.clone(), approval.clone());
+        let user_actions = self.user_actions.clone();
+        // Deny-safe: only a clear allow allows.
+        let decision = match decision {
+            Decision::Allow => DecisionInput::Allow,
+            _ => DecisionInput::Deny,
+        };
+        async move {
+            let token = match user_actions {
+                Some(mint) => Some(mint(session.clone(), approval.clone()).await?),
+                None => None,
+            };
+            agents
+                .decide(&session, &approval, decision, token.as_deref())
+                .await
+                .map_err(host_error)
         }
         .boxed_local()
     }

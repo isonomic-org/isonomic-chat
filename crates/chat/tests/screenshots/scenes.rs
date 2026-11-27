@@ -3,13 +3,66 @@
 
 //! The live screenshot states: what each one sends, streams and stops.
 
-use conversation_host::{ScriptedHost, ScriptedReply};
+use conversation_host::{ScriptedHost, ScriptedReply, ScriptedTool};
+use conversation_model::schema::Value;
 use conversation_model::{Availability, ModelCatalog, ModelOption};
 use isonomic_chat::Route;
 
 use crate::screenshots::Scene;
 
 const ANSWER: &str = "Public-key cryptography uses **two keys**: one you share and one you keep.\n\n1. Anyone can lock a message with your public key.\n2. Only your private key unlocks it.\n\nThat is how a browser and a server agree on a secret without ever sending it.";
+
+/// A call's input through a connection, as a connected-app tool sends it.
+fn through(connection: &str, operation: &str, field: &str, value: &str) -> Value {
+    Value::object([
+        ("connection", Value::from(connection)),
+        ("operation", Value::from(operation)),
+        ("input", Value::object([(field, Value::from(value))])),
+    ])
+}
+
+/// A reply that read through a connection first: the call's row, folded.
+pub(crate) fn tools(scene: &mut Scene) {
+    let read = ScriptedTool::new(
+        "connection_call",
+        through("Design files", "list_files", "folder", "Q4 launch"),
+        "plan.md, budget.xlsx, notes.md",
+    );
+    scene.host().script(
+        ScriptedReply::text(
+            "The Q4 launch folder has three files: the plan, the budget and your notes.",
+        )
+        .with_tool(read)
+        .with_title("Q4 launch files"),
+    );
+    scene.send("What is in my Q4 launch folder?");
+    scene.host().finish();
+    scene.settle();
+}
+
+/// A call that changes something, waiting for the person: its row and the
+/// approval card, with the status bar's Stop.
+pub(crate) fn approval(scene: &mut Scene) {
+    let act = ScriptedTool::new(
+        "connection_call",
+        through(
+            "Tasks",
+            "create_task",
+            "title",
+            "Book the room for Thursday",
+        ),
+        "Created.",
+    )
+    .asking("connection_call create_task");
+    scene.host().script(
+        ScriptedReply::text("Added the task.")
+            .with_tool(act)
+            .with_title("Book the room"),
+    );
+    scene.send("Add a task to book the room for Thursday.");
+    scene.host().finish();
+    scene.settle();
+}
 
 /// A finished exchange, a second reply stopped part way (continue shows),
 /// and the quiet divider of a compaction between them.

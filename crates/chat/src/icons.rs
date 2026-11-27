@@ -97,4 +97,9 @@ pub const ALL: &[IconName] = &[
     IconName::Square,
     IconName::TriangleAlert,
     IconName::Loader,
+    // A tool call's row and an approval's card.
+    IconName::SquareTerminal,
+    IconName::ChevronUp,
+    IconName::CircleCheck,
+    IconName::CircleX,
 ];

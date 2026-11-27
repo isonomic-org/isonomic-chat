@@ -9,10 +9,11 @@ use crate::schema::{
     AttemptOutcome, Block, Cause, DeltaKind, Event, LiveDelta, Purpose, Seq, SessionEvent,
     SessionId, Status, StepId, StopReason, TurnId, TurnStop,
 };
-use crate::turn::{Notice, ToolUse, Turn, TurnState};
+use crate::turn::{Notice, Turn, TurnState};
 use std::collections::BTreeSet;
 
 mod branch;
+mod tools;
 
 /// The error code of a turn that failed because the conversation no longer
 /// fits the model.
@@ -302,22 +303,13 @@ impl Thread {
                     self.touch(index);
                 }
             }
-            Event::ToolCall(call) => {
-                if let Some(index) = self.event_turn(event) {
-                    self.turns[index].tools.push(ToolUse {
-                        call: call.call.clone(),
-                        tool: call.tool.clone(),
-                        outcome: None,
-                    });
-                    self.touch(index);
-                }
-            }
-            Event::ToolResult(result) => {
-                if let Some(index) = self.event_turn(event) {
-                    let turn = &mut self.turns[index];
-                    if let Some(tool) = turn.tools.iter_mut().find(|t| t.call == result.call) {
-                        tool.outcome = Some(result.outcome.clone());
-                    }
+            Event::ToolCall(_)
+            | Event::ToolResult(_)
+            | Event::ApprovalRequest(_)
+            | Event::ApprovalDecision(_) => {
+                if let Some(index) = self.event_turn(event)
+                    && tools::fold(&mut self.turns[index], event)
+                {
                     self.touch(index);
                 }
             }
@@ -366,8 +358,8 @@ impl Thread {
                     None => self.notices.push(notice),
                 }
             }
-            // Approvals, questions, artifacts, memory and the rest are shown
-            // by their own bindings as they land; the turns do not change.
+            // Questions, artifacts, memory and the rest are shown by their
+            // own bindings as they land; the turns do not change.
             _ => {}
         }
     }

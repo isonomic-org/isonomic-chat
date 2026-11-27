@@ -10,24 +10,27 @@
 
 use events::{assistant, compacted, step_end, title_event, too_large, turn_end, words};
 
+mod end;
 mod events;
 mod fail;
 mod fork;
 mod list;
 mod refuse;
 mod reply;
+mod tools;
 
 pub use reply::{Failure, ScriptedReply};
+pub use tools::ScriptedTool;
 
 use crate::{
     ConversationHost, ForkAt, HostError, HostFuture, NewSession, SessionEntry, SessionQuery,
     UpdateStream,
 };
 use conversation_model::schema::{
-    AppId, Attempt, AttemptOutcome, Block, Cause, DeltaKind, Event, ForkReason, LiveDelta, Params,
-    PresetId, PresetRef, Principal, PrincipalKind, Purpose, Reasoning, Seq, SessionClass,
-    SessionEvent, SessionId, SessionStart, StepId, StepOutcome, StepStart, StopReason, TitleSource,
-    TurnId, TurnStart, TurnStop, User,
+    AppId, ApprovalId, Attempt, AttemptOutcome, Block, Cause, Decision, DeltaKind, Event,
+    ForkReason, LiveDelta, Params, PresetId, PresetRef, Principal, PrincipalKind, Purpose,
+    Reasoning, Seq, SessionClass, SessionEvent, SessionId, SessionStart, StepId, StepOutcome,
+    StepStart, StopReason, TitleSource, TurnId, TurnStart, TurnStop, User,
 };
 use conversation_model::{Availability, ModelCatalog, Update};
 use futures::channel::mpsc::{UnboundedSender, unbounded};
@@ -53,6 +56,10 @@ struct Open {
     refuse: bool,
     continues: Option<Seq>,
     fail: Option<reply::Failure>,
+    /// Tool calls still to make before the answer.
+    tools: VecDeque<ScriptedTool>,
+    /// A call that waits for the person.
+    waiting: Option<tools::Waiting>,
 }
 
 /// What a stopped reply did not get to write.
@@ -93,6 +100,7 @@ struct Inner {
     next_session: u32,
     next_turn: u32,
     next_step: u32,
+    next_call: u32,
     clock: u64,
 }
 
@@ -173,8 +181,23 @@ impl ScriptedHost {
     }
 
     /// Stream every open reply to its end.
+    /// A reply that waits for an approval stays open until it is decided.
     pub fn finish(&self) {
-        while self.pump(64) {}
+        while self.pump(64) && self.progressing() {}
+    }
+
+    /// Whether any open reply can write more without the person.
+    fn progressing(&self) -> bool {
+        let inner = self.inner.borrow();
+        inner
+            .sessions
+            .iter()
+            .any(|(id, session)| session.open.is_some() && !inner.waits(id))
+    }
+
+    /// Whether a reply in this session waits for the person's approval.
+    pub fn is_waiting(&self, session: &SessionId) -> bool {
+        self.inner.borrow().waits(session)
     }
 
     /// Whether any reply is open.
@@ -279,6 +302,8 @@ impl ConversationHost for ScriptedHost {
                 refuse: reply.refuse,
                 continues: None,
                 fail: reply.fail,
+                tools: reply.tools.into(),
+                waiting: None,
             };
             let state = inner.session(&session)?;
             state.leftover = None;
@@ -316,6 +341,8 @@ impl ConversationHost for ScriptedHost {
                 refuse: false,
                 fail: None,
                 continues: Some(leftover.after),
+                tools: VecDeque::new(),
+                waiting: None,
             });
             Ok(())
         })
@@ -324,9 +351,10 @@ impl ConversationHost for ScriptedHost {
     fn cancel(&self, session: &SessionId) -> HostFuture<()> {
         let session = session.clone();
         self.call(move |inner| {
-            let Some(open) = inner.session(&session)?.open.take() else {
+            let Some(mut open) = inner.session(&session)?.open.take() else {
                 return Ok(());
             };
+            inner.cancel_waiting(&session, &mut open);
             let (turn, step) = (Some(&open.turn), Some(&open.step));
             let mut sealed = None;
             if !open.written_text.is_empty() || !open.written_reasoning.is_empty() {
@@ -400,6 +428,16 @@ impl ConversationHost for ScriptedHost {
                 .get(&model)
                 .map_or(Availability::Unknown, |option| option.availability))
         })
+    }
+
+    fn decide(
+        &self,
+        session: &SessionId,
+        approval: &ApprovalId,
+        decision: Decision,
+    ) -> HostFuture<()> {
+        let (session, approval) = (session.clone(), approval.clone());
+        self.call(move |inner| inner.decide(&session, &approval, decision))
     }
 
     fn subscribe(&self, session: &SessionId, from_seq: Seq) -> HostFuture<UpdateStream> {
@@ -482,6 +520,10 @@ impl Inner {
     /// Write one word of the session's open reply, or end it. Returns whether
     /// the reply is still open.
     fn write_word(&mut self, id: &SessionId) -> bool {
+        if self.write_tool(id) {
+            // A call that waits stops the words until it is decided.
+            return !self.waits(id);
+        }
         if self.fail_due(id) {
             return self.fail_reply(id);
         }
@@ -516,50 +558,5 @@ impl Inner {
             .subscribers
             .retain(|sender| sender.unbounded_send(update.clone()).is_ok());
         true
-    }
-
-    fn end_reply(&mut self, id: &SessionId) {
-        let Some(session) = self.sessions.get_mut(id) else {
-            return;
-        };
-        let Some(open) = session.open.take() else {
-            return;
-        };
-        let give_title = !session.titled && open.title.is_some();
-        session.titled |= give_title;
-        let (turn, step) = (Some(&open.turn), Some(&open.step));
-        if open.refuse {
-            let attempt = Event::Attempt(Attempt {
-                outcome: AttemptOutcome::Refused,
-                error: None,
-                content: vec![Block::text(open.written_text.clone())],
-                usage: None,
-                retry: 0,
-                will_retry: false,
-            });
-            self.emit(id, turn, step, attempt);
-            self.emit(id, turn, step, step_end(StepOutcome::Refused));
-            self.emit(id, turn, None, turn_end(TurnStop::Refused, None));
-            return;
-        }
-        let cut = open.cut.clone().filter(|rest| !rest.is_empty());
-        let stop = if cut.is_some() {
-            StopReason::MaxTokens
-        } else {
-            StopReason::End
-        };
-        let sealed = self.emit(id, turn, step, assistant(&open, stop));
-        self.emit(id, turn, step, step_end(StepOutcome::Complete));
-        self.emit(id, turn, None, turn_end(TurnStop::Done, None));
-        if let (Some(rest), Some(session)) = (cut, self.sessions.get_mut(id)) {
-            session.leftover = Some(Leftover {
-                text: rest,
-                after: sealed,
-                title: None,
-            });
-        }
-        if let Some(title) = open.title.filter(|_| give_title) {
-            self.emit(id, None, None, title_event(title, TitleSource::Model));
-        }
     }
 }

@@ -2,6 +2,14 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-27 · Tool calls and approvals in a thread
+
+- A reply's tool calls show as Isonomic UI's tool call rows, one per call, above the reply's words: the operation (or the tool's name), the connection when the call's input names one, and running, done or failed with the time it took. Arguments and result stay folded until opened, a failed call too. Generic over every tool and name: the connection and operation are read from the input's `connection` / `operation` / `input` fields when present.
+- A call the host asks approval for shows Isonomic UI's approval card under its row: "Allow create_task?", the app, the action and each argument, Deny (Esc) and Allow, no "always allow". The status bar says "Waiting for your approval" with Stop; Stop denies the call as the engine does. Only a clear Allow allows.
+- The kit: `Turn::tools` carry input, effects, output and duration; `Turn::approvals` and `pending_approval()` (`conversation-model`); `ConversationHost::decide` over `approvals.decide`; `SdkHost::with_user_actions` supplies the window's user-action token; `ConversationView::decide`. The scripted host makes tool calls (`ScriptedTool`, `asking`, `failing`).
+- **Not live yet in the window:** `approvals.decide` needs a user-action token only the shell can mint (`approvals.user_action`), and no SDK call lets an app ask the window for one. Chat's `SdkHost` has none, so an answer is refused (`missing_user_action`) until the SDK adds that path (request to the SDK). Tested with the testkit standing in for the window.
+- Tests: `conversation-ui/tests/tools.rs` (a read, any tool name, allow, deny, stop while waiting), `conversation-sdk/tests/approvals.rs` (the same on the testkit, and the refusal without a token), `conversation-model/tests/tools.rs`. Screenshot states `thread-tools` and `thread-approval`.
+
 ## 2026-11-27 · SDK at 91c8d2a, harness at 077909e
 
 - `SDK_REF` moves to `91c8d2a` (`UI_REF` `6e0c4a5`, unchanged). The SDK adds tool server connections and the model setup calls, both for the window; nothing in Chat calls them.
@@ -125,40 +133,4 @@ Newest first. Every deviation from the brief is recorded here.
 - Keyboard: Chat opens on the composer; toggle sidebar moves to Mod-. (the design's key); Alt-Up and Alt-Down step through chats. Names: the toggle by state, More by chat, running chats, the title button, the rename and edit fields, code-block copy.
 - Screenshot states added: thinking before text, Markdown blocks, a failed send with Try again (19 states).
 
-## 2026-11-16 · SDK at abe8fe4: the run status bar and no attaching
-
-- `SDK_REF` moves to `abe8fe4` (its `UI_REF` is isonomic-ui `b4c9670`); harness unchanged at `ae4f1a7`. `Cargo.lock` needs no change.
-- The kit's status bar is now Isonomic UI's `RunStatusBar`: stopped (with Continue, passed as its action label), cut short (Continue), failed (Try again), reconnecting (also for an app away) and closed. Its button is the child `"action"` of the bar's id (`conversation_ui::action_button`).
-- Both composers turn attaching off (`set_attach(false)`): no plus button, no dropped files, no pasted images.
-- The `gpui` alias stays: `#[ui::test]` still resolves through it.
-- Chat's icon list gains the bar's icons.
-
-## 2026-11-16 · The chat list by newest version
-
-- A chat is as new as its newest version: the list orders chats by the latest change in any of their sessions (`conversation_model::newest_first`), pins still on top in pin order. A fork whose first session is not listed (an archived chat) never shows as a chat.
-- Tested in the model and against the SDK test engine: an older chat with a version made after a newer chat is listed first, and is not without the change.
-
-## 2026-11-16 · Editing a prompt
-
-- Edit (under a prompt, on hover) opens Isonomic UI's textarea in place of the bubble, with Cancel and Save; Mod-Enter saves. Save forks before that turn with reason edit and sends the new prompt there; it is a new version of the turn, in the same pager as try again. An empty or unchanged prompt does nothing.
-- Tested on the scripted host (cancel keeps the prompt; save makes a version with reason edit; the pager brings the first prompt back) and on the SDK test engine (the fork carries reason edit and runs the new prompt). Screenshot state `thread-editing`.
-- Chat's icon list now has the icons try again, the pager and edit draw.
-
-## 2026-11-16 · Try again and versions
-
-- Try again on any finished reply forks the session before that turn (`ConversationHost::fork`, over `sessions.fork` with reason regenerate) and sends the prompt again in the fork. The fork shares every turn before it; the turns after it belong to the old version.
-- The session and its forks at one point are that turn's versions. The pager under the reply switches between them, and later turns follow the version shown. Trying a version again adds a sibling, never a fork of a fork at the same turn.
-- A conversation is a tree of sessions; what shows is the path to the session most recently changed (`conversation_model::plan`). Opening a chat folds each session on the path up to where the next forked, then follows the last live.
-- Chat's list leaves forks out: a version is inside its chat. Rename, pin and delete act on the chat's first session.
-- Tested on the scripted host (last reply, an earlier reply, reopening with nested versions) and on the SDK's real host loop (a fork's own log holds only `session.start` and `forked`; Chat lists one chat and opens the newer version).
-- Not built: editing a prompt (the same fork with reason edit, once there is an edit box), and ordering the chat list by a chat's newest version.
-
-## 2026-11-16 · Thread to design 0.2
-
-- The thread scrolls across the whole panel, with its turns in a centred 720 column: 32 above the first and below the last, 24 between them. The composer and the status bar sit in the same column, with the disclaimer under them.
-- A prompt is a muted bubble on the right, with Copy under it on hover. A reply is unboxed Markdown, with Copy under it once it ends. Each code fence has its own copy button.
-- The status bar above the composer is the one place for reconnecting, a closed conversation, and how the last reply ended: stopped or cut short (with Continue), failed (in the danger colours, with Try again). Earlier turns keep a quiet note. It is a placeholder until Isonomic UI has a run status bar.
-- Code block decision: the text view's own fences, because a fence renderer that keeps the streaming re-parse tail-only is not proven (request O9).
-- Differences: `docs/design-diffs.md`, T1 to T10. Requests to Isonomic UI: O9 to O12.
-
-Older entries: `docs/status-archive.md`.
+Older entries are in `status-archive-2.md`.

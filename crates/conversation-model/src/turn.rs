@@ -3,7 +3,8 @@
 
 //! One turn as a view shows it.
 
-use crate::schema::{CallId, Seq, StepId, ToolOutcome, TurnId};
+use crate::schema::{CallId, Seq, StepId, TurnId};
+use crate::tools::{Approval, ToolUse};
 use std::collections::BTreeMap;
 
 /// Where a turn is.
@@ -46,17 +47,6 @@ impl TurnState {
     }
 }
 
-/// A tool the reply used, rendered generically until a renderer claims it.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ToolUse {
-    /// The call.
-    pub call: CallId,
-    /// The tool's name.
-    pub tool: String,
-    /// How it ended; `None` while it runs.
-    pub outcome: Option<ToolOutcome>,
-}
-
 /// Something in the log this build does not know how to show. It renders as
 /// a generic collapsible block.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -85,6 +75,8 @@ pub struct Turn {
     pub(crate) continuing: bool,
     /// Tools the reply used, in call order.
     pub tools: Vec<ToolUse>,
+    /// Approvals the host asked for in this turn, in order.
+    pub approvals: Vec<Approval>,
     /// Things this build cannot show.
     pub notices: Vec<Notice>,
     /// The stable code of the error that ended the turn, if it failed.
@@ -122,6 +114,7 @@ impl Turn {
             live_reasoning: BTreeMap::new(),
             continuing: false,
             tools: Vec::new(),
+            approvals: Vec::new(),
             notices: Vec::new(),
             error_code: None,
             divider_after: None,
@@ -162,6 +155,22 @@ impl Turn {
             }
         }
         thinking
+    }
+
+    /// The approval that gates a call, if one was asked for.
+    pub fn approval_for(&self, call: &CallId) -> Option<&Approval> {
+        self.approvals
+            .iter()
+            .rev()
+            .find(|approval| approval.call.as_ref() == Some(call))
+    }
+
+    /// An approval that still waits for an answer, while the turn is open.
+    pub fn pending_approval(&self) -> Option<&Approval> {
+        if !self.state.is_open() {
+            return None;
+        }
+        self.approvals.iter().find(|approval| approval.is_pending())
     }
 
     /// Whether this turn includes the given host turn.

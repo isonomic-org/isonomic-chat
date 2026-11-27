@@ -1074,6 +1074,7 @@ version = "0.0.1"
 dependencies = [
  "harness-core",
  "harness-testkit",
+ "serde_json",
 ]
 
 [[package]]
@@ -1100,6 +1101,7 @@ dependencies = [
  "conversation-host",
  "conversation-model",
  "futures",
+ "serde_json",
  "ui",
 ]
 

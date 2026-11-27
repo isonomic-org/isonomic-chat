@@ -16,6 +16,7 @@ use ui::{App, Entity, EventEmitter, FocusHandle, Focusable, SharedString, Task, 
 
 use crate::ConversationCopy;
 
+mod approvals;
 mod edit;
 mod render;
 mod replies;
@@ -72,6 +73,9 @@ pub struct ConversationView {
     load_failed: Option<Start>,
     /// The last turn (index, revision) whose status bar was dismissed.
     dismissed: Option<(usize, u64)>,
+    /// Approvals whose answer is on its way.
+    deciding: Vec<conversation_model::schema::ApprovalId>,
+    _decisions: Vec<Task<()>>,
     _composer_events: ui::Subscription,
 }
 
@@ -135,6 +139,8 @@ impl ConversationView {
             editing: None,
             load_failed: None,
             dismissed: None,
+            deciding: Vec::new(),
+            _decisions: Vec::new(),
             _composer_events: composer_events,
         };
         view.load_models(cx);

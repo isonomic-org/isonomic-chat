@@ -16,6 +16,7 @@ futures.workspace = true
 ui.workspace = true
 
 [dev-dependencies]
+serde_json.workspace = true
 ui = { workspace = true, features = ["test-support"] }
 
 [lints]
