@@ -29,10 +29,10 @@ futures = "0.3"
 # The session event schema and its recorded fixtures, pinned at the commit
 # isonomic-sdk pins, until the SDK's agents interface re-exports them. CI
 # fetches it with the shared workflow's `harness` input.
-harness-core = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "ae4f1a7ebe6fdde701534ceadddab987a1b40bcc" }
-harness-host = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "ae4f1a7ebe6fdde701534ceadddab987a1b40bcc" }
-harness-log = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "ae4f1a7ebe6fdde701534ceadddab987a1b40bcc" }
-harness-testkit = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "ae4f1a7ebe6fdde701534ceadddab987a1b40bcc" }
+harness-core = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "077909e25d1c4fa9054872da3d1f7e01ee6d5fbc" }
+harness-host = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "077909e25d1c4fa9054872da3d1f7e01ee6d5fbc" }
+harness-log = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "077909e25d1c4fa9054872da3d1f7e01ee6d5fbc" }
+harness-testkit = { git = "ssh://git@github.com/isonomic-org/isonomic-harness.git", rev = "077909e25d1c4fa9054872da3d1f7e01ee6d5fbc" }
 # Isonomic UI and its extra components come through the SDK
 # (isonomic_app::ui, isonomic_app::extra); the SDK's UI_REF is the one pin.
 # The SDK is a sibling checkout (../isonomic-sdk) pinned to the commit in

@@ -2,6 +2,12 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-27 · SDK at 91c8d2a, harness at 077909e
+
+- `SDK_REF` moves to `91c8d2a` (`UI_REF` `6e0c4a5`, unchanged). The SDK adds tool server connections and the model setup calls, both for the window; nothing in Chat calls them.
+- The harness moves to `077909e` with it, as the SDK asks of every app that pins it; no change to the event schema or the host API. `Cargo.lock` follows (harness crates only).
+- Builds, and every test passes, as before.
+
 ## 2026-11-25 · The thought row and the stop glyph
 
 - Once a reply's words come, a reply with reasoning shows a light bulb row, "Thought for N seconds" (whole seconds, at least one; whole minutes from a minute), that opens to the reasoning. Closed by default; the open state is kept per reply. Words are the kit's copy (`ConversationCopy::thought_for`).
