@@ -1101,6 +1101,7 @@ dependencies = [
  "conversation-host",
  "conversation-model",
  "futures",
+ "harness-testkit",
  "serde_json",
  "ui",
 ]

@@ -2,6 +2,14 @@
 
 Every decision about where a type, helper, binding or screen lives: the kit (`crates/conversation-*`), Chat (`crates/chat`), or neither (a request to the host). The test: could Agents, an in-app assistant or the Activity tab use it? Newest first.
 
+## 2026-11-27 · The gallery
+
+| Piece | Where | Verdict | Why |
+| --- | --- | --- | --- |
+| `FixtureHost`, the recorded-log player | `crates/conversation-host` | Kit | Every binding is shown and tested against the same fixtures, whatever app mounts it |
+| The gallery and the fixture tests | `crates/conversation-ui/tests` | Kit | It shows the kit's bindings; it moves with the kit at Milestone 4 |
+| The boundary and product-term checks | `xtask` | Repository | They guard the kit's move; the kit's own copy goes with it |
+
 ## 2026-11-27 · Tool calls and approvals
 
 | Piece | Where | Verdict | Why |

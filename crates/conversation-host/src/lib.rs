@@ -7,9 +7,13 @@
 //! nothing else: the kit never opens a socket. Its methods mirror the SDK's
 //! agents interface (`sessions.create`, `send`, `continue`, `cancel`,
 //! `rename`, `fork`, `subscribe`, `approvals.decide`), so the SDK adapter is a thin mapping. Until that
-//! adapter lands, [`ScriptedHost`] plays scripted replies with real events.
+//! adapter lands, [`ScriptedHost`] plays scripted replies with real events;
+//! [`FixtureHost`] plays a recorded log, for the gallery.
 
+mod fixture;
 mod scripted;
+
+pub use fixture::FixtureHost;
 
 pub use scripted::{Failure, ScriptedHost, ScriptedReply, ScriptedTool};
 
