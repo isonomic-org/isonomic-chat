@@ -23,7 +23,9 @@ use isonomic_proto::models::ModelState;
 use std::rc::Rc;
 
 /// The window's user-action token for the person's decision on an
-/// approval in a session: what `approvals.decide` needs.
+/// approval in a session: what `approvals.decide` needs. The host calls it
+/// at once, inside the person's input; only the future it returns is
+/// awaited later.
 pub type UserActions =
     Rc<dyn Fn(SessionId, ApprovalId) -> LocalBoxFuture<'static, Result<String, HostError>>>;
 
@@ -260,9 +262,12 @@ impl ConversationHost for SdkHost {
             Decision::Allow => DecisionInput::Allow,
             _ => DecisionInput::Deny,
         };
+        // Ask for the token now, while the person's click or key press is
+        // being handled: the window refuses a token asked for later.
+        let token = user_actions.map(|mint| mint(session.clone(), approval.clone()));
         async move {
-            let token = match user_actions {
-                Some(mint) => Some(mint(session.clone(), approval.clone()).await?),
+            let token = match token {
+                Some(token) => Some(token.await?),
                 None => None,
             };
             agents

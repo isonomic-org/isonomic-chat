@@ -4,7 +4,10 @@
 //! The tools a reply used and the approvals they waited on, as a view shows
 //! them: generic over every tool, whatever its name.
 
-use crate::schema::{ApprovalId, Basis, Block, CallId, Decision, Effect, ToolOutcome, Value};
+use crate::schema::{
+    ApprovalId, Basis, Block, CallId, Decision, DisplayOutcome, Effect, ToolKind, ToolOutcome,
+    Value,
+};
 
 /// Input keys that name the connection a call goes through, best first.
 const CONNECTION_KEYS: [&str; 5] = ["connection_label", "label", "connection", "app", "server"];
@@ -20,6 +23,8 @@ pub struct ToolUse {
     pub call: CallId,
     /// The tool's name.
     pub tool: String,
+    /// Where it runs: engine, client, cell or display.
+    pub kind: ToolKind,
     /// The input, parsed; `Null` when it did not parse.
     pub input: Value,
     /// The model's raw input, only when it did not parse.
@@ -34,6 +39,9 @@ pub struct ToolUse {
     pub started_at: u64,
     /// How long it ran, once it ended.
     pub duration_ms: Option<u64>,
+    /// For a display call: what the host made of it (shown, retry or
+    /// fallback), once it ended.
+    pub display: Option<DisplayOutcome>,
 }
 
 /// Where a call goes and what it asks, read from its input when the input
@@ -87,6 +95,12 @@ impl ToolUse {
             Some(raw) => raw.clone(),
             None => pretty(&self.input),
         }
+    }
+
+    /// Whether it is a display widget: shown under the reply, never as a
+    /// tool row.
+    pub fn is_display(&self) -> bool {
+        self.kind == ToolKind::Display
     }
 
     /// Whether it ended without a result: failed, denied, timed out or

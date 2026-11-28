@@ -2,6 +2,65 @@
 
 Moved from `status-archive.md` to keep files under the size limit. Newest first.
 
+## 2026-11-16 · The thread against the 0.2 frame
+
+- The chat header has no rule under it: design 0.2 has none (`app-shell.md`); the rule came from an older frame. The title stays 14 / 20 medium, the bundled Medium face.
+- Reply text is 16 / 24 (it inherited about 26). The prompt bubble takes the theme's `accent` neutral, the closest to the design's `gray/100`, at radius 18; `muted` nearly vanished on white.
+- The reply's action row is mid grey until pointed at, then the text colour (the bar's quiet mode), with 16 px icons in 28 px buttons.
+- Lists, from `message-content.md`: a bullet 4 in and its text 21 in, as designed. Numbers share the right-aligned marker column, so their text is 24 in where the design has 28.
+## 2026-11-16 · SDK at a6276aa (UI_REF 2b8a583): a quiet composer
+
+- `SDK_REF` moves to `a6276aa`; harness unchanged. `Cargo.lock` needs no change.
+- Both composers (home and the thread) take Isonomic UI's quiet focus: no blue border, as design 0.2 draws them. Empty, each is 96 high (the comfortable size at `2b8a583`). The palette's chip reads "Esc" on macOS too.
+- The greeting and empty-state icon is `Beacon`, a four-point star: the closest drawing in the set to the design's sparkle with a plus (`Sparkles` draws a wand). Omar may choose another.
+- Thread spacing checked against `screens/thread.md`: 58 from a prompt bubble to its reply's first line (6, the prompt's 28 actions row that keeps its space when hidden, 24), 12 from the reply to its action row, 24 to the next prompt. All match.
+## 2026-11-16 · Earlier replies stay whole; reloads keep deletes; the Mac comparison
+
+- **Thread:** the conversation view owns the text view state behind each reply, kept in step after every update, instead of the one the text view finds by element id each frame. A reply that has ended is drawn from one parse of its whole text. On the Mac, a finished reply was drawn as its first streamed token ("Here") once a later turn started; that was not reproduced here (scripted host and SDK test engine, frames drawn while parses were pending), so this removes every path through which a finished reply could show a partial parse. Tested in `conversation-ui/tests/stream.rs`; screenshot state `thread-earlier-reply`.
+- An opening emphasis or code marker at the very end of a reply (a reply stopped at `**`) is not drawn, and a reply with nothing to draw shows no Copy or Try again.
+- **Chat list:** a reload answered after a delete no longer brings the chat back; `is_reloading()` and `loads_finished()` tell the window when a reload has finished (requests I2, I3).
+- **Mac comparison:** New chat and Search sit 8 from the edge, the same width as the chat rows; a chat's header has its 1 px rule. The composer's blue focus border, its height (about 107, not 96), the four-point sparkle and the "Esc" chip on macOS need Isonomic UI (O15). The palette is centred on the window, as the reference draws it.
+- The screenshot harness's scenes moved to `tests/screenshots/scenes.rs` (file size).
+## 2026-11-16 · SDK at 8f21cb6: the window's QA ids
+
+- `SDK_REF` moves to `8f21cb6` (`UI_REF` `527d955`, stable ids); harness unchanged. `Cargo.lock` needs no change.
+- Each chat row is `chat-row-<session id>`; its menu items are `chat-row-menu-<id>-open`, `-pin`, `-rename`, `-delete`. Palette rows are Isonomic UI's `command-<id>` (time at `command-<id>-meta`); the model picker's list and rows come from `model_picker::list_id` and `row_id`. All are tested in `tests/ids.rs` and listed in `docs/accessibility.md`.
+## 2026-11-16 · Model names, and the Mac window checked
+
+- A model's name is shown without its quantisation tag: "Qwen3.5 2B (Q4_K_M)" reads "Qwen3.5 2B" (`conversation_model::display_name`, used by the SDK adapter; ids unchanged).
+- A test checks that every icon Chat draws resolves in Isonomic UI's catalog (`AllAssets`). Chat registers no asset source; the window does.
+- Two screenshot states at the Mac window's size (1100 wide, its 2200 px capture at 2x): `home-mac`, `thread-mac`. At that size the 720 column fills most of the 812 content area, as the design's rule gives.
+## 2026-11-16 · The wordmark, by Omar's brand rule
+
+- `SDK_REF` moves to `a3ac3bf` (`UI_REF` `a1b30e1`); harness unchanged.
+- The sidebar's wordmark is Isonomic UI's `Wordmark::product("Chat")` at 20: "Isonomic" in IBM Plex Sans Regular, "Chat" in Light. The home greeting is back in the theme's sans, 34 / 42. No serif anywhere in Chat: the serif is for long-form reading. A6 and H1 in `docs/design-diffs.md` follow this rule, not the reference.
+- A chat row's More button has the id `chat-row-menu-<session id>` for the window's QA. The other QA ids wait on Isonomic UI (`docs/accessibility.md`).
+## 2026-11-16 · SDK at 1f28327: the serif, and 28 px buttons
+
+- `SDK_REF` moves to `1f28327` (`UI_REF` `0a8f39d`); harness unchanged.
+- The wordmark (20 / 28, medium: the heaviest bundled weight) and the home greeting (34 / 42, regular) are in the bundled serif, as design 0.2 draws them.
+- Copy and Edit under a prompt and the reply action row are 28 px buttons with 16 px icons.
+- What still differs from the design is decided for version 1 or is Isonomic UI's tokens: see `docs/design-diffs.md`.
+## 2026-11-16 · SDK at 4947e43: chat icons in search, list indent
+
+- `SDK_REF` moves to `4947e43` (`UI_REF` `ecd21d1`, isonomic-ui #385); harness unchanged.
+- Search rows show the chat icon (any catalog icon now), and New chat its plus. List text sits 28 in, as designed.
+- Still open: Copy under a prompt and the reply action bar take no icon size (only `Button` does), so those stay 24 px buttons with 16 px icons; Edit matches Copy. The serif wordmark and greeting stay the theme's sans until Omar chooses a typeface.
+## 2026-11-16 · How long ago, in search
+
+- Each chat keeps when it was last active: the newest change in any of its versions, from the host's list, or now for a chat started here. Search shows it on the right of the row in the design's short form ("now", "20m", "2h", "3d", "2w", "4mo", "1y").
+- The rest of `docs/design-diffs.md` is either fixed, decided, or with Isonomic UI (#385: a chat icon on palette rows, list indent, icon size apart from button size). The serif wordmark and greeting wait on whether the theme has a serif family.
+## 2026-11-16 · SDK at 72aca92: Isonomic UI's new options in use
+
+- `SDK_REF` moves to `72aca92` (`UI_REF` `4f1207b`, isonomic-ui #381); harness unchanged. `Cargo.lock` needs no change.
+- Sidebar: the design's padding and 1 px gaps, 32 px rows that take focus (Tab, Enter, Space, Up, Down), Pinned folds. The header title truncates and keeps its caret; Delete is destructive in both menus.
+- Search: 640 wide, "Search or ask…", Esc in the field, 36 px rows, groups kept while filtering, the design's hints, nothing selected until the person types or moves, "No chats match.", focus held inside.
+- Composer: the comfortable size, round 32 px send and stop. Model picker: "Model" header, name-only trigger, trailing check, chosen-row fill, the design's row padding, no footer.
+- Thread: list indent and marker gap; the reply bar's pager first and "Try again". Buttons under a prompt and a reply stay 24 px so their icons stay 16 px.
+- Still open: palette chat icon and meta, hints as key chips, list text at 28, icon size apart from button size (`docs/design-diffs.md`).
+
+Older entries are in `status-archive-3.md` and `status-archive-2.md`.
+
 ## 2026-11-16 · SDK at abe8fe4: the run status bar and no attaching
 
 - `SDK_REF` moves to `abe8fe4` (its `UI_REF` is isonomic-ui `b4c9670`); harness unchanged at `ae4f1a7`. `Cargo.lock` needs no change.

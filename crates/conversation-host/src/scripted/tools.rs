@@ -215,5 +215,6 @@ fn result(call: &CallId, tool: &ScriptedTool, ended: Option<(ToolOutcome, &str)>
         error,
         truncated: None,
         duration_ms: Some(120),
+        display: None,
     })
 }

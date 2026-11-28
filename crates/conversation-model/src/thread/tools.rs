@@ -19,6 +19,7 @@ pub(super) fn fold(turn: &mut Turn, event: &SessionEvent) -> bool {
             turn.tools.push(ToolUse {
                 call: call.call.clone(),
                 tool: call.tool.clone(),
+                kind: call.kind.clone(),
                 input: call.input.clone(),
                 input_raw: call.input_raw.clone(),
                 effects: call.effects.clone(),
@@ -26,6 +27,7 @@ pub(super) fn fold(turn: &mut Turn, event: &SessionEvent) -> bool {
                 output: String::new(),
                 started_at: event.at,
                 duration_ms: None,
+                display: None,
             });
             true
         }
@@ -34,6 +36,7 @@ pub(super) fn fold(turn: &mut Turn, event: &SessionEvent) -> bool {
                 return false;
             };
             tool.outcome = Some(result.outcome.clone());
+            tool.display = result.display.clone();
             let mut output = output_of(&result.content);
             if output.is_empty()
                 && let Some(error) = &result.error

@@ -4,8 +4,12 @@
 //! Chat as an Isonomic app: the manifest the window shows and grants, and
 //! the root view it mounts.
 
-use conversation_sdk::SdkHost;
-use isonomic_app::{AppContext, Capabilities, Manifest, ModelAccess, Schema, SearchHit, SqlAccess};
+use conversation_host::HostError;
+use conversation_sdk::{SdkHost, UserActions};
+use futures::FutureExt as _;
+use isonomic_app::{
+    AppContext, Capabilities, Manifest, ModelAccess, Schema, SearchHit, SqlAccess, UserActionError,
+};
 use isonomic_proto::manifest::AgentsAccess;
 use std::rc::Rc;
 use ui::{AnyView, App, AppContext as _, Context, Entity, Global, IntoElement, Render, Window};
@@ -86,7 +90,11 @@ impl isonomic_app::App for Chat {
             app.set_global(KeysBound);
         }
         let backend = crate::Backend {
-            host: Rc::new(SdkHost::new(cx.client().agents()).with_models(cx.client().models())),
+            host: Rc::new(
+                SdkHost::new(cx.client().agents())
+                    .with_models(cx.client().models())
+                    .with_user_actions(user_actions(cx.clone())),
+            ),
             store: Rc::new(crate::store::SqlStore::new(cx.client().sql())),
             install_model: Some({
                 let app = cx.clone();
@@ -129,4 +137,25 @@ impl Render for Chat {
     fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
         self.shell.clone()
     }
+}
+
+/// The window's user-action tokens, for the person's answers to approvals.
+/// The window gives one only while the person is clicking or pressing a
+/// key in Chat; otherwise the approval stays pending and they are asked to
+/// answer again.
+fn user_actions(cx: AppContext) -> UserActions {
+    Rc::new(move |session, approval| {
+        let token = cx.user_action(&session, &approval);
+        async move {
+            token.await.map_err(|error| {
+                let message = match &error {
+                    UserActionError::NoUserInput => "Allow again from this window.".to_owned(),
+                    UserActionError::Engine { message, .. } => message.clone(),
+                    other => other.to_string(),
+                };
+                HostError::new(error.code(), message)
+            })
+        }
+        .boxed_local()
+    })
 }
