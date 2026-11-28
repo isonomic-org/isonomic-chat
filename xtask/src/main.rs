@@ -27,6 +27,8 @@ const CHAT_FORBIDDEN: &[(&str, &str)] = &[
     ("approval_card", "renders an approval"),
     ("Decision::", "decides an approval"),
     (".decide(", "decides an approval"),
+    ("WidgetBinding", "binds a display widget"),
+    ("DisplayOutcome", "decides how a display widget shows"),
 ];
 
 /// Whether `code` uses `pattern` as a name of its own, not as the tail of a

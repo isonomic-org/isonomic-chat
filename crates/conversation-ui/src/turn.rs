@@ -52,6 +52,8 @@ pub(crate) struct ReplyControls {
     pub(crate) on_decide: Option<crate::tools::DecideHandler>,
     /// Approvals whose answer is on its way.
     pub(crate) deciding: Vec<conversation_model::schema::ApprovalId>,
+    /// The display widgets the view knows, and how the person sorted them.
+    pub(crate) widgets: Option<crate::widgets::Shelf>,
 }
 
 /// An open edit field on a prompt.
@@ -339,6 +341,11 @@ fn reply(
                         }),
                 ),
         );
+    }
+    // Display widgets sit at full column width under the reply's words,
+    // in call order.
+    if let Some(shelf) = &controls.widgets {
+        column = column.children(shelf.render(turn, last, copy, cx));
     }
     for notice in &turn.notices {
         column = column.child(

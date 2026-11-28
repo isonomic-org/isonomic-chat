@@ -41,7 +41,8 @@ pub(crate) fn render_tools(
     deciding: &[ApprovalId],
 ) -> Vec<AnyElement> {
     let mut rows = Vec::new();
-    for tool in &turn.tools {
+    // Display widgets are shown under the reply, never as a row.
+    for tool in turn.tools.iter().filter(|tool| !tool.is_display()) {
         let approval = turn
             .approval_for(&tool.call)
             .filter(|a| a.is_pending() && turn.state.is_open());

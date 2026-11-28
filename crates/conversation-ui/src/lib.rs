@@ -21,8 +21,13 @@ mod status;
 mod tools;
 mod turn;
 mod view;
+mod widgets;
 
 pub use copy::ConversationCopy;
 pub use status::{STATUS_ID, StatusButton};
 pub use tools::{approval_card_id, tool_row_id};
 pub use view::{ConversationEvent, ConversationView};
+pub use widgets::{
+    BindError, Shown, SortHandler, WidgetBinding, WidgetContext, WidgetProps, WidgetRegistry,
+    widget_id,
+};

@@ -48,6 +48,16 @@ Verified 15 Nov 2026 against the Figma file and isonomic-ui `main` at `4cf5571` 
 | `projects_group` in the sidebar | Projects are out of scope for Milestone 0 |
 | `Chat / Content / Growth Analysis`, `Chat/Conversation Heading/Two Actions` (hidden, Components page) | Reference instances from the kit, not Chat components |
 
+## Display widgets (the kit's `WidgetRegistry`)
+
+| Display tool | Isonomic UI component | Binding | Status |
+| --- | --- | --- | --- |
+| `show_table` | `extra::sortable_table::SortableTable` | `widgets/table.rs` | on main; the selection column shows until isonomic-ui #413 (read-only mode) |
+| `show_steps` | `extra::step_trail::StepTrail` | `widgets/steps.rs` | on main; a step's detail is its first sub-step until isonomic-ui #428 (status line without a timer) |
+| `show_metrics` | `extra::stat_grid::StatGrid` | `widgets/metrics.rs` | on main |
+| `show_chart` | `component::chart::{BarChart, LineChart, AreaChart}` | `widgets/chart.rs` | on main; the title is a plain label above the chart |
+| `show_sources` (next) | none yet | — | **missing**: isonomic-ui #414 (source list) |
+
 ## Requests filed
 
 | Issue | For |
@@ -57,3 +67,4 @@ Verified 15 Nov 2026 against the Figma file and isonomic-ui `main` at `4cf5571` 
 | isonomic-ui #207 | Thinking indicator (from proposal #14) |
 | isonomic-ui #208 | Stacked list item, for `ContextItem` |
 | isonomic-ui #210 | Sidebar menu item: ellipsis for long labels |
+| isonomic-ui #413, #414, #428 | Display widgets: read-only sortable table, source list, step status line without a timer |

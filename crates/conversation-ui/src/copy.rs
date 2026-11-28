@@ -99,6 +99,8 @@ pub struct ConversationCopy {
     pub model_unknown: SharedString,
     /// The picked model is not installed yet.
     pub model_unavailable: SharedString,
+    /// A table the model showed with no rows.
+    pub empty_table: SharedString,
 }
 
 impl Default for ConversationCopy {
@@ -148,6 +150,7 @@ impl Default for ConversationCopy {
             deny: "Deny".into(),
             model_denied: "This app isn't allowed to use that model.".into(),
             model_unknown: "That model isn't available any more. Pick another.".into(),
+            empty_table: "Nothing to show.".into(),
             model_unavailable: "That model isn't installed yet. Download it, or pick another."
                 .into(),
         }

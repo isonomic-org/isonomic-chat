@@ -108,6 +108,11 @@ pub(crate) fn reconnect_wait(tries: u32) -> Duration {
     Duration::from_millis(millis.min(8_000))
 }
 
+/// How tall a chart the model shows is drawn, at full column width.
+pub(crate) fn widget_chart_height() -> Pixels {
+    px(220.)
+}
+
 #[cfg(test)]
 mod tests {
     use super::reconnect_wait;

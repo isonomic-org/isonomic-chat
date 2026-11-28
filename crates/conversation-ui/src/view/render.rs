@@ -280,5 +280,6 @@ fn controls(view: &WeakEntity<ConversationView>, index: usize, cx: &App) -> Repl
         prompt_focus: None,
         on_decide: Some(on_decide),
         deciding: this.deciding().to_vec(),
+        widgets: Some(this.shelf(view)),
     }
 }

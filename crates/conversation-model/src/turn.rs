@@ -3,7 +3,7 @@
 
 //! One turn as a view shows it.
 
-use crate::schema::{CallId, Seq, StepId, TurnId};
+use crate::schema::{CallId, DisplayOutcome, Seq, StepId, TurnId};
 use crate::tools::{Approval, ToolUse};
 use std::collections::BTreeMap;
 
@@ -155,6 +155,17 @@ impl Turn {
             }
         }
         thinking
+    }
+
+    /// The display widgets to show under the reply, in call order: display
+    /// calls that have ended, without those the model is retrying. A call
+    /// still running shows nothing yet.
+    pub fn widgets(&self) -> impl Iterator<Item = &ToolUse> {
+        self.tools.iter().filter(|tool| {
+            tool.is_display()
+                && tool.outcome.is_some()
+                && tool.display != Some(DisplayOutcome::Retry)
+        })
     }
 
     /// The approval that gates a call, if one was asked for.

@@ -2,6 +2,15 @@
 
 Newest first. Updated at every task boundary so a new session can resume from this repository alone. Detail is in `status.md`.
 
+## 2026-11-28 · Display widgets and live approvals
+
+| Task | Where | State |
+| --- | --- | --- |
+| Display widgets (#51) and approvals asking inside the click | `feat/display-widgets` pull request | open |
+| Ask widgets (#65) | after isonomic-ui #425, #426 and the harness ask specs | part 1 next |
+| Tool bindings in the kit (#57) | after harness #50 (files kit) and #61 (frame) | waiting |
+| Figma: display and ask widgets in-thread, Milestone 0 flows wired | Figma file | in progress |
+
 ## 2026-11-27 · The gallery, after the launch decisions
 
 **Where the work is**

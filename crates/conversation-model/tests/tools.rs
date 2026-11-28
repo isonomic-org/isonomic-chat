@@ -3,13 +3,14 @@
 
 //! Where a tool call goes, read from its input whatever the tool's name.
 
-use conversation_model::schema::{CallId, Value};
+use conversation_model::schema::{CallId, ToolKind, Value};
 use conversation_model::{ToolUse, summary_lines};
 
 fn call(tool: &str, input: &str) -> ToolUse {
     ToolUse {
         call: CallId::new("call_1"),
         tool: tool.into(),
+        kind: ToolKind::Engine,
         input: serde_json::from_str::<Value>(input).expect("json"),
         input_raw: None,
         effects: Vec::new(),
@@ -17,6 +18,7 @@ fn call(tool: &str, input: &str) -> ToolUse {
         output: String::new(),
         started_at: 0,
         duration_ms: None,
+        display: None,
     }
 }
 

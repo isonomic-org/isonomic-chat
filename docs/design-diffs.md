@@ -142,3 +142,12 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | T14 | Run status bar: Stop while running; Dismiss, Retry, Resume when stopped; Dismiss, Retry on an error; Steer | Isonomic UI's aligned run status bar at `66e93d3`, the same buttons; cut short has Dismiss and Continue; Steer left out | Fixed / Accepted (no steering in version 1) |
 | T15 | Edit box: input 16 / 24 at the padding edge; 34 high buttons; small shadow | Same (buttons 32: token) | Fixed |
 | T16 | Composer dock 720, disclaimer 8 below, 12 bottom padding | Same | — |
+
+## Display widgets (Session Lifecycle 0.2, "Display Widgets")
+
+| # | Design 0.2 | Built | Verdict |
+| --- | --- | --- | --- |
+| W1 | Widgets at full column width under the reply text of their step | Under the whole reply's words, in call order | Accepted (the turn keeps one text; per-step placement later) |
+| W2 | Charts in black | Isonomic UI's first chart colour (green) | Recorded (tokens win until Omar decides) |
+| W3 | Table without a selection column | The sortable table's checkboxes show, doing nothing | Recorded (isonomic-ui #413) |
+| W4 | Current step with its detail as a status line | The detail as the step's first sub-step | Recorded (isonomic-ui #428) |

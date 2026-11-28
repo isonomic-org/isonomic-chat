@@ -21,6 +21,7 @@ mod edit;
 mod render;
 mod replies;
 mod versions;
+mod widgets;
 
 use edit::Editing;
 use replies::Replies;
@@ -75,6 +76,10 @@ pub struct ConversationView {
     dismissed: Option<(usize, u64)>,
     /// Approvals whose answer is on its way.
     deciding: Vec<conversation_model::schema::ApprovalId>,
+    /// The display widgets this view draws.
+    widgets: Rc<crate::WidgetRegistry>,
+    /// How the person sorted each display call's widget.
+    sorts: Rc<std::collections::HashMap<conversation_model::schema::CallId, (usize, bool)>>,
     _decisions: Vec<Task<()>>,
     _composer_events: ui::Subscription,
 }
@@ -140,6 +145,8 @@ impl ConversationView {
             load_failed: None,
             dismissed: None,
             deciding: Vec::new(),
+            widgets: Rc::new(crate::WidgetRegistry::standard()),
+            sorts: Rc::default(),
             _decisions: Vec::new(),
             _composer_events: composer_events,
         };
