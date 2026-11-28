@@ -99,6 +99,10 @@ pub struct ConversationCopy {
     pub model_unknown: SharedString,
     /// The picked model is not installed yet.
     pub model_unavailable: SharedString,
+    /// The status while a question waits for the person.
+    pub waiting_answer: SharedString,
+    /// An asked question's row, when the person gave no answer.
+    pub not_answered: SharedString,
     /// A table the model showed with no rows.
     pub empty_table: SharedString,
 }
@@ -151,6 +155,8 @@ impl Default for ConversationCopy {
             model_denied: "This app isn't allowed to use that model.".into(),
             model_unknown: "That model isn't available any more. Pick another.".into(),
             empty_table: "Nothing to show.".into(),
+            waiting_answer: "Waiting for your answer".into(),
+            not_answered: "Not answered".into(),
             model_unavailable: "That model isn't installed yet. Download it, or pick another."
                 .into(),
         }

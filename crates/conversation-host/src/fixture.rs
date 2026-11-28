@@ -17,10 +17,10 @@ use crate::{
     UpdateStream,
 };
 use conversation_model::schema::{
-    ApprovalId, Block, Decision, DeltaKind, Event, ForkReason, LiveDelta, Seq, SessionEvent,
-    SessionId,
+    ApprovalId, Block, Decision, DeltaKind, Event, ForkReason, LiveDelta, QuestionId, Seq,
+    SessionEvent, SessionId,
 };
-use conversation_model::{Availability, ModelCatalog, Update};
+use conversation_model::{Availability, ModelCatalog, Reply, Update};
 use futures::channel::mpsc::{UnboundedSender, unbounded};
 use futures::{FutureExt as _, StreamExt as _, future};
 use std::cell::RefCell;
@@ -242,6 +242,10 @@ impl ConversationHost for FixtureHost {
     }
 
     fn decide(&self, _: &SessionId, _: &ApprovalId, _: Decision) -> HostFuture<()> {
+        Self::refuse()
+    }
+
+    fn answer(&self, _: &SessionId, _: &QuestionId, _: Reply) -> HostFuture<()> {
         Self::refuse()
     }
 

@@ -6,10 +6,11 @@ Newest first. Updated at every task boundary so a new session can resume from th
 
 | Task | Where | State |
 | --- | --- | --- |
-| Display widgets (#51) and approvals asking inside the click | `feat/display-widgets` pull request | open |
-| Ask widgets (#65) | after isonomic-ui #425, #426 and the harness ask specs | part 1 next |
+| Display widgets (#51) and approvals asking inside the click | #66 | merged |
+| Ask widgets (#65) part 1, `ask_user` | `feat/ask-user` pull request | open |
+| Ask widgets (#65) part 2 | after harness #57 and isonomic-ui #425, #426 | waiting |
 | Tool bindings in the kit (#57) | after harness #50 (files kit) and #61 (frame) | waiting |
-| Figma: display and ask widgets in-thread, Milestone 0 flows wired | Figma file | in progress |
+| Figma: display and ask widgets in-thread, Milestone 0 flows wired, Carbon icons | Figma file | done |
 
 ## 2026-11-27 · The gallery, after the launch decisions
 

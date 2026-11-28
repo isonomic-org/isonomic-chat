@@ -4,6 +4,10 @@ What this repository needs from others, and what others asked of it. Newest firs
 
 ## Out
 
+### O21 · Isonomic UI: the icon set in Carbon
+
+**To:** isonomic-ui #436. **Status:** open. Omar chose Carbon icons everywhere (28 Nov). Asked: the icon set and the icons inside components in Carbon, behind `IconName`, matching the design file's Carbon set. Chat then moves its own picks (the greeting mark, the stop glyph, row actions) to the Carbon names; it never bundles icons of its own.
+
 ### O20 · SDK: an app asks the window for a user-action token
 
 **To:** isonomic-sdk #64 (follows #25). **Status:** done in isonomic-sdk #65 (`d756838`); the kit asks inside the click from 28 Nov. Live once the window installs its token source. `approvals.decide` needs a token only the shell can mint (`approvals.user_action`), and no `AppContext` call lets an app ask the window for one when the person presses Allow or Deny in the app's view. Until it lands, Chat's approval card works on the testkit and is refused (`missing_user_action`) in the window. Asked: `AppContext::user_action(session, approval)`, answered only for a focused tab during an input event; the same in the test host, with a refusal to test; a stable refusal code.

@@ -17,6 +17,7 @@ use ui::{App, Entity, EventEmitter, FocusHandle, Focusable, SharedString, Task, 
 use crate::ConversationCopy;
 
 mod approvals;
+mod asks;
 mod edit;
 mod render;
 mod replies;
@@ -76,6 +77,11 @@ pub struct ConversationView {
     dismissed: Option<(usize, u64)>,
     /// Approvals whose answer is on its way.
     deciding: Vec<conversation_model::schema::ApprovalId>,
+    /// The card of the open question, and replies on their way.
+    ask_card: Option<asks::AskCard>,
+    answering: Vec<conversation_model::schema::QuestionId>,
+    /// A message sent while a question was open, held for the turn's end.
+    queued: Option<String>,
     /// The display widgets this view draws.
     widgets: Rc<crate::WidgetRegistry>,
     /// How the person sorted each display call's widget.
@@ -145,6 +151,9 @@ impl ConversationView {
             load_failed: None,
             dismissed: None,
             deciding: Vec::new(),
+            ask_card: None,
+            answering: Vec::new(),
+            queued: None,
             widgets: Rc::new(crate::WidgetRegistry::standard()),
             sorts: Rc::default(),
             _decisions: Vec::new(),
@@ -253,7 +262,13 @@ impl ConversationView {
 
     /// Send a prompt: shown at once, then confirmed by the host.
     pub fn send(&mut self, text: String, cx: &mut Context<Self>) {
-        if text.trim().is_empty() || !self.input_state().can_send() {
+        if text.trim().is_empty() {
+            return;
+        }
+        if !self.input_state().can_send() {
+            if self.open_ask().is_some() {
+                self.move_on(text, cx);
+            }
             return;
         }
         self.thread.borrow_mut().begin_send(text.clone());
@@ -427,6 +442,9 @@ impl ConversationView {
     /// Fold one update in and re-render only what moved.
     fn apply(&mut self, update: Update, cx: &mut Context<Self>) {
         self.thread.borrow_mut().apply(&update);
+        if self.queued.is_some() {
+            self.flush_queued(cx);
+        }
         let title = self.thread.borrow().title().map(str::to_owned);
         if title.is_some() && title != self.title {
             self.title = title.clone();
@@ -440,7 +458,8 @@ impl ConversationView {
     fn rows_changed(&mut self, cx: &mut Context<Self>) {
         let count = self.thread.borrow().turns().len();
         let state = self.input_state();
-        let busy = state.is_busy();
+        // While a question waits, the composer sends: a new message moves on.
+        let busy = state.is_busy() && self.open_ask().is_none();
         let closed = state == InputState::Closed;
         self.scroller.update(cx, |scroller, cx| {
             let known = scroller.item_count();

@@ -15,10 +15,12 @@ mod scripted;
 
 pub use fixture::FixtureHost;
 
-pub use scripted::{Failure, ScriptedHost, ScriptedReply, ScriptedTool};
+pub use scripted::{Failure, ScriptedHost, ScriptedQuestion, ScriptedReply, ScriptedTool};
 
-use conversation_model::schema::{ApprovalId, Block, Decision, ForkReason, Seq, SessionId, TurnId};
-use conversation_model::{Availability, ModelCatalog, Update};
+use conversation_model::schema::{
+    ApprovalId, Block, Decision, ForkReason, QuestionId, Seq, SessionId, TurnId,
+};
+use conversation_model::{Availability, ModelCatalog, Reply, Update};
 use futures::future::LocalBoxFuture;
 use futures::stream::LocalBoxStream;
 use std::fmt;
@@ -156,6 +158,11 @@ pub trait ConversationHost {
         approval: &ApprovalId,
         decision: Decision,
     ) -> HostFuture<()>;
+
+    /// Reply to a question the model asked the person (`questions.answer`).
+    /// Only ever with the person's input; a skip or a new message is sent
+    /// as no answer, never as a guess.
+    fn answer(&self, session: &SessionId, question: &QuestionId, reply: Reply) -> HostFuture<()>;
 
     /// Follow a session from just after `from_seq` (0 for everything).
     fn subscribe(&self, session: &SessionId, from_seq: Seq) -> HostFuture<UpdateStream>;

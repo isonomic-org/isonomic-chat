@@ -13,6 +13,7 @@
 //! The event schema is harness-core's, re-exported as [`schema`]. When the
 //! SDK's agents interface ships, it re-exports the same crate.
 
+mod asks;
 mod input;
 mod models;
 mod thread;
@@ -20,6 +21,7 @@ mod tools;
 mod turn;
 mod versions;
 
+pub use asks::{Ask, AskChoice, AskState, Reply};
 pub use harness_core as schema;
 pub use input::InputState;
 pub use models::{Availability, ModelCatalog, ModelOption, display_name};
