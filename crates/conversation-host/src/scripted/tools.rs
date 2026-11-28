@@ -29,6 +29,8 @@ pub struct ScriptedTool {
     pub fails: bool,
     /// Ask the person first, with this summary.
     pub approval: Option<String>,
+    /// Put this question to the person, and return their answer.
+    pub question: Option<super::ask::ScriptedQuestion>,
 }
 
 impl ScriptedTool {
@@ -59,7 +61,10 @@ impl ScriptedTool {
 
 /// A call that waits for the person.
 pub(super) struct Waiting {
-    pub(super) approval: ApprovalId,
+    /// The approval it waits on, or none for a question.
+    pub(super) approval: Option<ApprovalId>,
+    /// The question it waits on.
+    pub(super) question: Option<conversation_model::schema::QuestionId>,
     pub(super) call: CallId,
     pub(super) tool: ScriptedTool,
 }
@@ -94,6 +99,10 @@ impl Inner {
             child: None,
         });
         self.emit(id, Some(&turn), Some(&step), event);
+        if tool.question.is_some() {
+            self.ask(id, call, tool);
+            return true;
+        }
         let Some(summary) = tool.approval.clone() else {
             let result = result(&call, &tool, None);
             self.emit(id, Some(&turn), Some(&step), result);
@@ -112,7 +121,8 @@ impl Inner {
         self.emit(id, Some(&turn), Some(&step), request);
         if let Some(open) = self.sessions.get_mut(id).and_then(|s| s.open.as_mut()) {
             open.waiting = Some(Waiting {
-                approval,
+                approval: Some(approval),
+                question: None,
                 call,
                 tool,
             });
@@ -136,9 +146,11 @@ impl Inner {
         decision: Decision,
     ) -> Result<(), HostError> {
         let open = self.session(id)?.open.as_mut();
-        let Some(open) =
-            open.filter(|o| o.waiting.as_ref().is_some_and(|w| &w.approval == approval))
-        else {
+        let Some(open) = open.filter(|o| {
+            o.waiting
+                .as_ref()
+                .is_some_and(|w| w.approval.as_ref() == Some(approval))
+        }) else {
             return Err(HostError::new("not_found", "No such approval waits."));
         };
         let Some(waiting) = open.waiting.take() else {
@@ -146,8 +158,11 @@ impl Inner {
         };
         let (turn, step) = (open.turn.clone(), open.step.clone());
         let allow = decision == Decision::Allow;
+        let Some(approval) = waiting.approval.clone() else {
+            return Ok(());
+        };
         let decided = Event::ApprovalDecision(ApprovalDecision {
-            approval: waiting.approval,
+            approval,
             decision: if allow {
                 Decision::Allow
             } else {
@@ -174,18 +189,20 @@ impl Inner {
             return;
         };
         let (turn, step) = (Some(&open.turn), Some(&open.step));
-        let decided = Event::ApprovalDecision(ApprovalDecision {
-            approval: waiting.approval,
-            decision: Decision::Deny,
-            basis: Basis::Cancelled,
-            by: Decider {
-                scope: DeciderScope::Host,
-                app: None,
-            },
-            answer: None,
-            reason: None,
-        });
-        self.emit(id, turn, step, decided);
+        if let Some(approval) = waiting.approval.clone() {
+            let decided = Event::ApprovalDecision(ApprovalDecision {
+                approval,
+                decision: Decision::Deny,
+                basis: Basis::Cancelled,
+                by: Decider {
+                    scope: DeciderScope::Host,
+                    app: None,
+                },
+                answer: None,
+                reason: None,
+            });
+            self.emit(id, turn, step, decided);
+        }
         let outcome = Some((ToolOutcome::Cancelled, STOPPED));
         self.emit(
             id,
@@ -198,7 +215,11 @@ impl Inner {
 
 /// A call's result: what the tool returns, its failure, or `ended` (a
 /// denial or a stop) with the reason the model is told.
-fn result(call: &CallId, tool: &ScriptedTool, ended: Option<(ToolOutcome, &str)>) -> Event {
+pub(super) fn result(
+    call: &CallId,
+    tool: &ScriptedTool,
+    ended: Option<(ToolOutcome, &str)>,
+) -> Event {
     let (outcome, text, error) = match ended {
         Some((outcome, reason)) => (outcome, reason.to_owned(), None),
         None if tool.fails => (

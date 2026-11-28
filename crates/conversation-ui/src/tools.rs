@@ -7,7 +7,7 @@
 //! folds open to the arguments and the result.
 
 use conversation_model::schema::{ApprovalId, CallId, Decision, Effect, ToolOutcome};
-use conversation_model::{Approval, ToolUse, Turn, pretty, summary_lines};
+use conversation_model::{Approval, Ask, AskState, ToolUse, Turn, pretty, summary_lines};
 use std::rc::Rc;
 use std::time::Duration;
 use ui::extra::approval_card::{ApprovalCard, ApprovalRisk, ApprovalStatus};
@@ -46,7 +46,11 @@ pub(crate) fn render_tools(
         let approval = turn
             .approval_for(&tool.call)
             .filter(|a| a.is_pending() && turn.state.is_open());
-        rows.push(row(tool, approval.is_some(), copy).into_any_element());
+        let element = match turn.ask_for(&tool.call) {
+            Some(ask) => asked(tool, ask, copy).into_any_element(),
+            None => row(tool, approval.is_some(), copy).into_any_element(),
+        };
+        rows.push(element);
         if let Some(approval) = approval {
             let busy = deciding.contains(&approval.id);
             rows.push(card(tool, approval, copy, on_decide, busy).into_any_element());
@@ -105,6 +109,27 @@ fn row(tool: &ToolUse, waiting: bool, copy: &ConversationCopy) -> impl IntoEleme
         } else {
             card.result(tool.output.clone())
         };
+    }
+    div().w_full().child(card)
+}
+
+/// The row of a call that asked the person something: the question, and
+/// under it their answer, or that none came.
+fn asked(tool: &ToolUse, ask: &Ask, copy: &ConversationCopy) -> impl IntoElement {
+    let (status, summary) = match &ask.state {
+        AskState::Open => (ToolCallStatus::Running, copy.waiting_answer.clone()),
+        AskState::Answered { .. } => (
+            ToolCallStatus::Success,
+            SharedString::from(ask.answer_text().unwrap_or_default()),
+        ),
+        AskState::Unanswered => (ToolCallStatus::Success, copy.not_answered.clone()),
+    };
+    let mut card = ToolCallCard::new(tool_row_id(&tool.call), ask.prompt.clone(), status)
+        .open_on_error(false)
+        .summary(summary)
+        .arguments(pretty(&tool.target().arguments));
+    if let Some(ms) = tool.duration_ms {
+        card = card.duration(Duration::from_millis(ms));
     }
     div().w_full().child(card)
 }

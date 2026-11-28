@@ -12,6 +12,7 @@ use crate::schema::{
 use crate::turn::{Notice, Turn, TurnState};
 use std::collections::BTreeSet;
 
+mod asks;
 mod branch;
 mod tools;
 
@@ -313,6 +314,13 @@ impl Thread {
                     self.touch(index);
                 }
             }
+            Event::Question(_) | Event::Answer(_) => {
+                if let Some(index) = self.event_turn(event)
+                    && asks::fold(&mut self.turns[index], event)
+                {
+                    self.touch(index);
+                }
+            }
             Event::TurnEnd(end) => {
                 if let Some(index) = self.event_turn(event) {
                     let message = end
@@ -358,7 +366,7 @@ impl Thread {
                     None => self.notices.push(notice),
                 }
             }
-            // Questions, artifacts, memory and the rest are shown by their
+            // Artifacts, memory and the rest are shown by their
             // own bindings as they land; the turns do not change.
             _ => {}
         }

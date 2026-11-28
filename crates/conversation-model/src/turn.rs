@@ -3,6 +3,7 @@
 
 //! One turn as a view shows it.
 
+use crate::asks::Ask;
 use crate::schema::{CallId, DisplayOutcome, Seq, StepId, TurnId};
 use crate::tools::{Approval, ToolUse};
 use std::collections::BTreeMap;
@@ -77,6 +78,8 @@ pub struct Turn {
     pub tools: Vec<ToolUse>,
     /// Approvals the host asked for in this turn, in order.
     pub approvals: Vec<Approval>,
+    /// Questions the model asked the person in this turn, in order.
+    pub asks: Vec<Ask>,
     /// Things this build cannot show.
     pub notices: Vec<Notice>,
     /// The stable code of the error that ended the turn, if it failed.
@@ -115,6 +118,7 @@ impl Turn {
             continuing: false,
             tools: Vec::new(),
             approvals: Vec::new(),
+            asks: Vec::new(),
             notices: Vec::new(),
             error_code: None,
             divider_after: None,
@@ -174,6 +178,19 @@ impl Turn {
             .iter()
             .rev()
             .find(|approval| approval.call.as_ref() == Some(call))
+    }
+
+    /// A question that still waits for the person, while the turn is open.
+    pub fn open_ask(&self) -> Option<&Ask> {
+        if !self.state.is_open() {
+            return None;
+        }
+        self.asks.iter().find(|ask| ask.is_open())
+    }
+
+    /// The question a call asked, if it asked one.
+    pub fn ask_for(&self, call: &CallId) -> Option<&Ask> {
+        self.asks.iter().find(|ask| ask.call.as_ref() == Some(call))
     }
 
     /// An approval that still waits for an answer, while the turn is open.

@@ -13,12 +13,16 @@ use conversation_host::{
     ConversationHost, ForkAt, HostError, HostFuture, NewSession, SessionEntry, SessionQuery,
     UpdateStream,
 };
-use conversation_model::schema::{ApprovalId, Block, Decision, ForkReason, Seq, SessionId};
-use conversation_model::{Availability, ModelCatalog, ModelOption, Update, display_name};
+use conversation_model::schema::{
+    ApprovalId, Block, Decision, ForkReason, QuestionId, Seq, SessionId,
+};
+use conversation_model::{Availability, ModelCatalog, ModelOption, Reply, Update, display_name};
 use futures::future::LocalBoxFuture;
 use futures::{FutureExt as _, StreamExt as _, stream};
 use isonomic_client::{Agents, ClientError, Models, SessionUpdate};
-use isonomic_proto::agents::{CreateSession, DecisionInput, ForkPoint, ListSessions, PresetId};
+use isonomic_proto::agents::{
+    AnswerQuestion, CreateSession, DecisionInput, ForkPoint, ListSessions, PresetId,
+};
 use isonomic_proto::models::ModelState;
 use std::rc::Rc;
 
@@ -276,6 +280,23 @@ impl ConversationHost for SdkHost {
                 .map_err(host_error)
         }
         .boxed_local()
+    }
+
+    fn answer(&self, session: &SessionId, question: &QuestionId, reply: Reply) -> HostFuture<()> {
+        let (selected, text, skipped) = match reply {
+            Reply::Answered { selected, text } => (selected, text, false),
+            // A skip and a new message are no answer, never a guess.
+            Reply::Skipped | Reply::MovedOn => (Vec::new(), None, true),
+        };
+        let answer = AnswerQuestion {
+            session: session.clone(),
+            question: question.clone(),
+            selected,
+            text,
+            skipped,
+        };
+        let agents = self.agents.clone();
+        async move { agents.answer(answer).await.map_err(host_error) }.boxed_local()
     }
 
     fn subscribe(&self, session: &SessionId, from_seq: Seq) -> HostFuture<UpdateStream> {

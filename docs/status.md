@@ -2,6 +2,16 @@
 
 Newest first. Every deviation from the brief is recorded here.
 
+## 2026-11-28 · Questions the model asks the person (#65, part 1)
+
+- **`ask_user` on the question card.** A question the model asks (`question` event) shows Isonomic UI's question card above the composer, with its choices and a field for the person's own words; the status bar says "Waiting for your answer" with Stop. A pick or words go back through `ConversationHost::answer` (`questions.answer`); the card leaves, and the asked call's row in the thread shows the question and the answer (or "Not answered").
+- **Never for the person:** nothing is sent without their input. A choice the question never offered, empty words, or an approve or decline the card reports are not answers: nothing is sent and the card asks again. "Not now" folds the card and sends nothing.
+- **A new message while a question waits** goes back as moved on (`skipped`), and the message is held and sent once that turn ends. Stop while it waits sends no answer.
+- **Coming back:** an open question is rebuilt from the log, so reopening the conversation shows its card again. A recording answers nothing (`read_only`).
+- The kit: `Ask`, `AskState`, `Reply` and `Turn::asks`, `open_ask`, `ask_for` (`conversation-model`); `ConversationHost::answer` (SDK, scripted, fixture hosts); `ScriptedTool::question` and `ScriptedHost::answers` for tests; `ConversationView::open_ask`, `answer`, `status_message`.
+- **Deviations:** the card always shows the own-words field and offers one pick, even for a question that asks for several or for none (isonomic-ui #425); there is no Skip on the card yet (isonomic-ui #426), so Skip is "Not now" or a new message; the held message is not shown until it is sent; the answered row is one line, question then answer, in the tool row's face (design Q1, isonomic-ui #440).
+- Tests: `conversation-ui/tests/asks.rs` (a pick goes back; a new message moves on, then sends; stop sends nothing; a recorded answer shows and a recording refuses); `view::asks` unit test (only a clear answer is sent). The gallery's `approval` fixture shows the answered question.
+
 ## 2026-11-28 · Display widgets in the kit; approvals ask for their token inside the click
 
 - **Display widgets (#51).** A reply's display calls (`show_table`, `show_steps`, `show_metrics`, `show_chart`) draw Isonomic UI's sortable table, step trail, stat grid and bar, line or area chart at full column width under the reply's words, in call order. `WidgetRegistry::standard()` maps each tool name to a `WidgetBinding` (input in, props out, one component); the view uses it by default, and `ConversationView::set_widgets` swaps it. Display calls never show as tool rows.

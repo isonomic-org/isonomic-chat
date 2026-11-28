@@ -151,3 +151,11 @@ Screenshots: `SCREENSHOT_DIR=… cargo test -p isonomic-chat --features test-sup
 | W2 | Charts in black | Isonomic UI's first chart colour (green) | Recorded (tokens win until Omar decides) |
 | W3 | Table without a selection column | The sortable table's checkboxes show, doing nothing | Recorded (isonomic-ui #413) |
 | W4 | Current step with its detail as a status line | The detail as the step's first sub-step | Recorded (isonomic-ui #428) |
+
+## Ask widgets and icons
+
+| # | Design 0.2 | Built | Verdict |
+| --- | --- | --- | --- |
+| Q1 | Answered question: a two-line row, the question then the answer (`Ask/AnsweredRow`) | Isonomic UI's tool call row: question and answer on one line, in the row's mono face | Recorded (isonomic-ui #440) |
+| Q2 | Question card: Skip; multiple picks; no own-words field when the question wants none | Not now only; one pick; the field always shows | Recorded (isonomic-ui #425, #426) |
+| I1 | Carbon icons throughout (chosen by Omar, 28 Nov) | Isonomic UI's current set (Phosphor drawings), in Chat and inside every component | Recorded (isonomic-ui #436); Chat switches its own picks through `IconName` once it lands |

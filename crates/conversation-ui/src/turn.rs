@@ -294,7 +294,11 @@ fn reply(
     let tools =
         crate::tools::render_tools(turn, copy, controls.on_decide.as_ref(), &controls.deciding);
     column = column.children(tools);
-    if turn.state.is_open() && shown.is_none() && turn.pending_approval().is_none() {
+    if turn.state.is_open()
+        && shown.is_none()
+        && turn.pending_approval().is_none()
+        && turn.open_ask().is_none()
+    {
         let label = if reasoning.is_empty() {
             copy.thinking.clone()
         } else {

@@ -16,7 +16,7 @@ use ui::component::message_scroller::MessageScroller;
 use ui::component::{ActiveTheme as _, v_flex};
 use ui::extra::run_status_bar::RunStatus;
 use ui::prelude::*;
-use ui::{App, ElementId, SharedString, StyleRefinement, Window, div};
+use ui::{App, ElementId, SharedString, StyleRefinement, TestSupportExt as _, Window, div};
 
 impl ConversationView {
     /// What the status bar says and which buttons it shows, left to right:
@@ -54,9 +54,12 @@ impl ConversationView {
         }
         if turn.state.is_open() {
             // Waiting for the person still runs: Stop ends the turn.
-            let words = match turn.pending_approval() {
-                Some(_) => copy.waiting_approval.clone(),
-                None => copy.working.clone(),
+            let words = if turn.pending_approval().is_some() {
+                copy.waiting_approval.clone()
+            } else if turn.open_ask().is_some() {
+                copy.waiting_answer.clone()
+            } else {
+                copy.working.clone()
             };
             return Some((RunStatus::Running, words, vec![StatusButton::Stop]));
         }
@@ -87,6 +90,11 @@ impl ConversationView {
             buttons.push(StatusButton::Continue);
         }
         Some((status, message, buttons))
+    }
+
+    /// What the status bar says now, if it shows.
+    pub fn status_message(&self) -> Option<SharedString> {
+        self.status_layout().map(|(_, message, _)| message)
     }
 
     /// The element id of one of the status bar's buttons, if it shows now.
@@ -146,8 +154,9 @@ impl ConversationView {
 }
 
 impl Render for ConversationView {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let status = self.status(cx);
+        let ask = self.ask_card(window, cx);
         let replies = Rc::new(self.replies.sync(&self.thread.borrow(), cx));
         let thread = self.thread.clone();
         let copy = self.copy.clone();
@@ -217,6 +226,15 @@ impl Render for ConversationView {
                     .gap_2()
                     .px_8()
                     .children(status.map(crate::status::render))
+                    // An open question sits above the composer.
+                    .children(ask.map(|card| {
+                        div()
+                            .id("ask-card")
+                            .w_full()
+                            .max_w(metrics::column_width())
+                            .child(card)
+                            .test_support()
+                    }))
                     .child(
                         div()
                             .w_full()

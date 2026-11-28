@@ -10,6 +10,7 @@
 
 use events::{assistant, compacted, step_end, title_event, too_large, turn_end, words};
 
+mod ask;
 mod end;
 mod events;
 mod fail;
@@ -19,6 +20,7 @@ mod refuse;
 mod reply;
 mod tools;
 
+pub use ask::ScriptedQuestion;
 pub use reply::{Failure, ScriptedReply};
 pub use tools::ScriptedTool;
 
@@ -29,10 +31,10 @@ use crate::{
 use conversation_model::schema::{
     AppId, ApprovalId, Attempt, AttemptOutcome, Block, Cause, Decision, DeltaKind, Event,
     ForkReason, LiveDelta, Params, PresetId, PresetRef, Principal, PrincipalKind, Purpose,
-    Reasoning, Seq, SessionClass, SessionEvent, SessionId, SessionStart, StepId, StepOutcome,
-    StepStart, StopReason, TitleSource, TurnId, TurnStart, TurnStop, User,
+    QuestionId, Reasoning, Seq, SessionClass, SessionEvent, SessionId, SessionStart, StepId,
+    StepOutcome, StepStart, StopReason, TitleSource, TurnId, TurnStart, TurnStop, User,
 };
-use conversation_model::{Availability, ModelCatalog, Update};
+use conversation_model::{Availability, ModelCatalog, Reply, Update};
 use futures::channel::mpsc::{UnboundedSender, unbounded};
 use futures::{FutureExt as _, StreamExt as _, future};
 use std::cell::RefCell;
@@ -102,6 +104,7 @@ struct Inner {
     next_step: u32,
     next_call: u32,
     clock: u64,
+    answers: Vec<(SessionId, QuestionId, conversation_model::Reply)>,
 }
 
 /// A host that plays scripted replies. Cheap to clone; clones share state.
@@ -438,6 +441,11 @@ impl ConversationHost for ScriptedHost {
     ) -> HostFuture<()> {
         let (session, approval) = (session.clone(), approval.clone());
         self.call(move |inner| inner.decide(&session, &approval, decision))
+    }
+
+    fn answer(&self, session: &SessionId, question: &QuestionId, reply: Reply) -> HostFuture<()> {
+        let (session, question) = (session.clone(), question.clone());
+        self.call(move |inner| inner.answer(&session, &question, reply))
     }
 
     fn subscribe(&self, session: &SessionId, from_seq: Seq) -> HostFuture<UpdateStream> {
